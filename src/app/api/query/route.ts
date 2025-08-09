@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryService, documentService, QueryStatus } from '@/lib/db'
 import { AIService } from '@/lib/ai-service'
+import { isSupabaseConfigured } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,26 +11,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
     }
 
-    // Create query record
-    const queryRecordId = await queryService.create({
-      query: query.trim(),
-      status: QueryStatus.PROCESSING,
-      documentIds: documentIds ? JSON.stringify(documentIds) : undefined,
-      timestamp: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })
-    
-    const queryRecord = await queryService.getById(queryRecordId)
+    // Create query record if DB is configured; otherwise use an in-memory placeholder
+    let queryRecordId: string | null = null
+    let queryRecord: any = null
+    if (isSupabaseConfigured) {
+      queryRecordId = await queryService.create({
+        query: query.trim(),
+        status: QueryStatus.PROCESSING,
+        documentIds: documentIds ? JSON.stringify(documentIds) : undefined,
+        timestamp: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      queryRecord = await queryService.getById(queryRecordId)
+    } else {
+      queryRecord = {
+        id: 'demo-' + Date.now().toString(36),
+        query: query.trim(),
+        status: QueryStatus.PROCESSING,
+        timestamp: new Date()
+      }
+    }
 
     // Process the query using configured AI provider
     try {
       const aiService = AIService.getInstance()
       
-      // Load providers from database for server-side usage
-      await aiService.loadProvidersFromDatabase()
+      // Load providers from database for server-side usage when available
+      if (isSupabaseConfigured) {
+        await aiService.loadProvidersFromDatabase()
+      }
       
-      const activeProvider = aiService.getActiveProvider()
+      // Allow client to choose provider by id; fallback to active
+      const allProviders = aiService.getProviders()
+      const activeProvider = (provider
+        ? allProviders.find(p => p.id === provider) || allProviders.find(p => p.name === provider)
+        : aiService.getActiveProvider())
 
       if (!activeProvider) {
         return NextResponse.json({ 
@@ -37,8 +54,11 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
       
-      // Get relevant documents for context
-      let documents: any[] = await documentService.getWhere('status', '==', 'COMPLETED')
+      // Get relevant documents for context (skip if DB not configured)
+      let documents: any[] = []
+      if (isSupabaseConfigured) {
+        documents = await documentService.getWhere('status', '==', 'COMPLETED')
+      }
       
       // Filter by specific document IDs if provided
       if (documentIds && documentIds.length > 0) {
@@ -105,38 +125,45 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Update query record with results
-      await queryService.update(queryRecord!.id, {
-        status: QueryStatus.COMPLETED,
-        response: JSON.stringify(aiResponse),
-        results: aiResponse.relevantDocuments?.length || 0
-      })
+      // Update query record with results when DB is available
+      if (isSupabaseConfigured && queryRecord?.id) {
+        await queryService.update(queryRecord.id, {
+          status: QueryStatus.COMPLETED,
+          response: JSON.stringify(aiResponse),
+          results: aiResponse.relevantDocuments?.length || 0
+        })
+      }
 
       return NextResponse.json({
-        id: queryRecord!.id,
-        query: queryRecord!.query,
+        id: queryRecord.id,
+        query: queryRecord.query,
         status: QueryStatus.COMPLETED,
         response: aiResponse,
-        timestamp: queryRecord!.timestamp,
+        timestamp: queryRecord.timestamp,
         provider: activeProvider.name,
         usage: completion.usage
       })
 
-    } catch (aiError) {
+    } catch (aiError: any) {
       console.error('AI processing error:', aiError)
-      
-      // Update query record with error
-      await queryService.update(queryRecord!.id, {
-        status: QueryStatus.ERROR,
-        response: JSON.stringify({ error: 'AI processing failed' })
-      })
+
+      const message = typeof aiError?.message === 'string' ? aiError.message : 'AI processing failed'
+      const isConfigError = /api key not configured|no ai provider configured|unsupported provider/i.test(message)
+
+      // Update query record with error when DB is available
+      if (isSupabaseConfigured && queryRecord?.id) {
+        await queryService.update(queryRecord.id, {
+          status: QueryStatus.ERROR,
+          response: JSON.stringify({ error: message })
+        })
+      }
 
       return NextResponse.json({ 
-        id: queryRecord!.id,
-        query: queryRecord!.query,
+        id: queryRecord.id,
+        query: queryRecord.query,
         status: QueryStatus.ERROR,
-        error: 'Failed to process query with AI' 
-      }, { status: 500 })
+        error: message
+      }, { status: isConfigError ? 400 : 500 })
     }
 
   } catch (error) {

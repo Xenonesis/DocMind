@@ -152,6 +152,10 @@ export class AIService {
           return this.callOllama(config)
         case 'open-router':
           return this.callOpenRouter(config)
+        case 'openai':
+          return this.callOpenAI(config)
+        case 'anthropic':
+          return this.callAnthropic(config)
         default:
           throw new Error(`Unsupported provider: ${provider.type}`)
       }
@@ -393,6 +397,100 @@ export class AIService {
         promptTokens: data.usage?.prompt_tokens || 0,
         completionTokens: data.usage?.completion_tokens || 0,
         totalTokens: data.usage?.total_tokens || 0
+      }
+    }
+  }
+
+  private async callOpenAI(config: AIServiceConfig): Promise<AIResponse> {
+    const { provider, prompt, systemPrompt, temperature = 0.7, maxTokens = 8192 } = config
+    const url = `${provider.baseUrl}/chat/completions`
+    const messages: any[] = []
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt })
+    }
+    messages.push({ role: 'user', content: prompt })
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${provider.apiKey}`
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        top_p: provider.topP
+      })
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(`OpenAI API error: ${error}`)
+    }
+
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content || ''
+    return {
+      content,
+      model: provider.model,
+      provider: provider.name,
+      usage: {
+        promptTokens: data.usage?.prompt_tokens || 0,
+        completionTokens: data.usage?.completion_tokens || 0,
+        totalTokens: data.usage?.total_tokens || 0
+      }
+    }
+  }
+
+  private async callAnthropic(config: AIServiceConfig): Promise<AIResponse> {
+    const { provider, prompt, systemPrompt, temperature = 0.7, maxTokens = 8192 } = config
+    // Anthropic Messages API v1
+    const url = `${provider.baseUrl}/messages`
+
+    const messages: any[] = []
+    if (systemPrompt) {
+      // Anthropic uses a top-level system field rather than a system role message
+    }
+
+    messages.push({ role: 'user', content: prompt })
+
+    const body: any = {
+      model: provider.model,
+      messages,
+      temperature,
+      max_tokens: maxTokens,
+    }
+    if (systemPrompt) {
+      body.system = systemPrompt
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': provider.apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(body)
+    })
+
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(`Anthropic API error: ${error}`)
+    }
+
+    const data = await response.json()
+    const content = data.content?.[0]?.text || data.output_text || ''
+    return {
+      content,
+      model: provider.model,
+      provider: provider.name,
+      usage: {
+        promptTokens: data.usage?.input_tokens || 0,
+        completionTokens: data.usage?.output_tokens || 0,
+        totalTokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
       }
     }
   }

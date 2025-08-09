@@ -69,6 +69,8 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
     google: /^AIza[0-9A-Za-z\-_]{35}$/,
     mistral: /^[a-zA-Z0-9]{32}$/,
     'open-router': /^sk-or-[a-zA-Z0-9]{48,}$/,
+    openai: /^sk-[a-zA-Z0-9]{20,}$/,
+    anthropic: /^sk-ant-[a-zA-Z0-9]{20,}$/,
     'lm-studio': /^[a-zA-Z0-9\-_]{10,}$/,
     ollama: /^[a-zA-Z0-9\-_]{1,}$/ // Ollama might not require API keys
   }

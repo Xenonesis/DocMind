@@ -47,6 +47,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('documents')
   const [query, setQuery] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
+  const [selectedProvider, setSelectedProvider] = useState<string | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
 
   // Fetch documents from API
@@ -86,19 +88,20 @@ export default function Home() {
     }, 30000)
   }
 
-  const handleQuerySubmit = async () => {
-    if (!query.trim()) return
-    
+  const handleQuerySubmit = async (payload?: { query: string; documentIds: string[]; provider?: string }) => {
+    const finalQuery = payload?.query ?? query
+    if (!finalQuery.trim()) return
     setIsProcessing(true)
     try {
       const response = await fetch('/api/query', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: finalQuery,
+          documentIds: payload?.documentIds ?? selectedDocumentIds,
+          provider: payload?.provider ?? selectedProvider
+        }),
       })
-      
       if (response.ok) {
         setActiveTab('results')
       }
@@ -247,7 +250,12 @@ export default function Home() {
                 query={query}
                 setQuery={setQuery}
                 isProcessing={isProcessing}
-                onSubmit={handleQuerySubmit}
+                documents={documents}
+                onSubmit={({ query: q, documentIds, provider }) => {
+                  setSelectedDocumentIds(documentIds)
+                  setSelectedProvider(provider)
+                  handleQuerySubmit({ query: q, documentIds, provider })
+                }}
               />
             </TabsContent>
 

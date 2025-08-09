@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Send, 
   Brain, 
@@ -19,14 +20,21 @@ import {
   Settings,
   Cpu,
   Cloud,
-  Server
+  Server,
+  Shield,
+  X
 } from 'lucide-react'
 
 interface QueryInterfaceProps {
   query: string
   setQuery: (query: string) => void
   isProcessing: boolean
-  onSubmit: () => void
+  documents?: Array<{
+    id: string
+    name: string
+    status?: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'ERROR'
+  }>
+  onSubmit: (payload: { query: string; documentIds: string[]; provider?: string }) => void
 }
 
 interface QueryExample {
@@ -87,17 +95,24 @@ interface QueryHistory {
 interface AIProvider {
   id: string
   name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'custom'
+  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom'
   model: string
   isActive: boolean
   isConfigured: boolean
 }
 
-export function QueryInterface({ query, setQuery, isProcessing, onSubmit }: QueryInterfaceProps) {
+export function QueryInterface({ query, setQuery, isProcessing, documents = [], onSubmit }: QueryInterfaceProps) {
   const [selectedExample, setSelectedExample] = useState<string | null>(null)
   const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const [currentProvider, setCurrentProvider] = useState<AIProvider | null>(null)
+  const [providers, setProviders] = useState<AIProvider[]>([])
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('')
+
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
+  const [showMentionList, setShowMentionList] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   // Fetch query history from API
   const fetchQueryHistory = async () => {
@@ -120,16 +135,35 @@ export function QueryInterface({ query, setQuery, isProcessing, onSubmit }: Quer
       const res = await fetch('/api/settings')
       if (res.ok) {
         const data = await res.json()
-        const active = data.find((p: any) => p.isActive && p.apiKey)
+        // Map providers; allow selection of any configured or local provider
+        const mapped: AIProvider[] = data.map((p: any) => {
+          const raw = (p.provider || '').toString()
+          const lower = raw.toLowerCase()
+          const type = lower === 'openrouter' ? 'open-router' : (lower as any)
+          return {
+            id: p.id,
+            name: `${p.provider} (${p.model || ''})`,
+            type,
+            model: p.model || '',
+            isActive: !!p.isActive,
+            // Only consider configured if API key is present (no masked bullets)
+            isConfigured: !!p.apiKey && typeof p.apiKey === 'string' && p.apiKey.length > 0 && !p.apiKey.includes('•')
+          }
+        })
+        // Only show configured providers in the dropdown
+        const configuredProviders = mapped.filter(p => p.isConfigured)
+        setProviders(configuredProviders)
+        const active = configuredProviders.find((p: any) => p.isActive)
         if (active) {
           setCurrentProvider({
             id: active.id,
-            name: `${active.provider} (${active.model})`,
-            type: (active.provider || '').toString().toLowerCase() as any,
+            name: active.name,
+            type: active.type,
             model: active.model,
             isActive: true,
             isConfigured: true
           })
+          setSelectedProviderId(active.id)
           return
         }
       }
@@ -151,7 +185,7 @@ export function QueryInterface({ query, setQuery, isProcessing, onSubmit }: Quer
 
   const handleSubmit = () => {
     if (query.trim()) {
-      onSubmit()
+      onSubmit({ query, documentIds: selectedDocumentIds, provider: selectedProviderId || undefined })
       // Refresh history after submission
       setTimeout(() => fetchQueryHistory(), 1000)
     }
@@ -172,8 +206,83 @@ export function QueryInterface({ query, setQuery, isProcessing, onSubmit }: Quer
       case 'lm-studio': return <Server className="w-4 h-4 text-green-500" />
       case 'ollama': return <Cpu className="w-4 h-4 text-purple-500" />
       case 'open-router': return <Cloud className="w-4 h-4 text-indigo-500" />
+      case 'openai': return <Brain className="w-4 h-4 text-emerald-500" />
+      case 'anthropic': return <Shield className="w-4 h-4 text-yellow-600" />
       default: return <Brain className="w-4 h-4 text-gray-500" />
     }
+  }
+
+  // Mention helpers
+  const completedDocuments = useMemo(() => (documents || []).filter(d => d.status ? d.status === 'COMPLETED' : true), [documents])
+  const filteredMentionDocs = useMemo(() => {
+    const q = mentionQuery.trim().toLowerCase()
+    if (!q) return completedDocuments.slice(0, 8)
+    return completedDocuments.filter(d => d.name.toLowerCase().includes(q)).slice(0, 8)
+  }, [mentionQuery, completedDocuments])
+
+  const insertAtCursor = (text: string) => {
+    const el = textareaRef.current
+    if (!el) return
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const newValue = query.substring(0, start) + text + query.substring(end)
+    setQuery(newValue)
+    // Move cursor to just after inserted text
+    const newPos = start + text.length
+    requestAnimationFrame(() => {
+      el.selectionStart = el.selectionEnd = newPos
+      el.focus()
+    })
+  }
+
+  const onTextareaChange = (value: string) => {
+    setQuery(value)
+    // Detect mention trigger '@'
+    const el = textareaRef.current
+    const caret = el ? el.selectionStart : value.length
+    const before = value.slice(0, caret)
+    const lastAt = before.lastIndexOf('@')
+    if (lastAt >= 0) {
+      const afterAt = before.slice(lastAt + 1)
+      // Stop mention if whitespace or newline before caret without any text
+      if (/^[^\s@]{0,64}$/.test(afterAt)) {
+        setShowMentionList(true)
+        setMentionQuery(afterAt)
+        return
+      }
+    }
+    setShowMentionList(false)
+    setMentionQuery('')
+  }
+
+  const handleSelectMention = (doc: { id: string; name: string }) => {
+    // Replace the current '@query' with '@DocName'
+    const el = textareaRef.current
+    if (!el) return
+    const caret = el.selectionStart
+    const before = query.slice(0, caret)
+    const lastAt = before.lastIndexOf('@')
+    if (lastAt >= 0) {
+      const beforeAt = query.slice(0, lastAt)
+      const afterCaret = query.slice(caret)
+      const insertText = `@${doc.name} `
+      setQuery(beforeAt + insertText + afterCaret)
+      setSelectedDocumentIds(prev => Array.from(new Set([...prev, doc.id])))
+      requestAnimationFrame(() => {
+        const pos = (beforeAt + insertText).length
+        el.selectionStart = el.selectionEnd = pos
+        el.focus()
+      })
+    } else {
+      insertAtCursor(`@${doc.name} `)
+      setSelectedDocumentIds(prev => Array.from(new Set([...prev, doc.id])))
+    }
+    setShowMentionList(false)
+    setMentionQuery('')
+  }
+
+  const removeSelectedDoc = (docId: string) => {
+    setSelectedDocumentIds(prev => prev.filter(id => id !== docId))
   }
 
   return (
@@ -194,8 +303,9 @@ export function QueryInterface({ query, setQuery, isProcessing, onSubmit }: Quer
           <CardContent className="space-y-4">
             <div className="relative">
               <Textarea
+                ref={textareaRef}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => onTextareaChange(e.target.value)}
                 placeholder="Ask anything about your documents... 
                 Examples: 'What are the common reasons for claim denials?', 
                 'Find all contracts with specific termination clauses', 
@@ -207,6 +317,29 @@ export function QueryInterface({ query, setQuery, isProcessing, onSubmit }: Quer
                   }
                 }}
               />
+              {showMentionList && (
+                <div className="absolute left-3 top-3 mt-6 w-[calc(100%-3rem)] z-10">
+                  <Card className="shadow-lg border">
+                    <CardContent className="p-2">
+                      <div className="max-h-60 overflow-auto">
+                        {filteredMentionDocs.length === 0 ? (
+                          <div className="text-sm text-gray-500 p-2">No matching documents</div>
+                        ) : (
+                          filteredMentionDocs.map(doc => (
+                            <button
+                              key={doc.id}
+                              className="w-full text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                              onMouseDown={(e) => { e.preventDefault(); handleSelectMention(doc) }}
+                            >
+                              {doc.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
               <Button
                 size="sm"
                 className="absolute bottom-3 right-3"
@@ -220,12 +353,47 @@ export function QueryInterface({ query, setQuery, isProcessing, onSubmit }: Quer
                 )}
               </Button>
             </div>
+            {/* Selected documents chips */}
+            {selectedDocumentIds.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedDocumentIds.map(id => {
+                  const doc = completedDocuments.find(d => d.id === id)
+                  if (!doc) return null
+                  return (
+                    <Badge key={id} variant="secondary" className="flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      {doc.name}
+                      <button className="ml-1" onClick={() => removeSelectedDoc(id)} aria-label={`Remove ${doc.name}`}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  )
+                })}
+              </div>
+            )}
             <div className="flex items-center justify-between text-sm text-gray-500">
               <p>Press Ctrl/Cmd + Enter to submit</p>
-              <Badge variant="outline" className="gap-1">
-                <Brain className="w-3 h-3" />
-                AI Powered
-              </Badge>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs">Model:</span>
+                  <Select value={selectedProviderId} onValueChange={setSelectedProviderId}>
+                    <SelectTrigger className="h-8 w-[220px]">
+                      <SelectValue placeholder={currentProvider ? currentProvider.name : 'Select AI model'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {providers.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Badge variant="outline" className="gap-1">
+                  <Brain className="w-3 h-3" />
+                  AI Powered
+                </Badge>
+              </div>
             </div>
           </CardContent>
         </Card>

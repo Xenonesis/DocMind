@@ -38,7 +38,7 @@ import { encryptApiKey, decryptApiKey, isValidApiKey, maskApiKey } from '@/lib/c
 interface AIProvider {
   id: string
   name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'custom'
+  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom'
   baseUrl: string
   apiKey: string
   model: string
@@ -61,14 +61,25 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     type: 'google',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     apiKey: '',
-    model: 'gemini-pro',
+    model: 'gemini-2.5-flash',
     isActive: true,
     isConfigured: false,
-    models: ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+    models: [
+      // Gemini 2.5 family (text output)
+      'gemini-2.5-pro',
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      // Gemini 2.0 family (text output)
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      // Gemini 1.5 stable family (text output)
+      'gemini-1.5-pro',
+      'gemini-1.5-flash'
+    ],
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
-    description: 'Google\'s Gemini AI models for text generation and multimodal tasks.',
+    description: 'Google\'s Gemini 2.5/2.0/1.5 models for reasoning and multimodal understanding.',
     iconType: 'brain'
   },
   {
@@ -85,6 +96,36 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     topP: 0.9,
     description: 'Mistral\'s high-performance language models.',
     iconType: 'zap'
+  },
+  {
+    name: 'OpenAI',
+    type: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'gpt-4o-mini',
+    isActive: false,
+    isConfigured: false,
+    models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1'],
+    maxTokens: 8192,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'OpenAI\'s GPT models for chat and reasoning.',
+    iconType: 'brain'
+  },
+  {
+    name: 'Anthropic Claude',
+    type: 'anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    apiKey: '',
+    model: 'claude-3-5-sonnet-latest',
+    isActive: false,
+    isConfigured: false,
+    models: ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest'],
+    maxTokens: 8192,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'Anthropic\'s Claude 3 family of models.',
+    iconType: 'shield'
   },
   {
     name: 'LM Studio',
@@ -149,18 +190,20 @@ export function AiApiSettings() {
         if (res.ok) {
           const data = await res.json()
           // Map backend records to UI provider model
-          const mapped: AIProvider[] = data.map((s: any, index: number) => {
+          let mapped: AIProvider[] = data.map((s: any, index: number) => {
             const mappedType = (() => {
               const raw = (s.provider || 'custom').toString().toUpperCase()
               if (raw === 'OPENROUTER') return 'open-router'
-              return raw.toLowerCase()
+              if (raw === 'GOOGLE_AI') return 'google'
+              if (raw === 'LM_STUDIO') return 'lm-studio'
+              return raw.toLowerCase().replace(/_/g, '-')
             })()
             const defaults = defaultProviders.find(d => d.type === mappedType)
             return {
               id: s.id || `provider-${index}`,
               name: `${s.provider} (${s.model || ''})`,
               type: mappedType as AIProvider['type'],
-              baseUrl: s.baseUrl || '',
+              baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
               apiKey: (typeof s.apiKey === 'string' && s.apiKey.includes('•')) ? '' : (s.apiKey || ''),
               model: s.model || (defaults?.models?.[0] ?? ''),
               isActive: !!s.isActive,
@@ -176,6 +219,19 @@ export function AiApiSettings() {
               iconType: defaults?.iconType || 'brain'
             }
           })
+
+          if (mapped.length === 0) {
+            setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
+            return
+          }
+
+          // Merge in any missing default providers so all options are visible
+          const existingTypes = new Set(mapped.map(m => m.type))
+          const missingDefaults = defaultProviders
+            .filter(d => !existingTypes.has(d.type))
+            .map((d, idx) => ({ ...d, id: `provider-missing-${idx}` }))
+          mapped = [...mapped, ...missingDefaults]
+
           setProviders(mapped)
           return
         }
@@ -190,7 +246,18 @@ export function AiApiSettings() {
     setProviders(newProviders)
     // Persist ALL providers to backend directly
     const payload = newProviders.map(p => ({
-      provider: p.type === 'open-router' ? 'OPENROUTER' : p.type.toUpperCase().replace('-', '_'),
+      provider: (() => {
+        switch (p.type) {
+          case 'open-router': return 'OPENROUTER'
+          case 'lm-studio': return 'LM_STUDIO'
+          case 'google': return 'GOOGLE_AI'
+          case 'mistral': return 'MISTRAL'
+          case 'ollama': return 'OLLAMA'
+          case 'openai': return 'OPENAI'
+          case 'anthropic': return 'ANTHROPIC'
+          default: return 'CUSTOM'
+        }
+      })(),
       apiKey: p.apiKey ? p.apiKey : undefined,
       baseUrl: p.baseUrl,
       model: p.model,
@@ -267,6 +334,8 @@ export function AiApiSettings() {
     if (showApiKeys[provider.id]) {
       return provider.apiKey
     }
+    // Do not render placeholder bullets when empty
+    if (!provider.apiKey) return ''
     return maskApiKey(provider.apiKey)
   }
 
