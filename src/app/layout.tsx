@@ -3,20 +3,20 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "DocuMind AI - Intelligent Document Processing",
+  title: "DocMind - Intelligent Document Processing",
   description: "AI-powered document processing system with semantic search and natural language queries.",
   keywords: ["AI", "Document Processing", "Semantic Search", "Next.js", "TypeScript"],
-  authors: [{ name: "DocuMind AI Team" }],
+  authors: [{ name: "DocMind Team" }],
   openGraph: {
-    title: "DocuMind AI",
+    title: "DocMind",
     description: "Intelligent document processing with semantic understanding",
     url: "https://localhost:3000",
-    siteName: "DocuMind AI",
+    siteName: "DocMind",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DocuMind AI",
+    title: "DocMind",
     description: "Intelligent document processing with semantic understanding",
   },
 };

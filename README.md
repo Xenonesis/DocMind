@@ -1,68 +1,63 @@
-# 🚀 Welcome to Z.ai Code Scaffold
+# 🧠 DocMind - Intelligent Document Processing Platform
 
-A modern, production-ready web application scaffold powered by cutting-edge technologies, designed to accelerate your development with [Z.ai](https://chat.z.ai)'s AI-powered coding assistance.
+Transform how you interact with documents through AI-powered semantic search, natural language queries, and intelligent analysis. DocMind makes your documents searchable, queryable, and actionable.
 
-## ✨ Technology Stack
+![DocMind Dashboard](https://via.placeholder.com/800x400/1e293b/ffffff?text=DocMind+Dashboard)
 
-This scaffold provides a robust foundation built with:
+## ✨ Key Features
 
-### 🎯 Core Framework
-- **⚡ Next.js 15** - The React framework for production with App Router
-- **📘 TypeScript 5** - Type-safe JavaScript for better developer experience
-- **🎨 Tailwind CSS 4** - Utility-first CSS framework for rapid UI development
+### 📄 Smart Document Processing
+- **Multi-format Support** - PDF, DOCX, TXT, and more
+- **Intelligent Extraction** - Automatic text extraction and preprocessing
+- **Real-time Processing** - Live status updates with WebSocket integration
+- **Batch Upload** - Process multiple documents simultaneously
 
-### 🧩 UI Components & Styling
-- **🧩 shadcn/ui** - High-quality, accessible components built on Radix UI
-- **🎯 Lucide React** - Beautiful & consistent icon library
-- **🌈 Framer Motion** - Production-ready motion library for React
-- **🎨 Next Themes** - Perfect dark mode in 2 lines of code
+### 🔍 Advanced Search & Query
+- **Semantic Search** - Find documents by meaning, not just keywords
+- **Natural Language Queries** - Ask questions in plain English
+- **Context-Aware Results** - Get relevant excerpts with highlighted matches
+- **Query History** - Track and revisit previous searches
 
-### 📋 Forms & Validation
-- **🎣 React Hook Form** - Performant forms with easy validation
-- **✅ Zod** - TypeScript-first schema validation
+### 🤖 AI-Powered Analysis
+- **Document Summarization** - Generate concise summaries automatically
+- **Key Information Extraction** - Identify important entities and concepts
+- **Content Classification** - Automatic categorization and tagging
+- **Similarity Detection** - Find related documents and content
 
-### 🔄 State Management & Data Fetching
-- **🐻 Zustand** - Simple, scalable state management
-- **🔄 TanStack Query** - Powerful data synchronization for React
-- **🌐 Axios** - Promise-based HTTP client
-
-### 🗄️ Database & Backend
-- **🗄️ Prisma** - Next-generation Node.js and TypeScript ORM
-- **🔐 NextAuth.js** - Complete open-source authentication solution
-
-### 🎨 Advanced UI Features
-- **📊 TanStack Table** - Headless UI for building tables and datagrids
-- **🖱️ DND Kit** - Modern drag and drop toolkit for React
-- **📊 Recharts** - Redefined chart library built with React and D3
-- **🖼️ Sharp** - High performance image processing
-
-### 🌍 Internationalization & Utilities
-- **🌍 Next Intl** - Internationalization library for Next.js
-- **📅 Date-fns** - Modern JavaScript date utility library
-- **🪝 ReactUse** - Collection of essential React hooks for modern development
-
-## 🎯 Why This Scaffold?
-
-- **🏎️ Fast Development** - Pre-configured tooling and best practices
-- **🎨 Beautiful UI** - Complete shadcn/ui component library with advanced interactions
-- **🔒 Type Safety** - Full TypeScript configuration with Zod validation
-- **📱 Responsive** - Mobile-first design principles with smooth animations
-- **🗄️ Database Ready** - Prisma ORM configured for rapid backend development
-- **🔐 Auth Included** - NextAuth.js for secure authentication flows
-- **📊 Data Visualization** - Charts, tables, and drag-and-drop functionality
-- **🌍 i18n Ready** - Multi-language support with Next Intl
-- **🚀 Production Ready** - Optimized build and deployment settings
-- **🤖 AI-Friendly** - Structured codebase perfect for AI assistance
+### 📊 Analytics & Insights
+- **Usage Statistics** - Track document processing and query patterns
+- **Performance Metrics** - Monitor system efficiency and response times
+- **Content Analytics** - Understand your document collection better
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- Node.js 18+ and npm
+- Modern web browser with JavaScript enabled
+
+### Installation
+
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd docmind
+
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
 # Start development server
 npm run dev
+```
 
+Open [http://localhost:3000](http://localhost:3000) to access DocMind.
+
+### Production Deployment
+
+```bash
 # Build for production
 npm run build
 
@@ -70,72 +65,175 @@ npm run build
 npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see your application running.
+## 🏗️ Technology Stack
 
-## 🤖 Powered by Z.ai
+### Frontend
+- **⚡ Next.js 15** - React framework with App Router
+- **📘 TypeScript** - Type-safe development
+- **🎨 Tailwind CSS 4** - Modern utility-first styling
+- **🧩 shadcn/ui** - High-quality component library
+- **🌈 Framer Motion** - Smooth animations and transitions
 
-This scaffold is optimized for use with [Z.ai](https://chat.z.ai) - your AI assistant for:
+### Backend & Data
+- **🔄 TanStack Query** - Powerful data fetching and caching
+- **🌐 Axios** - HTTP client for API communication
+- **📊 Socket.io** - Real-time WebSocket communication
+- **🖼️ Sharp** - High-performance image processing
 
-- **💻 Code Generation** - Generate components, pages, and features instantly
-- **🎨 UI Development** - Create beautiful interfaces with AI assistance  
-- **🔧 Bug Fixing** - Identify and resolve issues with intelligent suggestions
-- **📝 Documentation** - Auto-generate comprehensive documentation
-- **🚀 Optimization** - Performance improvements and best practices
+### Document Processing
+- **📄 Mammoth** - DOCX document processing
+- **📋 PDF-Parse** - PDF text extraction
+- **🔍 Custom parsers** - Support for various document formats
 
-Ready to build something amazing? Start chatting with Z.ai at [chat.z.ai](https://chat.z.ai) and experience the future of AI-powered development!
+### UI/UX
+- **🎯 Lucide React** - Beautiful icon library
+- **📱 Responsive Design** - Mobile-first approach
+- **🌙 Dark Mode** - Built-in theme switching
+- **♿ Accessibility** - WCAG compliant components
 
 ## 📁 Project Structure
 
 ```
-src/
-├── app/                 # Next.js App Router pages
-├── components/          # Reusable React components
-│   └── ui/             # shadcn/ui components
-├── hooks/              # Custom React hooks
-└── lib/                # Utility functions and configurations
+docmind/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/               # API routes
+│   │   ├── globals.css        # Global styles
+│   │   ├── layout.tsx         # Root layout
+│   │   └── page.tsx           # Home page
+│   ├── components/            # React components
+│   │   ├── ui/               # shadcn/ui components
+│   │   ├── document-upload.tsx
+│   │   ├── query-interface.tsx
+│   │   ├── document-list.tsx
+│   │   ├── analysis-results.tsx
+│   │   └── settings/         # Settings components
+│   ├── hooks/                # Custom React hooks
+│   │   └── use-socket.ts     # WebSocket hook
+│   └── lib/                  # Utilities and configurations
+│       ├── socket.ts         # Socket.io client
+│       └── utils.ts          # Helper functions
+├── public/                   # Static assets
+│   ├── uploads/             # Document uploads
+│   └── logo.svg             # Application logo
+├── server.ts                # Custom server with Socket.io
+└── package.json             # Dependencies and scripts
 ```
 
-## 🎨 Available Features & Components
+## 🎯 Core Components
 
-This scaffold includes a comprehensive set of modern web development tools:
+### Document Upload
+- Drag-and-drop interface
+- Progress tracking
+- File validation
+- Batch processing support
 
-### 🧩 UI Components (shadcn/ui)
-- **Layout**: Card, Separator, Aspect Ratio, Resizable Panels
-- **Forms**: Input, Textarea, Select, Checkbox, Radio Group, Switch
-- **Feedback**: Alert, Toast (Sonner), Progress, Skeleton
-- **Navigation**: Breadcrumb, Menubar, Navigation Menu, Pagination
-- **Overlay**: Dialog, Sheet, Popover, Tooltip, Hover Card
-- **Data Display**: Badge, Avatar, Calendar
+### Query Interface
+- Natural language input
+- Query suggestions
+- Real-time search
+- Result filtering
 
-### 📊 Advanced Data Features
-- **Tables**: Powerful data tables with sorting, filtering, pagination (TanStack Table)
-- **Charts**: Beautiful visualizations with Recharts
-- **Forms**: Type-safe forms with React Hook Form + Zod validation
+### Document Management
+- List view with metadata
+- Status indicators
+- Bulk operations
+- Search and filter
 
-### 🎨 Interactive Features
-- **Animations**: Smooth micro-interactions with Framer Motion
-- **Drag & Drop**: Modern drag-and-drop functionality with DND Kit
-- **Theme Switching**: Built-in dark/light mode support
+### Analysis Results
+- Highlighted excerpts
+- Relevance scoring
+- Export capabilities
+- Visual analytics
 
-### 🔐 Backend Integration
-- **Authentication**: Ready-to-use auth flows with NextAuth.js
-- **Database**: Type-safe database operations with Prisma
-- **API Client**: HTTP requests with Axios + TanStack Query
-- **State Management**: Simple and scalable with Zustand
+### Settings Panel
+- AI API configuration
+- Processing preferences
+- User customization
+- System monitoring
 
-### 🌍 Production Features
-- **Internationalization**: Multi-language support with Next Intl
-- **Image Optimization**: Automatic image processing with Sharp
-- **Type Safety**: End-to-end TypeScript with Zod validation
-- **Essential Hooks**: 100+ useful React hooks with ReactUse for common patterns
+## 🔧 Configuration
 
-## 🤝 Get Started with Z.ai
+### Environment Variables
 
-1. **Clone this scaffold** to jumpstart your project
-2. **Visit [chat.z.ai](https://chat.z.ai)** to access your AI coding assistant
-3. **Start building** with intelligent code generation and assistance
-4. **Deploy with confidence** using the production-ready setup
+```bash
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:3000
+OPENAI_API_KEY=your_openai_key_here
+
+# Upload Configuration
+MAX_FILE_SIZE=10485760  # 10MB
+ALLOWED_FILE_TYPES=pdf,docx,txt
+
+# Processing Configuration
+BATCH_SIZE=5
+PROCESSING_TIMEOUT=30000
+```
+
+### AI API Settings
+Configure your preferred AI service through the settings panel:
+- OpenAI GPT models
+- Custom API endpoints
+- Processing parameters
+- Rate limiting
+
+## 📊 Usage Examples
+
+### Basic Document Upload
+1. Navigate to the Upload tab
+2. Drag files or click to select
+3. Monitor processing status
+4. View processed documents in Documents tab
+
+### Semantic Search
+1. Go to Query tab
+2. Enter natural language question: "What are the main findings about climate change?"
+3. Review results with highlighted excerpts
+4. Export or save relevant findings
+
+### Document Analysis
+1. Select processed documents
+2. Run analysis queries
+3. View generated summaries
+4. Export insights and reports
+
+## 🚀 Performance Features
+
+- **Lazy Loading** - Components load on demand
+- **Caching** - Intelligent query and result caching
+- **Streaming** - Real-time processing updates
+- **Optimization** - Automatic image and asset optimization
+- **Progressive Enhancement** - Works without JavaScript
+
+## 🔒 Security & Privacy
+
+- **File Validation** - Strict file type and size checking
+- **Secure Upload** - Protected file handling
+- **Data Isolation** - User data separation
+- **API Security** - Rate limiting and authentication
+- **Privacy First** - No data tracking or analytics
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation** - Check our [Wiki](wiki) for detailed guides
+- **Issues** - Report bugs or request features via [GitHub Issues](issues)
+- **Discussions** - Join our [Community Discussions](discussions)
 
 ---
 
-Built with ❤️ for the developer community. Supercharged by [Z.ai](https://chat.z.ai) 🚀
+**DocMind** - Making documents intelligent, searchable, and actionable. Built with modern web technologies for the future of document processing.

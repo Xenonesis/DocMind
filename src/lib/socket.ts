@@ -117,7 +117,7 @@ export const setupSocket = (io: Server) => {
 
     // Send welcome message
     socket.emit('message', {
-      text: 'Welcome to DocuMind AI Real-time Updates!',
+      text: 'Welcome to DocMind Real-time Updates!',
       senderId: 'system',
       timestamp: new Date().toISOString(),
     });
