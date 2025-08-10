@@ -113,7 +113,8 @@ export function DocumentList({ documents }: DocumentListProps) {
 
   const handleDownload = async (document: Document) => {
     try {
-      const response = await fetch(`/api/documents/${document.id}/download`)
+      const { authenticatedFetch } = await import('@/lib/api-client')
+      const response = await authenticatedFetch(`/api/documents/${document.id}/download`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)

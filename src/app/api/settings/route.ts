@@ -1,25 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { aiProviderService, userService, AiProvider } from '@/lib/db'
+import { supabaseServer } from '@/lib/supabase'
+import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 
 export async function GET(request: NextRequest) {
   try {
-    const defaultUser = await getOrCreateDefaultUser()
+    // Get authenticated user
+    const user = await getAuthenticatedUser(request)
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-    const settings = await aiProviderService.getAll()
+    if (!supabaseServer) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
 
-    // Filter by userId (since Firebase doesn't have built-in where clause in getAll)
-    const userSettings = settings.filter(setting => setting.userId === defaultUser.id)
+    // Ensure user profile exists
+    await ensureUserProfile(user)
 
-    const formattedSettings = userSettings.map(setting => ({
+    // Get user's AI provider settings
+    const { data: settings, error } = await supabaseServer
+      .from('ai_provider_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching settings:', error)
+      return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
+    }
+
+    const formattedSettings = (settings || []).map(setting => ({
       id: setting.id,
-      provider: setting.provider,
-      apiKey: setting.apiKey ? '•'.repeat(32) : '', // Masked API key
-      baseUrl: setting.baseUrl,
-      model: setting.model,
-      isActive: setting.isActive,
-      config: setting.config ? JSON.parse(setting.config) : {},
-      createdAt: setting.createdAt,
-      updatedAt: setting.updatedAt
+      provider: setting.provider_name,
+      apiKey: setting.api_key ? '•'.repeat(32) : '', // Masked API key
+      model: setting.model_name,
+      isActive: setting.is_active,
+      createdAt: setting.created_at,
+      updatedAt: setting.updated_at
     }))
 
     return NextResponse.json(formattedSettings)
@@ -34,61 +52,83 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const defaultUser = await getOrCreateDefaultUser()
+    // Get authenticated user
+    const user = await getAuthenticatedUser(request)
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    if (!supabaseServer) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    // Ensure user profile exists
+    await ensureUserProfile(user)
 
     // Helper to upsert a single provider setting
     const upsertOne = async (item: any) => {
-      const { provider, apiKey, baseUrl, model, config = {}, isActive = false } = item || {}
+      const { provider, apiKey, model, isActive = false } = item || {}
 
       if (!provider) {
         throw new Error('Provider is required')
       }
 
-      const existingSettings = await aiProviderService.getWhere('userId', '==', defaultUser.id)
-      const existingSetting = existingSettings.find(s => s.provider === provider)
+      // Check if setting already exists
+      const { data: existingSetting } = await supabaseServer
+        .from('ai_provider_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('provider_name', provider)
+        .single()
 
-      let settingId: string
-      let setting
-
+      let result
       if (existingSetting) {
-        await aiProviderService.update(existingSetting.id, {
-          apiKey: apiKey ?? existingSetting.apiKey,
-          baseUrl: baseUrl ?? existingSetting.baseUrl,
-          model: model ?? existingSetting.model,
-          isActive,
-          config: JSON.stringify(config)
-        })
-        settingId = existingSetting.id
-        setting = await aiProviderService.getById(settingId)
-      } else {
-        settingId = await aiProviderService.create({
-          userId: defaultUser.id,
-          provider: provider as AiProvider,
-          apiKey: apiKey || '',
-          baseUrl: baseUrl || '',
-          model: model || '',
-          isActive,
-          config: JSON.stringify(config),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        setting = await aiProviderService.getById(settingId)
-      }
+        // Update existing setting
+        const { data: updatedSetting, error: updateError } = await supabaseServer
+          .from('ai_provider_settings')
+          .update({
+            api_key: apiKey ?? existingSetting.api_key,
+            model_name: model ?? existingSetting.model_name,
+            is_active: isActive,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingSetting.id)
+          .select()
+          .single()
 
-      if (!setting) {
-        throw new Error('Failed to retrieve setting after creation/update')
+        if (updateError) {
+          throw updateError
+        }
+        result = updatedSetting
+      } else {
+        // Create new setting
+        const { data: newSetting, error: createError } = await supabaseServer
+          .from('ai_provider_settings')
+          .insert({
+            user_id: user.id,
+            provider_name: provider,
+            api_key: apiKey || '',
+            model_name: model || '',
+            is_active: isActive
+          })
+          .select()
+          .single()
+
+        if (createError) {
+          throw createError
+        }
+        result = newSetting
       }
 
       return {
-        id: setting.id,
-        provider: setting.provider,
+        id: result.id,
+        provider: result.provider_name,
         apiKey: '•'.repeat(32),
-        baseUrl: setting.baseUrl,
-        model: setting.model,
-        isActive: setting.isActive,
-        config: setting.config ? JSON.parse(setting.config) : {},
-        createdAt: setting.createdAt,
-        updatedAt: setting.updatedAt
+        model: result.model_name,
+        isActive: result.is_active,
+        createdAt: result.created_at,
+        updatedAt: result.updated_at
       }
     }
 
@@ -112,19 +152,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function getOrCreateDefaultUser() {
-  const users = await userService.getAll()
-  let user = users.length > 0 ? users[0] : null
-  
-  if (!user) {
-    const userId = await userService.create({
-      email: 'default@example.com',
-      name: 'Default User',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })
-    user = await userService.getById(userId)
-  }
-  
-  return user!
-}

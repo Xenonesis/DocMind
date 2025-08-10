@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { documentService, analysisService, queryService } from '@/lib/db'
+import { supabaseServer } from '@/lib/supabase'
+import { getAuthenticatedUser } from '@/lib/auth-server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,19 +9,30 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
     const search = searchParams.get('search')
 
-    // Get all documents first - handle permission errors gracefully
-    let documents: any[] = []
-    try {
-      documents = await documentService.getAll()
-    } catch (dbError: any) {
-      console.error('Database error fetching documents:', dbError)
-      // Return empty array if permission denied or other database errors
-      if (dbError.code === 'permission-denied' || dbError.code === '22007' || dbError.code === '22P05') {
-        console.warn('Database access issue, returning empty documents array:', dbError.message)
-        return NextResponse.json([]);
-      }
-      throw dbError;
+    // Get authenticated user
+    const user = await getAuthenticatedUser(request)
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
+
+    if (!supabaseServer) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    // Get user's documents from Supabase (without the problematic joins for now)
+    let { data: documents, error } = await supabaseServer
+      .from('documents')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching documents:', error)
+      return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
+    }
+
+    documents = documents || []
 
     // Apply filters
     if (status && status !== 'all') {
@@ -39,46 +51,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get related analyses and queries for each document
+    // Get counts separately for each document
     const formattedDocuments = await Promise.all(
       documents.map(async (doc) => {
-        let analyses: any[] = []
-        let queries: any[] = []
-        
-        try {
-          analyses = await analysisService.getWhere('documentId', '==', doc.id)
-        } catch (e) {
-          console.warn('Failed to fetch analyses for document', doc.id, e)
-        }
-        
-        try {
-          queries = await queryService.getWhere('documentIds', 'array-contains', doc.id)
-        } catch (e) {
-          console.warn('Failed to fetch queries for document', doc.id, e)
-          // Fallback: get all queries and filter manually
-          try {
-            const allQueries: any[] = await queryService.getAll()
-            queries = allQueries.filter(q => {
-              try {
-                const docIds = typeof q.documentIds === 'string' ? JSON.parse(q.documentIds) : q.documentIds
-                return Array.isArray(docIds) && docIds.includes(doc.id)
-              } catch {
-                return false
-              }
-            })
-          } catch (e2) {
-            console.warn('Failed to fetch queries with fallback', e2)
-          }
-        }
+        // Get analysis count for this document
+        const { count: analysisCount } = await supabaseServer
+          .from('analyses')
+          .select('*', { count: 'exact', head: true })
+          .eq('document_id', doc.id)
+          .eq('user_id', user.id)
 
-        // Sort and limit analyses and queries
-        const sortedAnalyses = analyses
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .slice(0, 3)
-        
-        const sortedQueries = queries
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .slice(0, 3)
+        // Get query count for this document (queries that reference this document)
+        const { data: queries } = await supabaseServer
+          .from('queries')
+          .select('document_ids')
+          .eq('user_id', user.id)
+
+        const queryCount = queries?.filter(query => {
+          try {
+            const docIds = JSON.parse(query.document_ids || '[]')
+            return Array.isArray(docIds) && docIds.includes(doc.id)
+          } catch {
+            return false
+          }
+        }).length || 0
 
         return {
           id: doc.id,
@@ -86,18 +82,12 @@ export async function GET(request: NextRequest) {
           type: doc.type,
           size: doc.size,
           status: doc.status,
-          uploadDate: doc.uploadDate,
-          processedAt: doc.processedAt,
+          uploadDate: doc.upload_date,
+          processedAt: doc.processed_at,
           category: doc.category,
-          tags: Array.isArray((doc as any).tags)
-            ? (doc as any).tags
-            : (typeof (doc as any).tags === 'string'
-              ? JSON.parse((doc as any).tags as unknown as string)
-              : []),
-          analysisCount: analyses.length,
-          queryCount: queries.length,
-          latestAnalyses: sortedAnalyses,
-          latestQueries: sortedQueries
+          tags: doc.tags ? (typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags) : [],
+          analysisCount: analysisCount || 0,
+          queryCount: queryCount || 0
         }
       })
     )

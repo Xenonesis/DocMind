@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { analysisService, documentService } from '@/lib/db'
+import { supabaseServer } from '@/lib/supabase'
+import { getAuthenticatedUser } from '@/lib/auth-server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,55 +9,72 @@ export async function GET(request: NextRequest) {
     const documentId = searchParams.get('documentId')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // Get analyses with Firebase
-    let analyses: any[] = await analysisService.getAll()
-    analyses = analyses.slice(0, limit)
+    // Get authenticated user
+    const user = await getAuthenticatedUser(request)
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    if (!supabaseServer) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    // Build query for user's analyses
+    let query = supabaseServer
+      .from('analyses')
+      .select(`
+        *,
+        documents:document_id (
+          id,
+          name,
+          type,
+          status
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit)
 
     // Apply filters
     if (type && type !== 'all') {
-      analyses = analyses.filter(analysis => analysis.type === type)
+      query = query.eq('analysis_type', type)
     }
     
     if (documentId) {
-      analyses = analyses.filter(analysis => analysis.documentId === documentId)
+      query = query.eq('document_id', documentId)
     }
 
-    // Get document details for each analysis
-    const formattedAnalyses = await Promise.all(
-      analyses.map(async (analysis) => {
-        let document: any = null
-        try {
-          document = await documentService.getById(analysis.documentId)
-        } catch (error) {
-          console.warn(`Could not fetch document ${analysis.documentId}:`, error)
-        }
+    const { data: analyses, error } = await query
 
-        return {
-          id: analysis.id,
-          type: analysis.type,
-          title: analysis.title,
-          description: analysis.description,
-          confidence: analysis.confidence,
-          severity: analysis.severity,
-          timestamp: analysis.timestamp,
-          document: document ? {
-            id: document.id,
-            name: document.name,
-            type: document.type,
-            category: document.category
-          } : null,
-          documents: Array.isArray((analysis as any).documents)
-            ? (analysis as any).documents
-            : (typeof (analysis as any).documents === 'string'
-              ? JSON.parse((analysis as any).documents as unknown as string)
-              : []),
-          metadata: analysis.metadata ? JSON.parse(analysis.metadata) : {}
-        }
-      })
-    )
+    if (error) {
+      console.error('Error fetching analyses:', error)
+      return NextResponse.json({ error: 'Failed to fetch analyses' }, { status: 500 })
+    }
+
+    // Format analyses for response
+    const formattedAnalyses = (analyses || []).map(analysis => ({
+      id: analysis.id,
+      type: analysis.analysis_type,
+      title: analysis.result?.title || 'Analysis',
+      description: analysis.result?.description || 'No description available',
+      confidence: analysis.result?.confidence || 0,
+      severity: analysis.result?.severity || 'LOW',
+      aiProvider: analysis.ai_provider,
+      aiModel: analysis.ai_model,
+      tokensUsed: analysis.tokens_used,
+      processingTime: analysis.processing_time_ms,
+      createdAt: analysis.created_at,
+      document: analysis.documents ? {
+        id: analysis.documents.id,
+        name: analysis.documents.name,
+        type: analysis.documents.type,
+        status: analysis.documents.status
+      } : null
+    }))
 
     // Get summary statistics
-    const stats = await getAnalysisStats()
+    const stats = await getAnalysisStats(user.id)
 
     return NextResponse.json({
       analyses: formattedAnalyses,
@@ -69,35 +87,56 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function getAnalysisStats() {
+async function getAnalysisStats(userId: string) {
   try {
-    // Get all analyses for statistics
-    const allAnalyses = await analysisService.getAll()
+    if (!supabaseServer) {
+      return {
+        total: 0,
+        byType: {},
+        bySeverity: {},
+        averageConfidence: 0,
+        recentCount: 0
+      }
+    }
+
+    // Get all analyses for this user
+    const { data: allAnalyses, error } = await supabaseServer
+      .from('analyses')
+      .select('*')
+      .eq('user_id', userId)
+
+    if (error || !allAnalyses) {
+      throw error
+    }
     
     const totalAnalyses = allAnalyses.length
     
     // Calculate type statistics
     const byType: Record<string, number> = {}
     allAnalyses.forEach(analysis => {
-      byType[analysis.type] = (byType[analysis.type] || 0) + 1
+      const type = analysis.analysis_type || 'unknown'
+      byType[type] = (byType[type] || 0) + 1
     })
     
     // Calculate severity statistics
     const bySeverity: Record<string, number> = {}
     allAnalyses.forEach(analysis => {
-      if (analysis.severity) {
-        bySeverity[analysis.severity] = (bySeverity[analysis.severity] || 0) + 1
-      }
+      const severity = analysis.result?.severity || 'LOW'
+      bySeverity[severity] = (bySeverity[severity] || 0) + 1
     })
     
     // Calculate average confidence
-    const totalConfidence = allAnalyses.reduce((sum, analysis) => sum + analysis.confidence, 0)
-    const averageConfidence = totalAnalyses > 0 ? Math.round(totalConfidence / totalAnalyses) : 0
+    const confidenceValues = allAnalyses
+      .map(analysis => analysis.result?.confidence || 0)
+      .filter(confidence => confidence > 0)
+    const averageConfidence = confidenceValues.length > 0 
+      ? Math.round(confidenceValues.reduce((sum, conf) => sum + conf, 0) / confidenceValues.length)
+      : 0
     
     // Calculate recent analyses (last 7 days)
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     const recentCount = allAnalyses.filter(analysis => 
-      analysis.createdAt.getTime() >= sevenDaysAgo.getTime()
+      analysis.created_at >= sevenDaysAgo
     ).length
 
     return {

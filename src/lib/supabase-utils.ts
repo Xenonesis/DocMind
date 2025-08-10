@@ -216,4 +216,8 @@ export const getAnalysesByDocumentId = async (documentId: string): Promise<Analy
   return analysisService.getWhere('documentId', '==', documentId)
 }
 
+export const getDocumentsByUserId = async (userId: string): Promise<Document[]> => {
+  return documentService.getWhere('userId', '==', userId)
+}
+
 

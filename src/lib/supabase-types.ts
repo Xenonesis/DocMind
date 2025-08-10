@@ -34,6 +34,7 @@ export enum AiProvider {
 
 export interface Document {
   id: string
+  userId: string
   name: string
   type: string
   size: string

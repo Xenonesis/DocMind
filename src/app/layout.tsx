@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   description: "AI-powered document processing system with semantic search and natural language queries.",
   keywords: ["AI", "Document Processing", "Semantic Search", "Next.js", "TypeScript"],
   authors: [{ name: "DocMind Team" }],
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   openGraph: {
     title: "DocMind",
     description: "Intelligent document processing with semantic understanding",

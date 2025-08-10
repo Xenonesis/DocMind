@@ -39,13 +39,19 @@ export async function GET(
     let fileBuffer: Buffer | null = null
 
     // Construct possible local file paths
+    // Try new user-organized structure first
+    const userEmail = metadata.userEmail || 'anonymous@example.com'
+    const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9@.-]/g, '_')
+    const userOrganizedPath = path.join(process.cwd(), 'public', 'uploads', 'users', sanitizedEmail, 'documents', documentId, document.name)
+    
+    // Legacy paths for backward compatibility
     const expectedFilePath = path.join(process.cwd(), 'public', 'uploads', 'documents', documentId, document.name)
     const legacyPath = path.join(process.cwd(), 'public', 'uploads', document.name)
     const storageRefPath = (metadata && metadata.storageRef)
       ? path.join(process.cwd(), 'public', 'uploads', metadata.storageRef)
       : null
 
-    const possiblePaths = [expectedFilePath, legacyPath, storageRefPath].filter(Boolean) as string[]
+    const possiblePaths = [userOrganizedPath, expectedFilePath, legacyPath, storageRefPath].filter(Boolean) as string[]
 
     for (const p of possiblePaths) {
       if (fs.existsSync(p)) {
@@ -63,7 +69,7 @@ export async function GET(
       if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
         const imageUrl = (metadata && metadata.downloadURL)
           ? metadata.downloadURL
-          : `/uploads/documents/${documentId}/${document.name}`
+          : `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
         return NextResponse.json({
           content: imageUrl,
           contentType: 'image',
@@ -75,7 +81,7 @@ export async function GET(
       if (ext === '.pdf') {
         const pdfUrl = (metadata && metadata.downloadURL)
           ? metadata.downloadURL
-          : `/uploads/documents/${documentId}/${document.name}`
+          : `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
         return NextResponse.json({
           content: pdfUrl,
           contentType: 'pdf',
@@ -119,7 +125,7 @@ export async function GET(
           break
 
         case '.pdf':
-          const pdfUrl = `/uploads/documents/${documentId}/${document.name}`
+          const pdfUrl = `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
           let pages = 0
           try {
             if (fileBuffer) {
@@ -167,7 +173,7 @@ export async function GET(
         case '.gif':
         case '.webp':
           // Return the correct URL path for the image
-          const imageUrl = `/uploads/documents/${documentId}/${document.name}`
+          const imageUrl = `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
           
           previewContent = {
             content: imageUrl,

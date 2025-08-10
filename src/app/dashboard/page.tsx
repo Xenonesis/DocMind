@@ -68,13 +68,15 @@ export default function Dashboard() {
   // Fetch documents from API
   const fetchDocuments = async () => {
     try {
-      const response = await fetch('/api/documents')
-      if (response.ok) {
-        const data = await response.json()
-        setDocuments(data)
-      }
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const data = await authenticatedRequest<Document[]>('/api/documents')
+      setDocuments(data)
     } catch (error) {
       console.error('Error fetching documents:', error)
+      // If authentication fails, the auth context will handle redirecting
+      if (error instanceof Error && error.message.includes('authentication')) {
+        console.log('Authentication error, user will be redirected')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -107,16 +109,16 @@ export default function Dashboard() {
     if (!finalQuery.trim()) return
     setIsProcessing(true)
     try {
-      const response = await fetch('/api/query', {
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const result = await authenticatedRequest('/api/query', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: finalQuery,
           documentIds: payload?.documentIds ?? selectedDocumentIds,
           provider: payload?.provider ?? selectedProvider
         }),
       })
-      if (response.ok) {
+      if (result) {
         setActiveTab('results')
       }
     } catch (error) {

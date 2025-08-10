@@ -117,11 +117,9 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
   // Fetch query history from API
   const fetchQueryHistory = async () => {
     try {
-      const response = await fetch('/api/query?limit=10')
-      if (response.ok) {
-        const data = await response.json()
-        setQueryHistory(data || [])
-      }
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const data = await authenticatedRequest('/api/query?limit=10')
+      setQueryHistory(data || [])
     } catch (error) {
       console.error('Error fetching query history:', error)
     } finally {
@@ -132,41 +130,42 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
   // Fetch current AI provider from server
   const fetchCurrentProvider = async () => {
     try {
-      const res = await fetch('/api/settings')
-      if (res.ok) {
-        const data = await res.json()
-        // Map providers; allow selection of any configured or local provider
-        const mapped: AIProvider[] = data.map((p: any) => {
-          const raw = (p.provider || '').toString()
-          const lower = raw.toLowerCase()
-          const type = lower === 'openrouter' ? 'open-router' : (lower as any)
-          return {
-            id: p.id,
-            name: `${p.provider} (${p.model || ''})`,
-            type,
-            model: p.model || '',
-            isActive: !!p.isActive,
-            // Only consider configured if API key is present (no masked bullets)
-            isConfigured: !!p.apiKey && typeof p.apiKey === 'string' && p.apiKey.length > 0 && !p.apiKey.includes('•')
-          }
-        })
-        // Only show configured providers in the dropdown
-        const configuredProviders = mapped.filter(p => p.isConfigured)
-        setProviders(configuredProviders)
-        const active = configuredProviders.find((p: any) => p.isActive)
-        if (active) {
-          setCurrentProvider({
-            id: active.id,
-            name: active.name,
-            type: active.type,
-            model: active.model,
-            isActive: true,
-            isConfigured: true
-          })
-          setSelectedProviderId(active.id)
-          return
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const data = await authenticatedRequest('/api/settings')
+      
+      // Map providers; allow selection of any configured or local provider
+      const mapped: AIProvider[] = data.map((p: any) => {
+        const raw = (p.provider || '').toString()
+        const lower = raw.toLowerCase()
+        const type = lower === 'openrouter' ? 'open-router' : (lower as any)
+        return {
+          id: p.id,
+          name: `${p.provider} (${p.model || ''})`,
+          type,
+          model: p.model || '',
+          isActive: !!p.isActive,
+          // Only consider configured if API key is present (no masked bullets)
+          isConfigured: !!p.apiKey && typeof p.apiKey === 'string' && p.apiKey.length > 0 && !p.apiKey.includes('•')
         }
+      })
+      
+      // Only show configured providers in the dropdown
+      const configuredProviders = mapped.filter(p => p.isConfigured)
+      setProviders(configuredProviders)
+      const active = configuredProviders.find((p: any) => p.isActive)
+      if (active) {
+        setCurrentProvider({
+          id: active.id,
+          name: active.name,
+          type: active.type,
+          model: active.model,
+          isActive: true,
+          isConfigured: true
+        })
+        setSelectedProviderId(active.id)
+        return
       }
+      
       setCurrentProvider(null)
     } catch (error) {
       console.error('Error fetching current provider:', error)

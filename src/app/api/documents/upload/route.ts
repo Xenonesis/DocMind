@@ -1,230 +1,177 @@
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
-import { documentService, analysisService, DocumentStatus, AnalysisType, Severity } from '@/lib/db'
-import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase'
-import { mkdirSync, writeFileSync } from 'fs'
-import { join, dirname } from 'path'
-import { emitDocumentUpdate, emitProgressUpdate, emitSystemNotification } from '@/lib/socket'
+import { supabaseServer } from '@/lib/supabase'
+import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
+
 import * as mammoth from 'mammoth'
 
-// Get socket.io server instance from global
-const getSocketIO = () => {
-  return (global as any).io || null
-}
-
 export async function POST(request: NextRequest) {
+  console.log('Upload API called')
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
     
     if (!file) {
+      console.log('No file provided in request')
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    const doLocalSaveAndRespond = async () => {
-      const fileBuffer = await file.arrayBuffer()
-      const fallbackId = `local-${Date.now()}`
-      const fileName = `documents/${fallbackId}/${file.name}`
-      const targetPath = join(process.cwd(), 'public', 'uploads', fileName)
-      mkdirSync(dirname(targetPath), { recursive: true })
-      writeFileSync(targetPath, Buffer.from(fileBuffer))
+    console.log(`Processing file: ${file.name}, size: ${file.size}, type: ${file.type}`)
 
-      const io = getSocketIO()
-      if (io) {
-        emitDocumentUpdate(io, {
-          documentId: fallbackId,
-          status: 'completed',
-          message: `Saved locally: ${file.name}`,
-          timestamp: new Date().toISOString()
-        })
-      }
-
-      return NextResponse.json({
-        id: fallbackId,
-        name: file.name,
-        type: file.type || 'unknown',
-        size: formatFileSize(file.size),
-        status: DocumentStatus.COMPLETED,
-        uploadDate: new Date(),
-        downloadURL: `/uploads/${fileName}`
-      })
+    // Get authenticated user
+    console.log('Getting authenticated user...')
+    const user = await getAuthenticatedUser(request)
+    
+    if (!user) {
+      console.log('Authentication failed - no user found')
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    // If Supabase isn't configured, do a local-only upload and return
-    if (!isSupabaseConfigured) {
-      return doLocalSaveAndRespond()
+    console.log(`Authenticated user: ${user.email} (${user.id})`)
+
+    if (!supabaseServer) {
+      console.log('Supabase server not configured')
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
+
+    console.log('Supabase server is configured')
+
+    // Ensure user profile exists
+    console.log('Ensuring user profile exists...')
+    try {
+      await ensureUserProfile(user)
+      console.log('User profile ensured successfully')
+    } catch (profileError) {
+      console.error('Error ensuring user profile:', profileError)
+      return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
+    }
+
+    // Sanitize email for file path (replace special characters)
+    const sanitizedEmail = user.email.replace(/[^a-zA-Z0-9@.-]/g, '_')
 
     // Ensure storage bucket exists (idempotent)
     try {
-      if (supabaseServer) {
-        await supabaseServer.storage.createBucket('documents', { public: true })
-      }
+      await supabaseServer.storage.createBucket('documents', { public: true })
     } catch (e: any) {
       // ignore if bucket already exists
     }
 
-    // Create document record in database - handle permission errors
-    let documentId;
-    try {
-      documentId = await documentService.create({
+    // Create document record in database
+    const { data: document, error: createError } = await supabaseServer
+      .from('documents')
+      .insert({
+        user_id: user.id,
         name: file.name,
         type: file.type || 'unknown',
         size: formatFileSize(file.size),
-        status: DocumentStatus.UPLOADING,
-        uploadDate: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        status: 'UPLOADING',
         metadata: JSON.stringify({
           originalName: file.name,
           mimeType: file.type,
-          lastModified: new Date(file.lastModified).toISOString()
+          lastModified: new Date(file.lastModified).toISOString(),
+          userEmail: user.email
         })
       })
-    } catch (dbError: any) {
-      console.warn('DB unavailable, saving upload locally. Reason:', dbError?.message || dbError)
-      return doLocalSaveAndRespond()
-    }
-    
-    let document;
-    try {
-      document = await documentService.getById(documentId)
-      if (!document) {
-        return NextResponse.json({ error: 'Failed to create document record' }, { status: 500 })
-      }
-    } catch (dbError: any) {
-      throw dbError;
+      .select()
+      .single()
+
+    if (createError || !document) {
+      console.error('Failed to create document record:', createError)
+      return NextResponse.json({ error: 'Failed to create document record' }, { status: 500 })
     }
 
-    // Emit socket update if socket.io is available
-    const io = getSocketIO()
-    if (io) {
-      emitDocumentUpdate(io, {
-        documentId: document.id,
-        status: 'uploading',
-        message: `Starting upload of ${file.name}`,
-        timestamp: new Date().toISOString()
-      })
-    }
+    console.log(`Created document record: ${document.id}`)
 
     // Read file contents once
     const fileBuffer = await file.arrayBuffer()
-    const fileName = `documents/${documentId}/${file.name}`
+    const fileName = `users/${sanitizedEmail}/documents/${document.id}/${file.name}`
     
     try {
       let downloadURL = ''
       let storageRef = ''
-      try {
-        if (!supabaseServer) throw new Error('Supabase not available on server')
-        console.log(`Attempting to upload to Supabase storage: ${fileName}`)
-        const { data, error } = await supabaseServer
-          .storage
+      
+      // Upload to Supabase storage
+      console.log(`Attempting to upload to Supabase storage: ${fileName}`)
+      const { data: uploadData, error: uploadError } = await supabaseServer
+        .storage
+        .from('documents')
+        .upload(fileName, Buffer.from(fileBuffer), { 
+          contentType: file.type || undefined, 
+          upsert: true 
+        })
+      
+      if (uploadError) {
+        console.error('Supabase upload error:', uploadError)
+        // Update document status to error
+        await supabaseServer
           .from('documents')
-          .upload(fileName, Buffer.from(fileBuffer), { contentType: file.type || undefined, upsert: true })
-        if (error) {
-            console.error('Supabase upload error:', error)
-            throw error // Force fallback to local storage
-        }
-        const { data: publicUrl } = supabaseServer.storage.from('documents').getPublicUrl(fileName)
-        downloadURL = publicUrl.publicUrl
-        storageRef = fileName
-        console.log(`Successfully uploaded to Supabase. URL: ${downloadURL}`)
-      } catch (clientStorageErr: any) {
-        console.warn('Supabase upload failed. Falling back to local filesystem storage.')
-        // Final fallback to local filesystem under public/uploads
-        const targetPath = join(process.cwd(), 'public', 'uploads', fileName)
-        try {
-            mkdirSync(dirname(targetPath), { recursive: true })
-            writeFileSync(targetPath, Buffer.from(fileBuffer))
-            downloadURL = `/uploads/${fileName}`
-            storageRef = fileName
-            console.log(`Successfully wrote file to local filesystem: ${targetPath}`)
-        } catch (localWriteError) {
-            console.error(`CRITICAL: Failed to write file to local filesystem at ${targetPath}`, localWriteError)
-            // If local write also fails, we must mark the document as an error
-            await documentService.update(document.id, { status: DocumentStatus.ERROR })
-            throw new Error('Failed to save file to both cloud and local storage.')
-        }
+          .update({ status: 'ERROR' })
+          .eq('id', document.id)
+        throw uploadError
       }
+      
+      const { data: publicUrl } = supabaseServer.storage
+        .from('documents')
+        .getPublicUrl(fileName)
+      
+      downloadURL = publicUrl.publicUrl
+      storageRef = fileName
+      console.log(`Successfully uploaded to Supabase. URL: ${downloadURL}`)
 
       // Update document status to processing
-      try {
-        console.log(`Updating document record ${document.id} with storageRef: ${storageRef}`)
-        await documentService.update(document.id, { 
-          status: DocumentStatus.PROCESSING,
+      const { error: updateError } = await supabaseServer
+        .from('documents')
+        .update({ 
+          status: 'PROCESSING',
           metadata: JSON.stringify({
             ...JSON.parse(document.metadata || '{}'),
-            storageRef: storageRef, // Use the determined storageRef
+            storageRef: storageRef,
             downloadURL: downloadURL
           })
         })
-      } catch (updateError: any) {
-        throw updateError;
+        .eq('id', document.id)
+      
+      if (updateError) {
+        console.error('Failed to update document status:', updateError)
+        throw updateError
       }
 
-      // Emit socket update
-      if (io) {
-        emitDocumentUpdate(io, {
-          documentId: document.id,
-          status: 'processing',
-          message: `Processing ${file.name}`,
-          timestamp: new Date().toISOString()
-        })
-      }
+      console.log(`Document status updated to PROCESSING: ${document.id}`)
 
       // Extract basic content for indexing
       const content = await extractFileContent(file, fileBuffer)
       
       // Final update with basic info
-      try {
-        await documentService.update(document.id, { 
-          status: DocumentStatus.COMPLETED,
-          processedAt: new Date(),
+      const { error: finalUpdateError } = await supabaseServer
+        .from('documents')
+        .update({ 
+          status: 'COMPLETED',
+          processed_at: new Date().toISOString(),
           content: content || `File uploaded: ${file.name} (${formatFileSize(file.size)})`,
           category: getFileCategory(file.name)
         })
-      } catch (updateError: any) {
-        if (updateError.code === 'permission-denied') {
-          console.warn('Could not update document status due to permissions');
-        } else {
-          throw updateError;
-        }
+        .eq('id', document.id)
+      
+      if (finalUpdateError) {
+        console.error('Failed to update document with final status:', finalUpdateError)
       }
 
       // Generate simple analyses (best effort)
       try {
-        await generateAnalysisFromContent(document.id, file.name, content)
+        await generateAnalysisFromContent(document.id, file.name, content, user.id)
       } catch (analysisError: any) {
-        if (analysisError?.code === 'permission-denied') {
-          console.warn('Analysis creation skipped due to Firestore permissions')
-        } else {
-          console.warn('Analysis generation error (non-fatal):', analysisError)
-        }
+        console.warn('Analysis generation error (non-fatal):', analysisError)
       }
 
-      // Emit completion update
-      if (io) {
-        emitDocumentUpdate(io, {
-          documentId: document.id,
-          status: 'completed',
-          message: `Successfully processed ${file.name}`,
-          timestamp: new Date().toISOString()
-        })
-
-        emitSystemNotification(io, {
-          type: 'success',
-          title: 'Document Processing Complete',
-          message: `${file.name} has been successfully processed and analyzed.`
-        })
-      }
+      console.log(`Document processing completed: ${file.name}`)
 
       return NextResponse.json({ 
         id: document.id,
         name: document.name,
         type: document.type,
         size: document.size,
-        status: DocumentStatus.COMPLETED,
-        uploadDate: document.uploadDate,
+        status: 'COMPLETED',
+        uploadDate: document.upload_date,
         downloadURL: downloadURL
       })
 
@@ -232,36 +179,26 @@ export async function POST(request: NextRequest) {
       console.error('Storage upload error:', storageError)
       
       // Update document status to error
-      await documentService.update(document.id, { 
-        status: DocumentStatus.ERROR 
-      })
+      await supabaseServer
+        .from('documents')
+        .update({ status: 'ERROR' })
+        .eq('id', document.id)
 
-      const io = getSocketIO()
-      if (io) {
-        emitSystemNotification(io, {
-          type: 'error',
-          title: 'Upload Failed',
-          message: `Failed to upload ${file.name} to storage.`
-        })
-      }
+      console.error(`Failed to upload ${file.name} to storage`)
 
       return NextResponse.json({ error: 'Failed to upload file to storage' }, { status: 500 })
     }
 
   } catch (error) {
     console.error('Upload error:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     
-    // Emit error notification if socket.io is available
-    const io = getSocketIO()
-    if (io) {
-      emitSystemNotification(io, {
-        type: 'error',
-        title: 'Upload Failed',
-        message: 'Failed to upload document. Please try again.'
-      })
-    }
-    
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+    return NextResponse.json({ 
+      error: 'Upload failed',
+      details: errorMessage,
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 }
 
@@ -311,12 +248,13 @@ async function extractFileContent(file: File, fileBuffer: ArrayBuffer): Promise<
       
       case 'pdf':
         try {
-          const pdfParseModule: any = await import('pdf-parse/lib/pdf-parse.js')
-          const pdfParse = pdfParseModule.default || pdfParseModule
+          const pdfParse = (await import('pdf-parse')).default
           const result = await pdfParse(Buffer.from(fileBuffer))
           const text = result.text?.trim()
           if (text) return text
-        } catch (e) {}
+        } catch (e) {
+          console.error('PDF parsing error:', e)
+        }
         return `PDF Document: ${file.name}\nSize: ${formatFileSize(file.size)}`
       
       case 'doc':
@@ -354,14 +292,14 @@ async function extractFileContent(file: File, fileBuffer: ArrayBuffer): Promise<
 }
 
 type GeneratedAnalysis = {
-  type: AnalysisType
+  type: string
   title: string
   description: string
   confidence: number
-  severity?: Severity
+  severity?: string
 }
 
-async function generateAnalysisFromContent(documentId: string, fileName: string, content: string) {
+async function generateAnalysisFromContent(documentId: string, fileName: string, content: string, userId: string) {
   const analyses: GeneratedAnalysis[] = []
   
   // Basic content analysis
@@ -370,7 +308,7 @@ async function generateAnalysisFromContent(documentId: string, fileName: string,
   const lineCount = content.split('\n').length
   
   analyses.push({
-    type: AnalysisType.INSIGHT,
+    type: 'INSIGHT',
     title: 'Document Statistics',
     description: `Document contains ${wordCount} words, ${charCount} characters, and ${lineCount} lines.`,
     confidence: 100
@@ -399,11 +337,11 @@ async function generateAnalysisFromContent(documentId: string, fileName: string,
     case 'txt':
       if (content.includes('TODO') || content.includes('FIXME')) {
         analyses.push({
-          type: AnalysisType.OPPORTUNITY,
+          type: 'OPPORTUNITY',
           title: 'Action Items Found',
           description: 'Document contains TODO or FIXME items that may require attention.',
           confidence: 90,
-          severity: Severity.MEDIUM
+          severity: 'MEDIUM'
         })
       }
       contentAnalysis = 'Plain text document processed successfully.'
@@ -414,7 +352,7 @@ async function generateAnalysisFromContent(documentId: string, fileName: string,
   }
 
   analyses.push({
-    type: AnalysisType.INSIGHT,
+    type: 'INSIGHT',
     title: 'Content Analysis',
     description: contentAnalysis,
     confidence: 95
@@ -437,35 +375,40 @@ async function generateAnalysisFromContent(documentId: string, fileName: string,
 
   if (sensitiveDataFound) {
     analyses.push({
-      type: AnalysisType.COMPLIANCE,
+      type: 'COMPLIANCE',
       title: 'Sensitive Data Detected',
       description: 'Document may contain sensitive information such as email addresses, phone numbers, or other PII.',
       confidence: 85,
-      severity: Severity.HIGH
+      severity: 'HIGH'
     })
   } else {
     analyses.push({
-      type: AnalysisType.COMPLIANCE,
+      type: 'COMPLIANCE',
       title: 'No Sensitive Data Detected',
       description: 'Initial scan found no obvious sensitive data patterns.',
       confidence: 80,
-      severity: Severity.LOW
+      severity: 'LOW'
     })
   }
 
-  // Save all analyses
-  for (const analysis of analyses) {
-    await analysisService.create({
-      type: analysis.type,
-      title: analysis.title,
-      description: analysis.description,
-      confidence: analysis.confidence,
-      severity: analysis.severity,
-      documentId: documentId,
-      documents: JSON.stringify([fileName]),
-      timestamp: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })
+  // Save all analyses to Supabase
+  if (supabaseServer) {
+    for (const analysis of analyses) {
+      await supabaseServer
+        .from('analyses')
+        .insert({
+          document_id: documentId,
+          user_id: userId,
+          analysis_type: analysis.type,
+          result: {
+            title: analysis.title,
+            description: analysis.description,
+            confidence: analysis.confidence,
+            severity: analysis.severity
+          },
+          ai_provider: 'system',
+          ai_model: 'rule-based'
+        })
+    }
   }
 }

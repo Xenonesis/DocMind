@@ -74,54 +74,88 @@ export class AIService {
     return this.providers.find(p => p.isActive && (p.isConfigured || ['ollama', 'lm-studio'].includes(p.type))) || null
   }
 
-  async loadProvidersFromDatabase() {
+  async loadProvidersFromDatabase(userId?: string) {
     try {
-      // Import here to avoid circular dependencies
-      const { aiProviderService, userService } = await import('./db')
-      
-      // Get default user
-      const users = await userService.getAll()
-      const user = users.length > 0 ? users[0] : null
-      
-      if (!user) {
-        console.log('No user found, cannot load AI providers')
+      // Only load from database on server side
+      if (typeof window !== 'undefined') {
         return
       }
 
-      // Get AI provider settings from database
-      const settings = await aiProviderService.getWhere('userId', '==', user.id)
+      if (!userId) {
+        console.log('No user ID provided, cannot load AI providers')
+        return
+      }
+
+      // Import Supabase client
+      const { supabaseServer } = await import('./supabase')
+      
+      if (!supabaseServer) {
+        console.log('Supabase not configured, cannot load AI providers')
+        return
+      }
+
+      // Get AI provider settings from Supabase
+      const { data: settings, error } = await supabaseServer
+        .from('ai_provider_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+
+      if (error) {
+        console.error('Failed to load AI providers from database:', error)
+        return
+      }
+
+      if (!settings || settings.length === 0) {
+        console.log('No AI provider settings found for user')
+        return
+      }
       
       // Convert database settings to AIProvider format
       this.providers = settings.map(setting => {
-        // Map database enum values to AI service type strings
+        // Map database provider names to AI service type strings
         const typeMapping: Record<string, AIProvider['type']> = {
-          'GOOGLE_AI': 'google',
-          'MISTRAL': 'mistral',
-          'LM_STUDIO': 'lm-studio',
-          'OLLAMA': 'ollama',
-          'OPENROUTER': 'open-router',
-          'OPENAI': 'openai',
-          'ANTHROPIC': 'anthropic',
-          'CUSTOM': 'custom'
+          'google': 'google',
+          'mistral': 'mistral',
+          'lm-studio': 'lm-studio',
+          'ollama': 'ollama',
+          'openrouter': 'open-router',
+          'open-router': 'open-router',
+          'openai': 'openai',
+          'anthropic': 'anthropic',
+          'custom': 'custom'
         }
 
-        const mappedType: AIProvider['type'] = typeMapping[setting.provider] || 'custom'
-        const parsedConfig = setting.config ? JSON.parse(setting.config) : {}
+        const providerName = setting.provider_name.toLowerCase()
+        const mappedType: AIProvider['type'] = typeMapping[providerName] || 'custom'
+        
+        // Set default base URLs based on provider type
+        const defaultBaseUrls: Record<string, string> = {
+          'google': 'https://generativelanguage.googleapis.com/v1beta',
+          'mistral': 'https://api.mistral.ai/v1',
+          'openai': 'https://api.openai.com/v1',
+          'anthropic': 'https://api.anthropic.com/v1',
+          'open-router': 'https://openrouter.ai/api/v1',
+          'lm-studio': 'http://localhost:1234/v1',
+          'ollama': 'http://localhost:11434/api'
+        }
         
         return {
           id: setting.id,
-          name: `${setting.provider} (${setting.model || ''})`,
+          name: `${setting.provider_name} (${setting.model_name || ''})`,
           type: mappedType,
-          apiKey: setting.apiKey || '',
-          baseUrl: setting.baseUrl || '',
-          model: setting.model || '',
-          isActive: !!setting.isActive,
-          isConfigured: !!setting.apiKey,
-          temperature: typeof parsedConfig.temperature === 'number' ? parsedConfig.temperature : 0.7,
-          maxTokens: typeof parsedConfig.maxTokens === 'number' ? parsedConfig.maxTokens : 1000,
-          topP: typeof parsedConfig.topP === 'number' ? parsedConfig.topP : 1.0
+          apiKey: setting.api_key || '',
+          baseUrl: defaultBaseUrls[mappedType] || 'http://localhost:8080',
+          model: setting.model_name || '',
+          isActive: !!setting.is_active,
+          isConfigured: !!setting.api_key,
+          temperature: 0.7,
+          maxTokens: 1000,
+          topP: 1.0
         } as AIProvider
       })
+      
+      console.log(`Loaded ${this.providers.length} AI providers from database`)
       
     } catch (error) {
       console.error('Failed to load AI providers from database:', error)

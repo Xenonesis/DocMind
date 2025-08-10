@@ -9,5 +9,6 @@ export {
   getUserByEmail,
   getAiProviderSettingsByUserId,
   getDocumentsByStatus,
-  getAnalysesByDocumentId
+  getAnalysesByDocumentId,
+  getDocumentsByUserId
 } from './supabase-utils'

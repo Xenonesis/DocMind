@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { queryService, documentService, QueryStatus } from '@/lib/db'
+import { supabaseServer } from '@/lib/supabase'
+import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 import { AIService } from '@/lib/ai-service'
-import { isSupabaseConfigured } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,36 +11,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
     }
 
-    // Create query record if DB is configured; otherwise use an in-memory placeholder
-    let queryRecordId: string | null = null
-    let queryRecord: any = null
-    if (isSupabaseConfigured) {
-      queryRecordId = await queryService.create({
-        query: query.trim(),
-        status: QueryStatus.PROCESSING,
-        documentIds: documentIds ? JSON.stringify(documentIds) : undefined,
-        timestamp: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+    // Get authenticated user
+    const user = await getAuthenticatedUser(request)
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    if (!supabaseServer) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    // Ensure user profile exists
+    await ensureUserProfile(user)
+
+    // Create query record in database
+    const { data: queryRecord, error: createError } = await supabaseServer
+      .from('queries')
+      .insert({
+        user_id: user.id,
+        query_text: query.trim(),
+        document_ids: documentIds ? JSON.stringify(documentIds) : '[]',
+        response: '',
+        ai_provider: provider || 'unknown',
+        ai_model: 'unknown'
       })
-      queryRecord = await queryService.getById(queryRecordId)
-    } else {
-      queryRecord = {
-        id: 'demo-' + Date.now().toString(36),
-        query: query.trim(),
-        status: QueryStatus.PROCESSING,
-        timestamp: new Date()
-      }
+      .select()
+      .single()
+
+    if (createError || !queryRecord) {
+      console.error('Failed to create query record:', createError)
+      return NextResponse.json({ error: 'Failed to create query record' }, { status: 500 })
     }
 
     // Process the query using configured AI provider
     try {
       const aiService = AIService.getInstance()
       
-      // Load providers from database for server-side usage when available
-      if (isSupabaseConfigured) {
-        await aiService.loadProvidersFromDatabase()
-      }
+      // Load providers from database for server-side usage
+      await aiService.loadProvidersFromDatabase(user.id)
       
       // Allow client to choose provider by id; fallback to active
       const allProviders = aiService.getProviders()
@@ -54,24 +63,29 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
       
-      // Get relevant documents for context (skip if DB not configured)
-      let documents: any[] = []
-      if (isSupabaseConfigured) {
-        documents = await documentService.getWhere('status', '==', 'COMPLETED')
-      }
-      
+      // Get relevant documents for context
+      let documentsQuery = supabaseServer
+        .from('documents')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'COMPLETED')
+        .order('created_at', { ascending: false })
+        .limit(10)
+
       // Filter by specific document IDs if provided
       if (documentIds && documentIds.length > 0) {
-        documents = documents.filter(doc => documentIds.includes(doc.id))
+        documentsQuery = documentsQuery.in('id', documentIds)
       }
-      
-      // Sort by creation date and limit to 10
-      documents = documents
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-        .slice(0, 10)
+
+      const { data: documents, error: docsError } = await documentsQuery
+
+      if (docsError) {
+        console.error('Error fetching documents:', docsError)
+        return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
+      }
 
       // Prepare context from documents
-      const context = documents.map(doc => ({
+      const context = (documents || []).map(doc => ({
         name: doc.name,
         content: doc.content || '',
         category: doc.category || '',
@@ -121,23 +135,30 @@ export async function POST(request: NextRequest) {
           insights: [],
           patterns: [],
           confidence: 75,
-          relevantDocuments: documents.map(doc => doc.name)
+          relevantDocuments: (documents || []).map(doc => doc.name)
         }
       }
 
-      // Update query record with results when DB is available
-      if (isSupabaseConfigured && queryRecord?.id) {
-        await queryService.update(queryRecord.id, {
-          status: QueryStatus.COMPLETED,
+      // Update query record with results
+      const { error: updateError } = await supabaseServer
+        .from('queries')
+        .update({
           response: JSON.stringify(aiResponse),
-          results: aiResponse.relevantDocuments?.length || 0
+          ai_provider: activeProvider.name,
+          ai_model: activeProvider.model || 'unknown',
+          tokens_used: completion.usage?.total_tokens || 0,
+          processing_time_ms: Date.now() - new Date(queryRecord.created_at).getTime()
         })
+        .eq('id', queryRecord.id)
+
+      if (updateError) {
+        console.error('Failed to update query record:', updateError)
       }
 
       return NextResponse.json({
         id: queryRecord.id,
-        query: queryRecord.query,
-        status: QueryStatus.COMPLETED,
+        query: queryRecord.query_text,
+        status: 'COMPLETED',
         response: aiResponse,
         timestamp: queryRecord.timestamp,
         provider: activeProvider.name,
@@ -150,18 +171,20 @@ export async function POST(request: NextRequest) {
       const message = typeof aiError?.message === 'string' ? aiError.message : 'AI processing failed'
       const isConfigError = /api key not configured|no ai provider configured|unsupported provider/i.test(message)
 
-      // Update query record with error when DB is available
-      if (isSupabaseConfigured && queryRecord?.id) {
-        await queryService.update(queryRecord.id, {
-          status: QueryStatus.ERROR,
-          response: JSON.stringify({ error: message })
+      // Update query record with error
+      await supabaseServer
+        .from('queries')
+        .update({
+          response: JSON.stringify({ error: message }),
+          ai_provider: 'error',
+          ai_model: 'error'
         })
-      }
+        .eq('id', queryRecord.id)
 
       return NextResponse.json({ 
         id: queryRecord.id,
-        query: queryRecord.query,
-        status: QueryStatus.ERROR,
+        query: queryRecord.query_text,
+        status: 'ERROR',
         error: message
       }, { status: isConfigError ? 400 : 500 })
     }
@@ -174,23 +197,45 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Get authenticated user
+    const user = await getAuthenticatedUser(request)
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    if (!supabaseServer) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    const queries: any[] = (await queryService.getAll()).slice(0, limit)
+    // Get user's queries
+    const { data: queries, error } = await supabaseServer
+      .from('queries')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
-    // Firebase doesn't have built-in offset, so we'll slice the results
-    const paginatedQueries = queries.slice(offset, offset + limit)
+    if (error) {
+      console.error('Error fetching queries:', error)
+      return NextResponse.json({ error: 'Failed to fetch queries' }, { status: 500 })
+    }
 
-    const formattedQueries = paginatedQueries.map(query => ({
+    const formattedQueries = (queries || []).map(query => ({
       id: query.id,
-      query: query.query,
-      status: query.status,
+      query: query.query_text,
+      status: 'COMPLETED', // Assuming completed if stored
       response: query.response ? JSON.parse(query.response) : null,
-      results: query.results,
       timestamp: query.timestamp,
-      documentIds: query.documentIds ? JSON.parse(query.documentIds) : []
+      documentIds: query.document_ids ? JSON.parse(query.document_ids) : [],
+      provider: query.ai_provider,
+      model: query.ai_model,
+      tokensUsed: query.tokens_used,
+      processingTime: query.processing_time_ms
     }))
 
     return NextResponse.json(formattedQueries)

@@ -186,58 +186,58 @@ export function AiApiSettings() {
     
     const load = async () => {
       try {
-        const res = await fetch('/api/settings')
-        if (res.ok) {
-          const data = await res.json()
-          // Map backend records to UI provider model
-          let mapped: AIProvider[] = data.map((s: any, index: number) => {
-            const mappedType = (() => {
-              const raw = (s.provider || 'custom').toString().toUpperCase()
-              if (raw === 'OPENROUTER') return 'open-router'
-              if (raw === 'GOOGLE_AI') return 'google'
-              if (raw === 'LM_STUDIO') return 'lm-studio'
-              return raw.toLowerCase().replace(/_/g, '-')
-            })()
-            const defaults = defaultProviders.find(d => d.type === mappedType)
-            return {
-              id: s.id || `provider-${index}`,
-              name: `${s.provider} (${s.model || ''})`,
-              type: mappedType as AIProvider['type'],
-              baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-              apiKey: (typeof s.apiKey === 'string' && s.apiKey.includes('•')) ? '' : (s.apiKey || ''),
-              model: s.model || (defaults?.models?.[0] ?? ''),
-              isActive: !!s.isActive,
-              isConfigured: !!(s.apiKey && !s.apiKey.includes('•')),
-              lastTested: undefined,
-              testStatus: undefined,
-              errorMessage: undefined,
-              models: defaults?.models || [],
-              maxTokens: s.config?.maxTokens ?? defaults?.maxTokens ?? 1000,
-              temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
-              topP: s.config?.topP ?? defaults?.topP ?? 1.0,
-              description: defaults?.description || 'Configured provider',
-              iconType: defaults?.iconType || 'brain'
-            }
-          })
-
-          if (mapped.length === 0) {
-            setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
-            return
+        const { authenticatedRequest } = await import('@/lib/api-client')
+        const data = await authenticatedRequest('/api/settings')
+        
+        // Map backend records to UI provider model
+        let mapped: AIProvider[] = data.map((s: any, index: number) => {
+          const mappedType = (() => {
+            const raw = (s.provider || 'custom').toString().toUpperCase()
+            if (raw === 'OPENROUTER') return 'open-router'
+            if (raw === 'GOOGLE_AI') return 'google'
+            if (raw === 'LM_STUDIO') return 'lm-studio'
+            return raw.toLowerCase().replace(/_/g, '-')
+          })()
+          const defaults = defaultProviders.find(d => d.type === mappedType)
+          return {
+            id: s.id || `provider-${index}`,
+            name: `${s.provider} (${s.model || ''})`,
+            type: mappedType as AIProvider['type'],
+            baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
+            apiKey: (typeof s.apiKey === 'string' && s.apiKey.includes('•')) ? '' : (s.apiKey || ''),
+            model: s.model || (defaults?.models?.[0] ?? ''),
+            isActive: !!s.isActive,
+            isConfigured: !!(s.apiKey && !s.apiKey.includes('•')),
+            lastTested: undefined,
+            testStatus: undefined,
+            errorMessage: undefined,
+            models: defaults?.models || [],
+            maxTokens: s.config?.maxTokens ?? defaults?.maxTokens ?? 1000,
+            temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
+            topP: s.config?.topP ?? defaults?.topP ?? 1.0,
+            description: defaults?.description || 'Configured provider',
+            iconType: defaults?.iconType || 'brain'
           }
+        })
 
-          // Merge in any missing default providers so all options are visible
-          const existingTypes = new Set(mapped.map(m => m.type))
-          const missingDefaults = defaultProviders
-            .filter(d => !existingTypes.has(d.type))
-            .map((d, idx) => ({ ...d, id: `provider-missing-${idx}` }))
-          mapped = [...mapped, ...missingDefaults]
-
-          setProviders(mapped)
+        if (mapped.length === 0) {
+          setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
           return
         }
-      } catch {}
-      // Fallback to defaults if server fetch fails
-      setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
+
+        // Merge in any missing default providers so all options are visible
+        const existingTypes = new Set(mapped.map(m => m.type))
+        const missingDefaults = defaultProviders
+          .filter(d => !existingTypes.has(d.type))
+          .map((d, idx) => ({ ...d, id: `provider-missing-${idx}` }))
+        mapped = [...mapped, ...missingDefaults]
+
+        setProviders(mapped)
+      } catch (error) {
+        console.warn('Failed to load settings from server:', error)
+        // Fallback to defaults if server fetch fails
+        setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
+      }
     }
     load()
   }, [])
@@ -268,9 +268,9 @@ export function AiApiSettings() {
         topP: p.topP ?? 1.0
       }
     }))
-    await fetch('/api/settings', {
+    const { authenticatedRequest } = await import('@/lib/api-client')
+    await authenticatedRequest('/api/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ providers: payload })
     })
   }

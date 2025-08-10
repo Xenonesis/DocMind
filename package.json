@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec \"npx tsx server.ts\" --watch server.ts --watch src --ext ts,tsx,js,jsx",
+    "dev": "next dev",
     "build": "next build",
-    "start": "set NODE_ENV=production && tsx server.ts",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {

@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import { 
   Upload, 
   FileText, 
@@ -34,6 +36,7 @@ interface DocumentUploadProps {
 export function DocumentUpload({ onUpload }: DocumentUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploadingFiles, setUploadingFiles] = useState<Document[]>([])
+  const { user } = useAuth()
 
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase()
@@ -93,9 +96,12 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
         const formData = new FormData()
         formData.append('file', file)
 
-        const response = await fetch('/api/documents/upload', {
+        // Use authenticated fetch for file upload
+        const { authenticatedFetch } = await import('@/lib/api-client')
+        const response = await authenticatedFetch('/api/documents/upload', {
           method: 'POST',
-          body: formData
+          body: formData,
+          headers: {} // Don't set Content-Type for FormData, let browser set it
         })
 
         clearInterval(progressInterval)

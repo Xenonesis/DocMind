@@ -74,9 +74,10 @@ export function AnalysisResults() {
   // Fetch analysis data from API
   const fetchAnalysisData = async () => {
     try {
+      const { authenticatedFetch } = await import('@/lib/api-client')
       const [analysisResponse, documentsResponse] = await Promise.all([
-        fetch('/api/analysis'),
-        fetch('/api/documents')
+        authenticatedFetch('/api/analysis'),
+        authenticatedFetch('/api/documents')
       ])
       
       if (analysisResponse.ok) {
