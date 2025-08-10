@@ -153,16 +153,40 @@ export class SupabaseService<T extends { id: string }> {
         qb = qb.neq(column, value)
         break
       case 'array-contains':
-        // For JSON array columns stored as TEXT, we need to use a different approach
-        // Use the LIKE operator to search within the JSON string
-        qb = qb.like(column, `%"${value}"%`)
+        // For JSONB arrays, use the contains operator
+        // For the queries table, documentIds is likely stored as JSONB
+        if (this.tableName === 'queries' && column === 'document_ids') {
+          // Try JSONB contains first, fallback to text search if it fails
+          try {
+            qb = qb.contains(column, [value])
+          } catch (error) {
+            // If JSONB fails, try text-based search as fallback
+            console.warn('JSONB contains failed, falling back to text search:', error)
+            qb = qb.filter(column, 'like', `%"${value}"%`)
+          }
+        } else {
+          // For other cases, use text search in JSON string
+          qb = qb.filter(column, 'like', `%"${value}"%`)
+        }
         break
       default:
         qb = qb.eq(column, value)
     }
 
     const { data, error } = await qb
-    if (error) throw error
+    if (error) {
+      // If we get the JSONB operator error, try a different approach
+      if (error.code === '42883' && operator === 'array-contains') {
+        console.warn('JSONB operator error, retrying with text search approach')
+        // Retry with a different query approach
+        qb = supabaseServer!.from(this.tableName).select('*')
+        qb = qb.filter(column, 'like', `%"${value}"%`)
+        const retryResult = await qb
+        if (retryResult.error) throw retryResult.error
+        return reviveDates(toCamel(retryResult.data)) as T[]
+      }
+      throw error
+    }
     return reviveDates(toCamel(data)) as T[]
   }
 }

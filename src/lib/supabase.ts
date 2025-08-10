@@ -16,6 +16,9 @@ export const supabaseBrowser: SupabaseClient | null =
     ? createClient(supabaseUrl, supabaseAnonKey)
     : null
 
+// Single client for browser use
+export const supabase = supabaseBrowser
+
 export const isSupabaseConfigured = Boolean(supabaseUrl && (supabaseAnonKey || supabaseServiceRoleKey))
 
 export type { SupabaseClient }

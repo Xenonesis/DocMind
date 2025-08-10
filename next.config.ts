@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
         ignored: ['**/*'], // 忽略所有文件变化
       };
     }
+    
+    // Suppress Supabase realtime WebSocket warning
+    config.ignoreWarnings = [
+      {
+        module: /node_modules\/@supabase\/realtime-js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+    
     return config;
   },
   eslint: {
