@@ -33,7 +33,8 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react'
-import { encryptApiKey, decryptApiKey, isValidApiKey, maskApiKey } from '@/lib/crypto-utils'
+import { isValidApiKey } from '@/lib/crypto-utils'
+import { useToast } from '@/hooks/use-toast'
 
 interface AIProvider {
   id: string
@@ -53,6 +54,8 @@ interface AIProvider {
   topP?: number
   description: string
   iconType: 'brain' | 'zap' | 'server' | 'shield' | 'globe'
+  // Track if user edited the API key so we know to send it to the server
+  dirtyApiKey?: boolean
 }
 
 const defaultProviders: Omit<AIProvider, 'id'>[] = [
@@ -180,10 +183,13 @@ export function AiApiSettings() {
   const [saving, setSaving] = useState(false)
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({})
   const [mounted, setMounted] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     setMounted(true)
     
+    // Remove test filtering - show all configured providers
+
     const load = async () => {
       try {
         const { authenticatedRequest } = await import('@/lib/api-client')
@@ -199,15 +205,18 @@ export function AiApiSettings() {
             return raw.toLowerCase().replace(/_/g, '-')
           })()
           const defaults = defaultProviders.find(d => d.type === mappedType)
+          const isMasked = typeof s.apiKey === 'string' && /^[\u2022•]+$/.test(s.apiKey)
           return {
             id: s.id || `provider-${index}`,
             name: `${s.provider} (${s.model || ''})`,
             type: mappedType as AIProvider['type'],
             baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-            apiKey: (typeof s.apiKey === 'string' && s.apiKey.includes('•')) ? '' : (s.apiKey || ''),
+            // If backend returned a masked value (••••), don't bind it to the input
+            apiKey: isMasked ? '' : (s.apiKey || ''),
             model: s.model || (defaults?.models?.[0] ?? ''),
             isActive: !!s.isActive,
-            isConfigured: !!(s.apiKey && !s.apiKey.includes('•')),
+            // Consider masked value as configured, even if we don't bind it
+            isConfigured: isMasked ? true : !!(s.apiKey && s.apiKey.length > 0),
             lastTested: undefined,
             testStatus: undefined,
             errorMessage: undefined,
@@ -216,27 +225,44 @@ export function AiApiSettings() {
             temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
             topP: s.config?.topP ?? defaults?.topP ?? 1.0,
             description: defaults?.description || 'Configured provider',
-            iconType: defaults?.iconType || 'brain'
+            iconType: defaults?.iconType || 'brain',
+            dirtyApiKey: false,
           }
         })
 
-        if (mapped.length === 0) {
-          setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
-          return
-        }
+        // Show all configured providers (removed test filtering)
 
-        // Merge in any missing default providers so all options are visible
+        // Always merge in default providers so all options are visible
         const existingTypes = new Set(mapped.map(m => m.type))
         const missingDefaults = defaultProviders
           .filter(d => !existingTypes.has(d.type))
           .map((d, idx) => ({ ...d, id: `provider-missing-${idx}` }))
         mapped = [...mapped, ...missingDefaults]
 
+        // If no providers exist at all, start with defaults
+        if (mapped.length === 0) {
+          mapped = defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` }))
+        }
+
         setProviders(mapped)
+        
+        // Show success message if providers were loaded
+        if (mapped.length > 0) {
+          toast({
+            title: 'Settings loaded',
+            description: `Loaded ${mapped.length} AI provider configuration(s).`,
+          })
+        }
       } catch (error) {
         console.warn('Failed to load settings from server:', error)
         // Fallback to defaults if server fetch fails
         setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
+        
+        toast({
+          title: 'Failed to load settings',
+          description: 'Using default provider configurations. Your saved settings could not be loaded.',
+          variant: 'destructive',
+        })
       }
     }
     load()
@@ -258,7 +284,8 @@ export function AiApiSettings() {
           default: return 'CUSTOM'
         }
       })(),
-      apiKey: p.apiKey ? p.apiKey : undefined,
+      // Only send apiKey if user edited it; allows updating or clearing
+      apiKey: p.dirtyApiKey ? (p.apiKey ?? '') : undefined,
       baseUrl: p.baseUrl,
       model: p.model,
       isActive: !!p.isActive,
@@ -273,6 +300,39 @@ export function AiApiSettings() {
       method: 'POST',
       body: JSON.stringify({ providers: payload })
     })
+    // Refresh from server to reflect masked apiKey and persisted baseUrl
+    const refreshed = await authenticatedRequest('/api/settings')
+    setProviders((refreshed as any[]).map((s: any, index: number) => {
+      const mappedType = (() => {
+        const raw = (s.provider || 'custom').toString().toUpperCase()
+        if (raw === 'OPENROUTER') return 'open-router'
+        if (raw === 'GOOGLE_AI') return 'google'
+        if (raw === 'LM_STUDIO') return 'lm-studio'
+        return raw.toLowerCase().replace(/_/g, '-')
+      })()
+      const defaults = defaultProviders.find(d => d.type === mappedType)
+      const isMasked = typeof s.apiKey === 'string' && /^[\u2022•]+$/.test(s.apiKey)
+      return {
+        id: s.id || `provider-${index}`,
+        name: `${s.provider} (${s.model || ''})`,
+        type: mappedType as AIProvider['type'],
+        baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
+        apiKey: isMasked ? '' : (s.apiKey || ''),
+        model: s.model || (defaults?.models?.[0] ?? ''),
+        isActive: !!s.isActive,
+        isConfigured: isMasked ? true : !!(s.apiKey && s.apiKey.length > 0),
+        lastTested: undefined,
+        testStatus: undefined,
+        errorMessage: undefined,
+        models: defaults?.models || [],
+        maxTokens: s.config?.maxTokens ?? defaults?.maxTokens ?? 1000,
+        temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
+        topP: s.config?.topP ?? defaults?.topP ?? 1.0,
+        description: defaults?.description || 'Configured provider',
+        iconType: defaults?.iconType || 'brain',
+        dirtyApiKey: false,
+      }
+    }))
   }
 
   const updateProvider = (id: string, updates: Partial<AIProvider>) => {
@@ -282,21 +342,55 @@ export function AiApiSettings() {
     setProviders(newProviders)
   }
 
+  const saveProviderChanges = async () => {
+    try {
+      await saveProviders(providers)
+      toast({
+        title: 'Provider updated',
+        description: 'Your AI provider configuration has been saved.',
+      })
+    } catch (error) {
+      console.error('Failed to save provider changes:', error)
+      toast({
+        title: 'Failed to save provider',
+        description: 'There was an error saving your provider configuration. Please try again.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   const testProvider = async (id: string) => {
     const provider = providers.find(p => p.id === id)
     if (!provider || !provider.apiKey) return
 
+    // Debug logging to understand what's happening
+    console.log('🔍 Testing provider:', {
+      id: provider.id,
+      name: provider.name,
+      type: provider.type,
+      apiKeyLength: provider.apiKey.length,
+      apiKeyStartsWith: provider.apiKey.substring(0, 4),
+      apiKey: provider.apiKey.substring(0, 8) + '...' + provider.apiKey.substring(provider.apiKey.length - 4)
+    })
+
     // Validate API key format before testing
     if (!isValidApiKey(provider.apiKey, provider.type)) {
+      console.log('❌ API key validation failed for:', provider.name)
       updateProvider(id, {
         testStatus: 'error',
         lastTested: new Date().toISOString(),
         errorMessage: 'Invalid API key format for this provider',
         isConfigured: false
       })
+      toast({
+        title: 'Invalid API key',
+        description: `The API key format for ${provider.name} is invalid. Please check and try again.`,
+        variant: 'destructive',
+      })
       return
     }
 
+    console.log('✅ API key validation passed for:', provider.name)
     setTestingProvider(id)
     updateProvider(id, { testStatus: 'pending' })
 
@@ -311,12 +405,30 @@ export function AiApiSettings() {
         errorMessage: ok ? undefined : 'Connection validation failed',
         isConfigured: ok
       })
+
+      if (ok) {
+        toast({
+          title: 'Connection successful',
+          description: `${provider.name} is now configured and ready to use.`,
+        })
+      } else {
+        toast({
+          title: 'Connection failed',
+          description: `Failed to validate ${provider.name} connection. Please check your settings.`,
+          variant: 'destructive',
+        })
+      }
     } catch (error) {
       updateProvider(id, {
         testStatus: 'error',
         lastTested: new Date().toISOString(),
         errorMessage: 'Connection failed',
         isConfigured: false
+      })
+      toast({
+        title: 'Connection error',
+        description: `An error occurred while testing ${provider.name}. Please try again.`,
+        variant: 'destructive',
       })
     } finally {
       setTestingProvider(null)
@@ -328,31 +440,44 @@ export function AiApiSettings() {
       ...prev,
       [id]: !prev[id]
     }))
+    
+    const provider = providers.find(p => p.id === id)
+    if (provider) {
+      toast({
+        title: 'API Key visibility changed',
+        description: `API key for ${provider.name} is now ${showApiKeys[id] ? 'hidden' : 'visible'}.`,
+      })
+    }
   }
 
   const getDisplayedApiKey = (provider: AIProvider) => {
-    if (showApiKeys[provider.id]) {
-      return provider.apiKey
-    }
-    // Do not render placeholder bullets when empty
-    if (!provider.apiKey) return ''
-    return maskApiKey(provider.apiKey)
+    // Always bind the real API key; use input type password to mask visually
+    return provider.apiKey || ''
   }
 
   const saveSettings = async () => {
     setSaving(true)
     try {
-      // Simulate saving to backend
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
       // Update active provider logic - only one can be active at a time
       const activeProvider = providers.find(p => p.isActive && p.isConfigured)
       const newProviders = providers.map(p => ({
         ...p,
         isActive: p.id === activeProvider?.id
       }))
+      await saveProviders(newProviders)
       
-      saveProviders(newProviders)
+      // Show success message
+      toast({
+        title: 'Settings updated',
+        description: 'Your AI provider settings have been updated successfully.',
+      })
+    } catch (error) {
+      console.error('Failed to update settings:', error)
+      toast({
+        title: 'Failed to update settings',
+        description: 'There was an error updating your AI provider settings. Please try again.',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -400,32 +525,32 @@ export function AiApiSettings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             AI API Integration Settings
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             Configure and manage your AI service providers. Only one provider can be active at a time.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="gap-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="gap-1 text-xs">
                 <Brain className="w-3 h-3" />
                 {providers.filter(p => p.isConfigured).length} Configured
               </Badge>
-              <Badge variant="outline" className="gap-1">
+              <Badge variant="outline" className="gap-1 text-xs">
                 <CheckCircle className="w-3 h-3" />
                 {providers.filter(p => p.isActive && p.isConfigured).length} Active
               </Badge>
             </div>
-            <Button onClick={saveSettings} disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              Save Settings
+            <Button onClick={saveSettings} disabled={saving} size="sm" className="w-full sm:w-auto">
+              {saving ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" /> : <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />}
+              <span className="text-sm">Save Settings</span>
             </Button>
           </div>
         </CardContent>
@@ -442,16 +567,18 @@ export function AiApiSettings() {
           {providers.map((provider) => (
             <Card key={provider.id}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {getProviderIcon(provider.iconType)}
-                    <div>
-                      <CardTitle className="text-lg">{provider.name}</CardTitle>
-                      <CardDescription>{provider.description}</CardDescription>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                    <div className="flex-shrink-0">
+                      {getProviderIcon(provider.iconType)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg truncate">{provider.name}</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm line-clamp-2">{provider.description}</CardDescription>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(getProviderStatus(provider))}>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                    <Badge className={`${getStatusColor(getProviderStatus(provider))} text-xs w-fit`}>
                       {getStatusIcon(provider)}
                       <span className="ml-1 capitalize">
                         {getProviderStatus(provider).replace('_', ' ')}
@@ -467,8 +594,16 @@ export function AiApiSettings() {
                             isActive: p.id === provider.id
                           }))
                           setProviders(newProviders)
+                          toast({
+                            title: 'Provider activated',
+                            description: `${provider.name} is now the active AI provider.`,
+                          })
                         } else {
                           updateProvider(provider.id, { isActive: false })
+                          toast({
+                            title: 'Provider deactivated',
+                            description: `${provider.name} has been deactivated.`,
+                          })
                         }
                       }}
                       disabled={!provider.isConfigured}
@@ -477,7 +612,7 @@ export function AiApiSettings() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor={`base-url-${provider.id}`}>Base URL</Label>
                     <Input
@@ -494,7 +629,7 @@ export function AiApiSettings() {
                         id={`api-key-${provider.id}`}
                         type={showApiKeys[provider.id] ? 'text' : 'password'}
                         value={getDisplayedApiKey(provider)}
-                        onChange={(e) => updateProvider(provider.id, { apiKey: e.target.value })}
+                        onChange={(e) => updateProvider(provider.id, { apiKey: e.target.value, dirtyApiKey: true })}
                         placeholder="Enter your API key"
                         className="pr-10"
                       />
@@ -513,9 +648,15 @@ export function AiApiSettings() {
                       </Button>
                     </div>
                     {provider.apiKey && !isValidApiKey(provider.apiKey, provider.type) && (
-                      <p className="text-xs text-red-500">
-                        Invalid API key format for {provider.name}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-xs text-red-500">
+                          Invalid API key format for {provider.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Debug: Type={provider.type}, Length={provider.apiKey.length}, 
+                          Starts with: {provider.apiKey.substring(0, 4)}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -575,18 +716,43 @@ export function AiApiSettings() {
                       <span>Last tested: {new Date(provider.lastTested).toLocaleString()}</span>
                     )}
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => testProvider(provider.id)}
-                    disabled={!provider.apiKey || testingProvider === provider.id}
-                  >
-                    {testingProvider === provider.id ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <TestTube className="w-4 h-4 mr-2" />
-                    )}
-                    Test Connection
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await saveProviders(providers)
+                          toast({
+                            title: 'Provider saved',
+                            description: `${provider.name} configuration has been saved.`,
+                          })
+                        } catch (error) {
+                          console.error('Failed to save provider:', error)
+                          toast({
+                            title: 'Failed to save provider',
+                            description: `There was an error saving ${provider.name}. Please try again.`,
+                            variant: 'destructive',
+                          })
+                        }
+                      }}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => testProvider(provider.id)}
+                      disabled={!provider.apiKey || testingProvider === provider.id}
+                    >
+                      {testingProvider === provider.id ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <TestTube className="w-4 h-4 mr-2" />
+                      )}
+                      Test Connection
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -602,49 +768,12 @@ export function AiApiSettings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="timeout">Request Timeout (seconds)</Label>
-                  <Input
-                    id="timeout"
-                    type="number"
-                    defaultValue="30"
-                    placeholder="30"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="retry-attempts">Retry Attempts</Label>
-                  <Input
-                    id="retry-attempts"
-                    type="number"
-                    defaultValue="3"
-                    placeholder="3"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="fallback-model">Fallback Model</Label>
-                <Select defaultValue="">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select fallback model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
-                    <SelectItem value="gpt-4">GPT-4</SelectItem>
-                    <SelectItem value="claude-3">Claude 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="custom-instructions">Custom Instructions</Label>
-                <Textarea
-                  id="custom-instructions"
-                  placeholder="Add custom instructions for AI behavior..."
-                  rows={3}
-                />
-              </div>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Advanced configuration options will be available in a future update.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </TabsContent>
@@ -657,32 +786,11 @@ export function AiApiSettings() {
                 Monitor your AI API usage and costs.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">0</div>
-                  <div className="text-sm text-gray-500">API Calls Today</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">0</div>
-                  <div className="text-sm text-gray-500">Tokens Used</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">$0.00</div>
-                  <div className="text-sm text-gray-500">Estimated Cost</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Monthly Usage</Label>
-                <Progress value={0} className="h-2" />
-                <div className="text-sm text-gray-500">0% of monthly limit</div>
-              </div>
-
+            <CardContent>
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Usage tracking will be available once you start making API calls.
+                  Usage tracking and analytics will be available in a future update.
                 </AlertDescription>
               </Alert>
             </CardContent>

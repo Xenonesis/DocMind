@@ -1,4 +1,4 @@
-// Supabase collection types (matching previous Firebase shapes)
+// Supabase collection types
 
 export interface User {
   id: string

@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Allow cross-origin requests from network IPs
+  allowedDevOrigins: [
+    '192.168.180.1',
+    '192.168.1.0/24',    // Allow entire local network range
+    '192.168.0.0/24',    // Common router range
+    '10.0.0.0/24',       // Another common range
+  ],
   // 禁用 Next.js 热重载，由 nodemon 处理重编译
   reactStrictMode: false,
   webpack: (config, { dev }) => {

@@ -3,10 +3,14 @@ import { supabaseServer } from '@/lib/supabase'
 
 export async function GET() {
   try {
-    console.log('Health check called')
-    
     // Test basic functionality
-    const health = {
+    const health: {
+      status: string
+      timestamp: string
+      supabaseConfigured: boolean
+      environment: string | undefined
+      databaseConnection?: boolean
+    } = {
       status: 'ok',
       timestamp: new Date().toISOString(),
       supabaseConfigured: !!supabaseServer,
@@ -31,7 +35,6 @@ export async function GET() {
       }
     }
     
-    console.log('Health check result:', health)
     return NextResponse.json(health)
   } catch (error) {
     console.error('Health check error:', error)

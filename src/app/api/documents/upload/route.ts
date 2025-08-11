@@ -6,41 +6,28 @@ import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 import * as mammoth from 'mammoth'
 
 export async function POST(request: NextRequest) {
-  console.log('Upload API called')
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
     
     if (!file) {
-      console.log('No file provided in request')
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    console.log(`Processing file: ${file.name}, size: ${file.size}, type: ${file.type}`)
-
     // Get authenticated user
-    console.log('Getting authenticated user...')
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
-      console.log('Authentication failed - no user found')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    console.log(`Authenticated user: ${user.email} (${user.id})`)
-
     if (!supabaseServer) {
-      console.log('Supabase server not configured')
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    console.log('Supabase server is configured')
-
     // Ensure user profile exists
-    console.log('Ensuring user profile exists...')
     try {
       await ensureUserProfile(user)
-      console.log('User profile ensured successfully')
     } catch (profileError) {
       console.error('Error ensuring user profile:', profileError)
       return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
@@ -80,8 +67,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create document record' }, { status: 500 })
     }
 
-    console.log(`Created document record: ${document.id}`)
-
     // Read file contents once
     const fileBuffer = await file.arrayBuffer()
     const fileName = `users/${sanitizedEmail}/documents/${document.id}/${file.name}`
@@ -91,7 +76,6 @@ export async function POST(request: NextRequest) {
       let storageRef = ''
       
       // Upload to Supabase storage
-      console.log(`Attempting to upload to Supabase storage: ${fileName}`)
       const { data: uploadData, error: uploadError } = await supabaseServer
         .storage
         .from('documents')
@@ -116,7 +100,6 @@ export async function POST(request: NextRequest) {
       
       downloadURL = publicUrl.publicUrl
       storageRef = fileName
-      console.log(`Successfully uploaded to Supabase. URL: ${downloadURL}`)
 
       // Update document status to processing
       const { error: updateError } = await supabaseServer

@@ -18,7 +18,17 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
   // Add the authorization header
   const headers: Record<string, string> = {
     'Authorization': `Bearer ${session.access_token}`,
-    ...options.headers
+  }
+
+  // Merge existing headers
+  if (options.headers) {
+    if (options.headers instanceof Headers) {
+      options.headers.forEach((value, key) => {
+        headers[key] = value
+      })
+    } else {
+      Object.assign(headers, options.headers)
+    }
   }
 
   // Only set Content-Type to application/json if not already specified and not FormData

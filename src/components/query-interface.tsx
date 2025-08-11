@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Send, 
   Brain, 
@@ -22,7 +25,25 @@ import {
   Cloud,
   Server,
   Shield,
-  X
+  X,
+  Sparkles,
+  Zap,
+  MessageCircle,
+  Filter,
+  History,
+  Lightbulb,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  RefreshCw,
+  Star,
+  BookOpen,
+  Target,
+  Layers,
+  Globe,
+  Mic,
+  MicOff
 } from 'lucide-react'
 
 interface QueryInterfaceProps {
@@ -112,6 +133,10 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
   const [showMentionList, setShowMentionList] = useState(false)
   const [mentionQuery, setMentionQuery] = useState('')
+  const [showExamples, setShowExamples] = useState(true)
+  const [showHistory, setShowHistory] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [searchFilter, setSearchFilter] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   // Fetch query history from API
@@ -144,12 +169,12 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
           type,
           model: p.model || '',
           isActive: !!p.isActive,
-          // Only consider configured if API key is present (no masked bullets)
-          isConfigured: !!p.apiKey && typeof p.apiKey === 'string' && p.apiKey.length > 0 && !p.apiKey.includes('•')
+          // Consider configured if API key is present (including masked keys)
+          isConfigured: !!p.apiKey && typeof p.apiKey === 'string' && p.apiKey.length > 0
         }
       })
       
-      // Only show configured providers in the dropdown
+      // Show all configured providers (removed test/demo filtering)
       const configuredProviders = mapped.filter(p => p.isConfigured)
       setProviders(configuredProviders)
       const active = configuredProviders.find((p: any) => p.isActive)
@@ -284,303 +309,577 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
     setSelectedDocumentIds(prev => prev.filter(id => id !== docId))
   }
 
+  // Filter examples based on search
+  const filteredExamples = useMemo(() => {
+    if (!searchFilter.trim()) return queryExamples
+    const filter = searchFilter.toLowerCase()
+    return queryExamples.filter(example => 
+      example.question.toLowerCase().includes(filter) ||
+      example.category.toLowerCase().includes(filter) ||
+      example.description.toLowerCase().includes(filter)
+    )
+  }, [searchFilter])
+
+  // Voice recognition (if supported)
+  const toggleVoiceRecognition = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Speech recognition not supported in this browser')
+      return
+    }
+
+    if (isListening) {
+      setIsListening(false)
+      return
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const recognition = new SpeechRecognition()
+    
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.lang = 'en-US'
+
+    recognition.onstart = () => setIsListening(true)
+    recognition.onend = () => setIsListening(false)
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setQuery(prev => prev + (prev ? ' ' : '') + transcript)
+    }
+
+    recognition.start()
+  }
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Query Input */}
-      <div className="lg:col-span-2 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="w-5 h-5" />
-              Natural Language Query
-            </CardTitle>
-            <CardDescription>
-              Ask questions about your documents in plain English. Our AI will understand 
-              the context and provide intelligent answers.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Textarea
-                ref={textareaRef}
-                value={query}
-                onChange={(e) => onTextareaChange(e.target.value)}
-                placeholder="Ask anything about your documents... 
-                Examples: 'What are the common reasons for claim denials?', 
-                'Find all contracts with specific termination clauses', 
-                'Show me documents related to compliance requirements'"
-                className="min-h-[120px] resize-none pr-12"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    handleSubmit()
-                  }
-                }}
-              />
-              {showMentionList && (
-                <div className="absolute left-3 top-3 mt-6 w-[calc(100%-3rem)] z-10">
-                  <Card className="shadow-lg border">
-                    <CardContent className="p-2">
-                      <div className="max-h-60 overflow-auto">
-                        {filteredMentionDocs.length === 0 ? (
-                          <div className="text-sm text-gray-500 p-2">No matching documents</div>
-                        ) : (
-                          filteredMentionDocs.map(doc => (
-                            <button
-                              key={doc.id}
-                              className="w-full text-left px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                              onMouseDown={(e) => { e.preventDefault(); handleSelectMention(doc) }}
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+      {/* Hero Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center space-y-3 sm:space-y-4 py-4 sm:py-6 lg:py-8 px-4"
+      >
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+          <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl">
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Ask Anything
+          </h1>
+        </div>
+        <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          Transform your documents into intelligent conversations. Ask questions in natural language and get instant, contextual answers.
+        </p>
+      </motion.div>
+
+      {/* No Providers Warning */}
+      {providers.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="px-4 mb-6"
+        >
+          <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
+              No AI providers are configured. Please go to{' '}
+              <a href="/settings" className="font-medium underline hover:no-underline">
+                Settings
+              </a>{' '}
+              to configure at least one AI provider before asking questions.
+            </AlertDescription>
+          </Alert>
+        </motion.div>
+      )}
+
+      {/* Main Query Interface */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="relative px-4"
+      >
+        <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors duration-300">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <div className="space-y-4 sm:space-y-6">
+              {/* Query Input Area */}
+              <div className="relative">
+                <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                  <div className="flex-1 relative w-full">
+                    <Textarea
+                      ref={textareaRef}
+                      value={query}
+                      onChange={(e) => onTextareaChange(e.target.value)}
+                      placeholder="What would you like to know about your documents? Try asking something like 'What are the key risks in my contracts?' or 'Show me all compliance-related documents'..."
+                      className="min-h-[120px] sm:min-h-[140px] text-base sm:text-lg border-0 shadow-none resize-none focus-visible:ring-0 placeholder:text-gray-400"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                          handleSubmit()
+                        }
+                      }}
+                    />
+                    
+                    {/* Mention Dropdown */}
+                    <AnimatePresence>
+                      {showMentionList && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute left-0 top-full mt-2 w-full z-20"
+                        >
+                          <Card className="shadow-xl border-2">
+                            <CardContent className="p-2 sm:p-3">
+                              <div className="max-h-48 overflow-auto space-y-1">
+                                {filteredMentionDocs.length === 0 ? (
+                                  <div className="text-xs sm:text-sm text-gray-500 p-2 sm:p-3 text-center">
+                                    No matching documents found
+                                  </div>
+                                ) : (
+                                  filteredMentionDocs.map(doc => (
+                                    <button
+                                      key={doc.id}
+                                      className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-2"
+                                      onMouseDown={(e) => { e.preventDefault(); handleSelectMention(doc) }}
+                                    >
+                                      <FileText className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                                      <span className="truncate text-xs sm:text-sm">{doc.name}</span>
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex sm:flex-col gap-2 w-full sm:w-auto">
+                    <Button
+                      onClick={toggleVoiceRecognition}
+                      variant="outline"
+                      size="sm"
+                      className={`flex-1 sm:flex-none ${isListening ? 'bg-red-50 border-red-200 text-red-600' : ''}`}
+                    >
+                      {isListening ? <MicOff className="w-3 h-3 sm:w-4 sm:h-4" /> : <Mic className="w-3 h-3 sm:w-4 sm:h-4" />}
+                      <span className="ml-1 sm:hidden text-xs">{isListening ? 'Stop' : 'Voice'}</span>
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={isProcessing || !query.trim() || providers.length === 0}
+                      className="flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                      size="sm"
+                    >
+                      {isProcessing ? (
+                        <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                      )}
+                      <span className="ml-1 sm:hidden text-xs">Send</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Selected Documents */}
+                <AnimatePresence>
+                  {selectedDocumentIds.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 pt-4 border-t"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <Target className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Focusing on {selectedDocumentIds.length} document{selectedDocumentIds.length > 1 ? 's' : ''}:
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedDocumentIds.map(id => {
+                          const doc = completedDocuments.find(d => d.id === id)
+                          if (!doc) return null
+                          return (
+                            <motion.div
+                              key={id}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
                             >
-                              {doc.name}
-                            </button>
+                              <Badge variant="secondary" className="flex items-center gap-2 px-3 py-1">
+                                <FileText className="w-3 h-3" />
+                                <span className="max-w-32 truncate">{doc.name}</span>
+                                <button 
+                                  onClick={() => removeSelectedDoc(id)} 
+                                  className="hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full p-0.5"
+                                  aria-label={`Remove ${doc.name}`}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            </motion.div>
+                          )
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Footer Actions */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mt-4 sm:mt-6 pt-3 sm:pt-4 border-t">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Ctrl/Cmd + Enter to send</span>
+                      <span className="sm:hidden">Ctrl+Enter to send</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Type @ to mention documents</span>
+                      <span className="sm:hidden">@ to mention docs</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    <Select value={selectedProviderId} onValueChange={setSelectedProviderId}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder={providers.length === 0 ? "No AI Models Configured" : "Select AI Model"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {providers.length === 0 ? (
+                          <SelectItem value="no-providers" disabled>
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <AlertCircle className="w-4 h-4" />
+                              <span>Configure AI providers in Settings</span>
+                            </div>
+                          </SelectItem>
+                        ) : (
+                          providers.map(p => (
+                            <SelectItem key={p.id} value={p.id}>
+                              <div className="flex items-center gap-2">
+                                {getProviderIcon(p.type)}
+                                <span className="truncate">{p.name}</span>
+                              </div>
+                            </SelectItem>
                           ))
                         )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-              <Button
-                size="sm"
-                className="absolute bottom-3 right-3"
-                onClick={handleSubmit}
-                disabled={isProcessing || !query.trim()}
-              >
-                {isProcessing ? (
-                  <Clock className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-            {/* Selected documents chips */}
-            {selectedDocumentIds.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedDocumentIds.map(id => {
-                  const doc = completedDocuments.find(d => d.id === id)
-                  if (!doc) return null
-                  return (
-                    <Badge key={id} variant="secondary" className="flex items-center gap-1">
-                      <FileText className="w-3 h-3" />
-                      {doc.name}
-                      <button className="ml-1" onClick={() => removeSelectedDoc(id)} aria-label={`Remove ${doc.name}`}>
-                        <X className="w-3 h-3" />
-                      </button>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Badge variant="outline" className="gap-1 text-xs w-fit">
+                      <Brain className="w-3 h-3" />
+                      AI Powered
                     </Badge>
-                  )
-                })}
-              </div>
-            )}
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <p>Press Ctrl/Cmd + Enter to submit</p>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs">Model:</span>
-                  <Select value={selectedProviderId} onValueChange={setSelectedProviderId}>
-                    <SelectTrigger className="h-8 w-[220px]">
-                      <SelectValue placeholder={currentProvider ? currentProvider.name : 'Select AI model'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {providers.map(p => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  </div>
                 </div>
-                <Badge variant="outline" className="gap-1">
-                  <Brain className="w-3 h-3" />
-                  AI Powered
-                </Badge>
               </div>
             </div>
           </CardContent>
         </Card>
+      </motion.div>
 
-        {/* Query Examples */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="w-5 h-5" />
-              Example Queries
-            </CardTitle>
-            <CardDescription>
-              Click on any example to get started with common document analysis tasks
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {queryExamples.map((example) => (
-                <motion.div
-                  key={example.id}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+      {/* Content Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 px-4">
+        {/* Quick Start & Examples */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-yellow-500" />
+                    Quick Start
+                  </CardTitle>
                   <Button
-                    variant="outline"
-                    className="w-full h-auto p-4 text-left justify-start"
-                    onClick={() => handleExampleClick(example)}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowExamples(!showExamples)}
                   >
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {example.category}
-                        </Badge>
-                      </div>
-                      <p className="font-medium text-sm">{example.question}</p>
-                      <p className="text-xs text-gray-500">{example.description}</p>
-                    </div>
+                    {showExamples ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </Button>
-                </motion.div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Query History */}
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Query History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-3">
-                {isLoadingHistory ? (
-                  <div className="text-center py-8">
-                    <Clock className="w-8 h-8 mx-auto animate-spin text-gray-400 mb-4" />
-                    <p className="text-gray-500">Loading query history...</p>
-                  </div>
-                ) : queryHistory.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No queries yet</h3>
-                    <p className="text-gray-500">Start by asking a question about your documents.</p>
-                  </div>
-                ) : (
-                  queryHistory.map((history) => (
-                    <motion.div
-                      key={history.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                    >
-                      <div className="flex items-start gap-2 mb-2">
-                        {getStatusIcon(history.status)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {history.query}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(history.timestamp).toLocaleString()}
-                          </p>
-                        </div>
+                </div>
+                <CardDescription>
+                  Get started with these common queries or explore example questions
+                </CardDescription>
+              </CardHeader>
+              
+              <AnimatePresence>
+                {showExamples && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <CardContent className="space-y-4">
+                      {/* Search Examples */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          placeholder="Search examples..."
+                          value={searchFilter}
+                          onChange={(e) => setSearchFilter(e.target.value)}
+                          className="pl-10"
+                        />
                       </div>
-                      {history.results !== undefined && (
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-3 h-3 text-gray-400" />
-                          <span className="text-xs text-gray-500">
-                            {history.results} results found
-                          </span>
+
+                      {/* Example Categories */}
+                      <div className="space-y-3">
+                        {filteredExamples.map((example) => (
+                          <motion.div
+                            key={example.id}
+                            whileHover={{ scale: 1.005 }}
+                            whileTap={{ scale: 0.995 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="w-full"
+                          >
+                            <div 
+                              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 bg-white dark:bg-gray-800"
+                              onClick={() => handleExampleClick(example)}
+                            >
+                              <div className="flex items-start justify-between gap-3 mb-3">
+                                <Badge variant="secondary" className="text-xs font-medium flex-shrink-0">
+                                  {example.category}
+                                </Badge>
+                                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                              </div>
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-sm leading-5 text-gray-900 dark:text-gray-100 break-words">
+                                  {example.question}
+                                </h4>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 leading-4 break-words">
+                                  {example.description}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {filteredExamples.length === 0 && (
+                        <div className="text-center py-8">
+                          <Search className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                          <p className="text-gray-500">No examples match your search</p>
                         </div>
                       )}
+                    </CardContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+          </motion.div>
+
+          {/* AI Capabilities */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-purple-500" />
+                  AI Capabilities
+                </CardTitle>
+                <CardDescription>
+                  Powered by advanced language models for intelligent document analysis
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { icon: Search, label: 'Semantic Search', desc: 'Find meaning, not just keywords' },
+                    { icon: Brain, label: 'Context Understanding', desc: 'Comprehends document relationships' },
+                    { icon: Target, label: 'Pattern Recognition', desc: 'Identifies trends and anomalies' },
+                    { icon: Shield, label: 'Risk Assessment', desc: 'Highlights potential issues' },
+                    { icon: BookOpen, label: 'Cross-Document Analysis', desc: 'Connects information across files' },
+                    { icon: Globe, label: 'Multi-Language Support', desc: 'Works with various languages' }
+                  ].map((capability, index) => (
+                    <motion.div
+                      key={capability.label}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    >
+                      <div className="p-2 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg">
+                        <capability.icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{capability.label}</p>
+                        <p className="text-xs text-gray-500">{capability.desc}</p>
+                      </div>
                     </motion.div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
 
-        {/* AI Provider Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              AI Provider
-            </CardTitle>
-            <CardDescription>
-              Current AI model being used for queries
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {currentProvider ? (
-              <div className="space-y-3">
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Query History */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card>
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getProviderIcon(currentProvider.type)}
-                    <span className="font-medium">{currentProvider.name}</span>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {currentProvider.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="w-5 h-5 text-green-500" />
+                    Recent Queries
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowHistory(!showHistory)}
+                  >
+                    {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </Button>
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex justify-between">
-                    <span>Model:</span>
-                    <span className="font-mono text-xs">{currentProvider.model}</span>
+              </CardHeader>
+              
+              <AnimatePresence>
+                {(showHistory || queryHistory.length === 0) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <CardContent>
+                      <ScrollArea className="h-[300px]">
+                        <div className="space-y-3">
+                          {isLoadingHistory ? (
+                            <div className="text-center py-8">
+                              <RefreshCw className="w-6 h-6 mx-auto animate-spin text-gray-400 mb-3" />
+                              <p className="text-sm text-gray-500">Loading history...</p>
+                            </div>
+                          ) : queryHistory.length === 0 ? (
+                            <div className="text-center py-8">
+                              <MessageCircle className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">No queries yet</h3>
+                              <p className="text-sm text-gray-500">Your query history will appear here</p>
+                            </div>
+                          ) : (
+                            queryHistory.map((history, index) => (
+                              <motion.div
+                                key={history.id}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="group p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-all duration-200"
+                                onClick={() => setQuery(history.query)}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="mt-0.5">
+                                    {getStatusIcon(history.status)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                      {history.query}
+                                    </p>
+                                    <div className="flex items-center justify-between mt-1">
+                                      <p className="text-xs text-gray-500">
+                                        {new Date(history.timestamp).toLocaleDateString()}
+                                      </p>
+                                      {history.results !== undefined && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {history.results} results
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      navigator.clipboard.writeText(history.query)
+                                    }}
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Card>
+          </motion.div>
+
+          {/* AI Provider Status */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-blue-500" />
+                  AI Model
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {currentProvider ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {getProviderIcon(currentProvider.type)}
+                        <div>
+                          <p className="font-medium text-sm">{currentProvider.name}</p>
+                          <p className="text-xs text-gray-500 capitalize">{currentProvider.type}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Active
+                      </Badge>
+                    </div>
+                    
+                    {currentProvider.name.includes('Demo') && (
+                      <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Demo Mode</p>
+                            <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                              Configure a production AI provider in Settings for full functionality.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-between mt-1">
-                    <span>Type:</span>
-                    <span className="capitalize">{currentProvider.type}</span>
-                  </div>
-                </div>
-                {currentProvider.name.includes('Demo') && (
-                  <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                      Demo mode active. Configure a real AI provider in Settings for production use.
-                    </p>
+                ) : (
+                  <div className="text-center py-6">
+                    <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500 mb-3">No AI provider configured</p>
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-3 h-3 mr-2" />
+                      Configure Now
+                    </Button>
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No AI provider configured</p>
-                <Button variant="outline" size="sm" className="mt-2">
-                  <Settings className="w-3 h-3 mr-1" />
-                  Configure
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Capabilities */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Capabilities
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="text-sm">Semantic search</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="text-sm">Context understanding</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="text-sm">Pattern recognition</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="text-sm">Cross-document analysis</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="text-sm">Risk assessment</span>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
     </div>
   )

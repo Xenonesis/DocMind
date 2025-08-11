@@ -136,16 +136,16 @@ export function DocumentList({ documents }: DocumentListProps) {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             Document Library
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             Manage and analyze your uploaded documents
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -153,33 +153,35 @@ export function DocumentList({ documents }: DocumentListProps) {
                   placeholder="Search documents..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 text-sm sm:text-base"
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="UPLOADING">Uploading</SelectItem>
-                <SelectItem value="PROCESSING">Processing</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-                <SelectItem value="ERROR">Error</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {documentTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="UPLOADING">Uploading</SelectItem>
+                  <SelectItem value="PROCESSING">Processing</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="ERROR">Error</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {documentTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -208,42 +210,50 @@ export function DocumentList({ documents }: DocumentListProps) {
                   key={doc.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      {getFileIcon(doc.name)}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        {getFileIcon(doc.name)}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{doc.name}</h3>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                        <h3 className="font-medium truncate text-sm sm:text-base">{doc.name}</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-gray-500">
                           <div className="flex items-center gap-1">
                             <HardDrive className="w-3 h-3" />
                             <span>{doc.size}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            <span>{formatDate(doc.uploadDate)}</span>
+                            <span className="hidden sm:inline">{formatDate(doc.uploadDate)}</span>
+                            <span className="sm:hidden">{new Date(doc.uploadDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                           </div>
                           {doc.category && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs w-fit">
                               {doc.category}
                             </Badge>
                           )}
                         </div>
                         {doc.tags && doc.tags.length > 0 && (
-                          <div className="flex gap-1 mt-2">
-                            {doc.tags.map((tag, index) => (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {doc.tags.slice(0, 3).map((tag, index) => (
                               <Badge key={index} variant="secondary" className="text-xs">
                                 {tag}
                               </Badge>
                             ))}
+                            {doc.tags.length > 3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{doc.tags.length - 3}
+                              </Badge>
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      <Badge className={getStatusColor(doc.status)}>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                      <Badge className={`${getStatusColor(doc.status)} text-xs w-fit`}>
                         {getStatusIcon(doc.status)}
                         <span className="ml-1 capitalize">{doc.status}</span>
                       </Badge>
@@ -254,19 +264,21 @@ export function DocumentList({ documents }: DocumentListProps) {
                           size="sm"
                           onClick={() => handlePreview(doc)}
                           title="Preview document"
+                          className="h-8 w-8 p-0"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleDownload(doc)}
                           title="Download document"
+                          className="h-8 w-8 p-0"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="w-4 h-4" />
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     </div>

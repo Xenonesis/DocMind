@@ -52,22 +52,8 @@ export class AIService {
   }
 
   private async loadProviders() {
-    try {
-      // Check if we're in browser environment
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('aiProviders')
-        if (saved) {
-          const providers = JSON.parse(saved)
-          // Decrypt API keys when loading
-          this.providers = providers.map((p: AIProvider) => ({
-            ...p,
-            apiKey: decryptApiKey(p.apiKey)
-          }))
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load AI providers:', error)
-    }
+    // Providers are now loaded from database via API calls
+    // No localStorage usage
   }
 
   getActiveProvider(): AIProvider | null {
@@ -82,7 +68,6 @@ export class AIService {
       }
 
       if (!userId) {
-        console.log('No user ID provided, cannot load AI providers')
         return
       }
 
@@ -90,7 +75,6 @@ export class AIService {
       const { supabaseServer } = await import('./supabase')
       
       if (!supabaseServer) {
-        console.log('Supabase not configured, cannot load AI providers')
         return
       }
 
@@ -107,27 +91,46 @@ export class AIService {
       }
 
       if (!settings || settings.length === 0) {
-        console.log('No AI provider settings found for user')
         return
       }
       
       // Convert database settings to AIProvider format
       this.providers = settings.map(setting => {
-        // Map database provider names to AI service type strings
+        // Normalize and map provider names from DB to internal provider types
+        const rawName = (setting.provider_name || '').toString()
+        const providerName = rawName.trim().toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-')
+
         const typeMapping: Record<string, AIProvider['type']> = {
+          // Google / Gemini
           'google': 'google',
+          'google-ai': 'google',
+          'googleai': 'google',
+          'google-llm': 'google',
+          'gemini': 'google',
+          // Mistral
           'mistral': 'mistral',
+          // LM Studio
           'lm-studio': 'lm-studio',
+          'lmstudio': 'lm-studio',
+          // Ollama
           'ollama': 'ollama',
+          // OpenRouter
           'openrouter': 'open-router',
           'open-router': 'open-router',
+          'openrouter.ai': 'open-router',
+          // OpenAI
           'openai': 'openai',
+          'chatgpt': 'openai',
+          'gpt': 'openai',
+          // Anthropic
           'anthropic': 'anthropic',
+          'claude': 'anthropic',
+          // Fallback
           'custom': 'custom'
         }
 
-        const providerName = setting.provider_name.toLowerCase()
-        const mappedType: AIProvider['type'] = typeMapping[providerName] || 'custom'
+        const mappedType: AIProvider['type'] =
+          typeMapping[providerName] || typeMapping[providerName.replace(/\./g, '')] || 'custom'
         
         // Set default base URLs based on provider type
         const defaultBaseUrls: Record<string, string> = {
@@ -142,7 +145,7 @@ export class AIService {
         
         return {
           id: setting.id,
-          name: `${setting.provider_name} (${setting.model_name || ''})`,
+          name: `${rawName} (${setting.model_name || ''})`,
           type: mappedType,
           apiKey: setting.api_key || '',
           baseUrl: defaultBaseUrls[mappedType] || 'http://localhost:8080',
@@ -154,8 +157,6 @@ export class AIService {
           topP: 1.0
         } as AIProvider
       })
-      
-      console.log(`Loaded ${this.providers.length} AI providers from database`)
       
     } catch (error) {
       console.error('Failed to load AI providers from database:', error)
@@ -547,12 +548,7 @@ export class AIService {
   
 
   updateProviders(providers: AIProvider[]) {
-    // Encrypt API keys before saving
-    const encryptedProviders = providers.map(p => ({
-      ...p,
-      apiKey: encryptApiKey(p.apiKey)
-    }))
+    // Update in-memory providers only - persistence is handled by the API
     this.providers = providers
-    localStorage.setItem('aiProviders', JSON.stringify(encryptedProviders))
   }
 }

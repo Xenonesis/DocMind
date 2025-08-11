@@ -66,7 +66,18 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
 
   // Basic validation patterns for different providers
   const patterns = {
-    google: /^AIza[0-9A-Za-z\-_]{35}$/,
+    // Google API keys can have various formats:
+    // - AIza... (most common, typically 39 chars but can vary)
+    // - Other formats for different Google services (20+ chars, but not starting with AIza)
+    // Be more permissive for Google keys to accommodate different formats
+    google: (key: string) => {
+      // AIza keys - be more flexible with length (35-45 chars is common)
+      if (key.startsWith('AIza')) {
+        return key.length >= 35 && key.length <= 45 && /^AIza[0-9A-Za-z\-_]+$/.test(key)
+      }
+      // Other Google keys must be at least 20 characters and not start with AIza
+      return key.length >= 20 && /^[A-Za-z0-9\-_]+$/.test(key)
+    },
     mistral: /^[a-zA-Z0-9]{32}$/,
     'open-router': /^sk-or-[a-zA-Z0-9]{48,}$/,
     openai: /^sk-[a-zA-Z0-9]{20,}$/,
@@ -77,6 +88,11 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
 
   const pattern = patterns[providerType as keyof typeof patterns]
   if (pattern) {
+    // Handle function-based validation for Google
+    if (typeof pattern === 'function') {
+      return pattern(apiKey)
+    }
+    // Handle regex-based validation for other providers
     return pattern.test(apiKey)
   }
 

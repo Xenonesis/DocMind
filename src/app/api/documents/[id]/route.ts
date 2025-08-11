@@ -7,7 +7,6 @@ export async function GET(
 ) {
   try {
     const { id: documentId } = await params
-    console.log('Fetching document with ID:', documentId)
 
     // Get document from database
     const document = await documentService.getById(documentId)
@@ -37,7 +36,6 @@ export async function DELETE(
 ) {
   try {
     const { id: documentId } = await params
-    console.log('Deleting document with ID:', documentId)
 
     // Delete document from database
     await documentService.delete(documentId)
@@ -64,13 +62,14 @@ export async function PUT(
     const { id: documentId } = await params
     const updates = await request.json()
     
-    console.log('Updating document with ID:', documentId, 'Updates:', updates)
-
     // Update document in database
-    const updatedDocument = await documentService.update(documentId, updates)
+    await documentService.update(documentId, updates)
+
+    // Get the updated document
+    const updatedDocument = await documentService.getById(documentId)
 
     if (!updatedDocument) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Document not found after update' }, { status: 404 })
     }
 
     return NextResponse.json(updatedDocument)

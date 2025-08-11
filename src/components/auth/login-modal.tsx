@@ -55,10 +55,10 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md mx-4 max-w-[calc(100vw-2rem)]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">Welcome Back</DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">Welcome Back</DialogTitle>
+          <DialogDescription className="text-center text-sm sm:text-base">
             Sign in to your DocMind account
           </DialogDescription>
         </DialogHeader>
@@ -67,7 +67,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="space-y-6"
+          className="space-y-4 sm:space-y-6"
         >
           {/* Social Login */}
           <div className="space-y-3">

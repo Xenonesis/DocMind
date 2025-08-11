@@ -6,7 +6,7 @@ import {
   DocumentUpdate, 
   QueryUpdate, 
   AnalysisUpdate 
-} from '@/lib/socket'
+} from '@/lib/socket-types'
 
 interface UseSocketOptions {
   autoConnect?: boolean
@@ -66,7 +66,6 @@ export function useSocket(options: UseSocketOptions = {}) {
     // Connection events
     socket.on('connect', () => {
       setState(prev => ({ ...prev, isConnected: true }))
-      console.log('Socket connected:', socket.id)
 
       // Join rooms if specified
       if (documentId) {
@@ -80,7 +79,6 @@ export function useSocket(options: UseSocketOptions = {}) {
 
     socket.on('disconnect', () => {
       setState(prev => ({ ...prev, isConnected: false }))
-      console.log('Socket disconnected')
     })
 
     // Document updates
@@ -136,12 +134,12 @@ export function useSocket(options: UseSocketOptions = {}) {
 
     // Connection confirmation
     socket.on('connected', (data: { socketId: string; timestamp: string; message: string }) => {
-      console.log('Socket connection confirmed:', data)
+      // Connection confirmed
     })
 
     // Welcome message
     socket.on('message', (msg: { text: string; senderId: string; timestamp: string }) => {
-      console.log('Socket message:', msg)
+      // Message received
     })
 
     // Auto-connect if enabled

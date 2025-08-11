@@ -65,9 +65,6 @@ export default function DocumentPreviewPage() {
   const router = useRouter()
   const documentId = params.id as string
   
-  console.log('DocumentPreviewPage rendered with params:', params)
-  console.log('Document ID:', documentId)
-  
   const [document, setDocument] = useState<Document | null>(null)
   const [previewContent, setPreviewContent] = useState<PreviewContent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -88,13 +85,10 @@ export default function DocumentPreviewPage() {
 
   const fetchDocument = async () => {
     try {
-      console.log('Fetching document with ID:', documentId)
       const response = await fetch(`/api/documents/${documentId}`)
-      console.log('Document fetch response status:', response.status)
       
       if (response.ok) {
         const data = await response.json()
-        console.log('Document data received:', data)
         setDocument(data)
       } else {
         const errorData = await response.json()
@@ -147,18 +141,20 @@ export default function DocumentPreviewPage() {
           url: window.location.href
         })
       } catch (err) {
-        console.log('Share failed:', err)
+        // Share failed
       }
     }
   }
 
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen()
-      setIsFullScreen(true)
-    } else {
-      document.exitFullscreen()
-      setIsFullScreen(false)
+    if (typeof window !== 'undefined') {
+      if (!window.document.fullscreenElement) {
+        containerRef.current?.requestFullscreen()
+        setIsFullScreen(true)
+      } else {
+        window.document.exitFullscreen()
+        setIsFullScreen(false)
+      }
     }
   }
 
@@ -197,13 +193,13 @@ export default function DocumentPreviewPage() {
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
+        const a = window.document.createElement('a')
         a.href = url
         a.download = document.name
-        document.body.appendChild(a)
+        window.document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
+        window.document.body.removeChild(a)
       }
     } catch (error) {
       console.error('Download failed:', error)
@@ -389,7 +385,7 @@ export default function DocumentPreviewPage() {
                     size="sm" 
                     onClick={() => {
                       // Check if we can go back in history
-                      if (window.history.length > 1 && document.referrer) {
+                      if (window.history.length > 1 && window.document.referrer) {
                         // If there's a referrer, go back
                         window.history.back()
                       } else {

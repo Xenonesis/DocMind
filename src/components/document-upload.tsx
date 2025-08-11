@@ -202,21 +202,21 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
             Upload Documents
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             Upload your documents for intelligent processing and analysis. 
             Supports PDF, DOC, DOCX, TXT, and image files.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            className={`border-2 border-dashed rounded-lg p-4 sm:p-6 lg:p-8 text-center transition-colors ${
               isDragOver 
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' 
                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
@@ -225,11 +225,11 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
           >
-            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-lg font-medium mb-2">
+            <Upload className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 mx-auto mb-3 sm:mb-4 text-gray-400" />
+            <p className="text-base sm:text-lg font-medium mb-2">
               Drag and drop your files here
             </p>
-            <p className="text-gray-500 mb-4">
+            <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">
               or click to browse files
             </p>
             <input
@@ -240,7 +240,7 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
               className="hidden"
               id="file-upload"
             />
-            <Button asChild>
+            <Button asChild size="sm" className="w-full sm:w-auto">
               <label htmlFor="file-upload" className="cursor-pointer">
                 Choose Files
               </label>

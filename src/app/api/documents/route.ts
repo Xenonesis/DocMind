@@ -55,14 +55,14 @@ export async function GET(request: NextRequest) {
     const formattedDocuments = await Promise.all(
       documents.map(async (doc) => {
         // Get analysis count for this document
-        const { count: analysisCount } = await supabaseServer
+        const { count: analysisCount } = await supabaseServer!
           .from('analyses')
           .select('*', { count: 'exact', head: true })
           .eq('document_id', doc.id)
           .eq('user_id', user.id)
 
         // Get query count for this document (queries that reference this document)
-        const { data: queries } = await supabaseServer
+        const { data: queries } = await supabaseServer!
           .from('queries')
           .select('document_ids')
           .eq('user_id', user.id)

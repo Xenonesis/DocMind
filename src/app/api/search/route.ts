@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all completed documents for searching
-    let documents = await documentService.getWhere('status', '==', 'COMPLETED')
+    let documents: any[] = await documentService.getWhere('status', '==', 'COMPLETED')
     
     // Apply additional filters
     if (filters.type) {
@@ -118,7 +118,7 @@ Provide relevance scores between 0 and 1, where 1 is perfectly relevant.`
         searchResults = JSON.parse(completion.content)
       } catch (parseError) {
         // If AI response is not valid JSON, perform fallback search
-        return fallbackKeywordSearch(query, documents, limit)
+        return NextResponse.json(fallbackKeywordSearch(query, documents, limit))
       }
 
       // Enhance results with full document details
@@ -160,7 +160,7 @@ Provide relevance scores between 0 and 1, where 1 is perfectly relevant.`
       console.error('AI semantic search error:', aiError)
       
       // Fallback to basic keyword search
-      return fallbackKeywordSearch(query, documents, limit)
+      return NextResponse.json(fallbackKeywordSearch(query, documents, limit))
     }
 
   } catch (error) {

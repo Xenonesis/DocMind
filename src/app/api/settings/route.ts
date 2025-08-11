@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase'
+import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
 import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
+import { encryptApiKey, decryptApiKey, maskApiKey } from '@/lib/crypto-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,15 +12,53 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    if (!db) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
+    // Verify user exists by checking if we can query their data
+    try {
+      const { data: testQuery, error: testError } = await db
+        .from('user_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      // If the user doesn't exist, their session is invalid
+      if (testError && testError.code === 'PGRST116') {
+        console.error(`User ${user.id} not found in database:`, testError)
+        return NextResponse.json({ 
+          error: 'User session is invalid. Please log out and log back in.' 
+        }, { status: 401 })
+      }
+
+      // If there's any other error with the test query, log it but continue
+      if (testError) {
+        console.warn('User verification query had an error, but continuing:', testError)
+      }
+    } catch (verificationError) {
+      console.warn('User verification failed, but continuing:', verificationError)
+    }
+
     // Ensure user profile exists
-    await ensureUserProfile(user)
+    try {
+      await ensureUserProfile(user)
+    } catch (profileError: any) {
+      console.error('Error ensuring user profile:', profileError)
+      if (profileError.code === '23503' || profileError.message === 'User not found in authentication system') {
+        return NextResponse.json({ 
+          error: 'User session is invalid. Please log out and log back in.' 
+        }, { status: 401 })
+      }
+      throw profileError
+    }
 
     // Get user's AI provider settings
-    const { data: settings, error } = await supabaseServer
+    const { data: settings, error } = await db
       .from('ai_provider_settings')
       .select('*')
       .eq('user_id', user.id)
@@ -33,9 +72,10 @@ export async function GET(request: NextRequest) {
     const formattedSettings = (settings || []).map(setting => ({
       id: setting.id,
       provider: setting.provider_name,
-      apiKey: setting.api_key ? '•'.repeat(32) : '', // Masked API key
+      apiKey: setting.api_key ? maskApiKey(decryptApiKey(setting.api_key)) : '', // Properly masked API key
       model: setting.model_name,
       isActive: setting.is_active,
+      baseUrl: setting.base_url || '',
       createdAt: setting.created_at,
       updatedAt: setting.updated_at
     }))
@@ -59,96 +99,114 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    if (!db) {
+      console.error('Supabase server not configured')
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Ensure user profile exists
-    await ensureUserProfile(user)
+    // Ensure user profile exists (best-effort)
+    try { await ensureUserProfile(user) } catch {}
 
-    // Helper to upsert a single provider setting
-    const upsertOne = async (item: any) => {
-      const { provider, apiKey, model, isActive = false } = item || {}
+    const { providers } = body
+    if (!providers || !Array.isArray(providers)) {
+      return NextResponse.json({ error: 'Invalid request format' }, { status: 400 })
+    }
 
-      if (!provider) {
-        throw new Error('Provider is required')
-      }
+    const results = []
 
-      // Check if setting already exists
-      const { data: existingSetting } = await supabaseServer
-        .from('ai_provider_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('provider_name', provider)
-        .single()
-
-      let result
-      if (existingSetting) {
-        // Update existing setting
-        const { data: updatedSetting, error: updateError } = await supabaseServer
-          .from('ai_provider_settings')
-          .update({
-            api_key: apiKey ?? existingSetting.api_key,
-            model_name: model ?? existingSetting.model_name,
-            is_active: isActive,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingSetting.id)
-          .select()
-          .single()
-
-        if (updateError) {
-          throw updateError
-        }
-        result = updatedSetting
-      } else {
-        // Create new setting
-        const { data: newSetting, error: createError } = await supabaseServer
-          .from('ai_provider_settings')
-          .insert({
-            user_id: user.id,
-            provider_name: provider,
-            api_key: apiKey || '',
-            model_name: model || '',
-            is_active: isActive
-          })
-          .select()
-          .single()
-
-        if (createError) {
-          throw createError
-        }
-        result = newSetting
-      }
-
-      return {
-        id: result.id,
-        provider: result.provider_name,
-        apiKey: '•'.repeat(32),
-        model: result.model_name,
-        isActive: result.is_active,
-        createdAt: result.created_at,
-        updatedAt: result.updated_at
+    for (const item of providers) {
+      try {
+        const result = await upsertProviderSetting(db, user.id, item)
+        results.push(result)
+      } catch (error: any) {
+        console.error('Error processing provider:', error)
+        results.push({ error: error.message, provider: item.provider })
       }
     }
 
-    // Bulk save if providers array is provided
-    if (Array.isArray(body?.providers)) {
-      const results = [] as any[]
-      for (const item of body.providers) {
-        const saved = await upsertOne(item)
-        results.push(saved)
-      }
-      return NextResponse.json(results)
-    }
-
-    // Single save fallback (backward compatible)
-    const singleResult = await upsertOne(body)
-    return NextResponse.json(singleResult)
-
+    return NextResponse.json({ success: true, results })
   } catch (error) {
-    console.error('Error saving setting:', error)
-    return NextResponse.json({ error: 'Failed to save setting' }, { status: 500 })
+    console.error('Error in settings POST:', error)
+    return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 })
   }
+}
+
+// Enhanced upsert function with proper encryption
+async function upsertProviderSetting(db: any, userId: string, item: any) {
+  const { provider, apiKey, model, isActive, config, baseUrl } = item
+
+  // Check for existing setting
+  const { data: existingSetting, error: fetchError } = await db
+    .from('ai_provider_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('provider_name', provider)
+    .maybeSingle()
+
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    console.error('Error fetching existing setting:', fetchError)
+    throw fetchError
+  }
+
+  let result
+  if (existingSetting) {
+    // Only update API key if provided (not undefined or empty string for masked values)
+    let apiKeyUpdate = existingSetting.api_key
+    if (apiKey !== undefined && apiKey !== '' && !apiKey.includes('•')) {
+      // Encrypt the new API key
+      apiKeyUpdate = encryptApiKey(apiKey)
+    }
+
+    const updateData = {
+      api_key: apiKeyUpdate,
+      model_name: model ?? existingSetting.model_name,
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+      base_url: baseUrl ?? existingSetting.base_url
+    }
+
+    const { data: updatedSetting, error: updateError } = await db
+      .from('ai_provider_settings')
+      .update(updateData)
+      .eq('id', existingSetting.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('Error updating setting:', updateError)
+      throw updateError
+    }
+    result = updatedSetting
+  } else {
+    // Encrypt API key for new settings
+    const encryptedApiKey = apiKey ? encryptApiKey(apiKey) : ''
+
+    const insertData = {
+      user_id: userId,
+      provider_name: provider,
+      api_key: encryptedApiKey,
+      model_name: model || '',
+      is_active: isActive,
+      base_url: baseUrl ?? null
+    }
+
+    const { data: newSetting, error: createError } = await db
+      .from('ai_provider_settings')
+      .insert(insertData)
+      .select()
+      .single()
+
+    if (createError) {
+      console.error('Error creating setting:', createError)
+      throw createError
+    }
+    result = newSetting
+  }
+
+  return result
 }
 

@@ -34,20 +34,18 @@ export async function GET(
       metadata.storageRef ? path.join(process.cwd(), 'public', 'uploads', metadata.storageRef) : null
     ].filter(Boolean) as string[]
 
-    let filePath: string
-    let fileBuffer: Buffer
-    let fileFound = false
+    let filePath: string | null = null
+    let fileBuffer: Buffer | null = null
 
     for (const possiblePath of possiblePaths) {
       if (fs.existsSync(possiblePath)) {
         filePath = possiblePath
         fileBuffer = fs.readFileSync(filePath)
-        fileFound = true
         break
       }
     }
 
-    if (!fileFound) {
+    if (!fileBuffer || !filePath) {
       console.error('File not found in any of these locations:', possiblePaths)
       return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
     }

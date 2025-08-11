@@ -10,13 +10,11 @@ export async function GET(
 ) {
   try {
     const { id: documentId } = await params
-    console.log('Preview request for document ID:', documentId)
 
     // Get document from database
     let document
     try {
       document = await documentService.getById(documentId)
-      console.log('Document found:', document ? 'Yes' : 'No')
     } catch (dbError) {
       console.error('Database error:', dbError)
       return NextResponse.json({ error: 'Database error: ' + (dbError as Error).message }, { status: 500 })

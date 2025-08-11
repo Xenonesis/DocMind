@@ -33,6 +33,7 @@ import { AnalysisResults } from '@/components/analysis-results'
 import { AiApiSettings } from '@/components/settings/ai-api-settings'
 import { useAuth } from '@/lib/auth-context'
 import { ProtectedRoute } from '@/components/protected-route'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface Document {
   id: string
@@ -75,7 +76,7 @@ export default function Dashboard() {
       console.error('Error fetching documents:', error)
       // If authentication fails, the auth context will handle redirecting
       if (error instanceof Error && error.message.includes('authentication')) {
-        console.log('Authentication error, user will be redirected')
+        // Authentication error, user will be redirected
       }
     } finally {
       setIsLoading(false)
@@ -155,44 +156,46 @@ export default function Dashboard() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto p-6 max-w-7xl">
+        <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-600 rounded-lg">
-                <FileText className="w-8 h-8 text-white" />
+              <div className="p-1.5 sm:p-2 bg-blue-600 rounded-lg">
+                <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
                   DocMind
                 </h1>
-                <p className="text-slate-600 dark:text-slate-400">
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
                   Welcome back, {user.name}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <Avatar>
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+              <ThemeToggle />
+              <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback>
-                  <User className="w-4 h-4" />
+                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
                 </AvatarFallback>
               </Avatar>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+              <Button variant="outline" onClick={handleLogout} size="sm" className="text-xs sm:text-sm">
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
               </Button>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -245,27 +248,27 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="upload" className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Upload
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+            <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+              <TabsTrigger value="upload" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+                <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">Upload</span>
               </TabsTrigger>
-              <TabsTrigger value="documents" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Documents
+              <TabsTrigger value="documents" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">Docs</span>
               </TabsTrigger>
-              <TabsTrigger value="query" className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Query
+              <TabsTrigger value="query" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+                <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">Query</span>
               </TabsTrigger>
-              <TabsTrigger value="results" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                Results
+              <TabsTrigger value="results" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">Results</span>
               </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                Settings
+              <TabsTrigger value="settings" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline sm:inline">Settings</span>
               </TabsTrigger>
             </TabsList>
 

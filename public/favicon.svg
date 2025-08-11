@@ -2,21 +2,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <defs>
     <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2a2a2a"/>
-      <stop offset="100%" stop-color="#4a4a4a"/>
+      <stop offset="0%" stop-color="#070606"/>
+      <stop offset="37%" stop-color="#1b1b1b"/>
+      <stop offset="100%" stop-color="#3b3b3b"/>
     </linearGradient>
     <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1a1a1a"/>
-      <stop offset="100%" stop-color="#3a3a3a"/>
+      <stop offset="0%" stop-color="#070606"/>
+      <stop offset="37%" stop-color="#1b1b1b"/>
+      <stop offset="100%" stop-color="#3b3b3b"/>
     </linearGradient>
     <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#333333"/>
-      <stop offset="100%" stop-color="#555555"/>
+      <stop offset="0%" stop-color="#070606"/>
+      <stop offset="37%" stop-color="#1b1b1b"/>
+      <stop offset="100%" stop-color="#3b3b3b"/>
     </linearGradient>
   </defs>
   
-  <!-- Simplified DocMind logo shapes for favicon -->
-  <polygon fill="url(#g1)" points="16,3 12,8 4,8 8,3"/>
-  <polygon fill="url(#g2)" points="30,3 6,29 2,29 26,3"/>
-  <polygon fill="url(#g3)" points="28,24 24,29 14,29 18,24"/>
+  <!-- DocMind logo simplified for favicon - three geometric shapes -->
+  <polygon fill="url(#g1)" points="20,2 16.5,5.5 3,5.5 6.5,2"/>
+  <polygon fill="url(#g2)" points="30,2 4,28 1,28 27,2"/>
+  <polygon fill="url(#g3)" points="29,24 25.5,27.5 12,27.5 15.5,24"/>
 </svg>

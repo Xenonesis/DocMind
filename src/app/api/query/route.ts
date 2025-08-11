@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
           response: JSON.stringify(aiResponse),
           ai_provider: activeProvider.name,
           ai_model: activeProvider.model || 'unknown',
-          tokens_used: completion.usage?.total_tokens || 0,
+          tokens_used: completion.usage?.totalTokens || 0,
           processing_time_ms: Date.now() - new Date(queryRecord.created_at).getTime()
         })
         .eq('id', queryRecord.id)
