@@ -143,15 +143,26 @@ export class AIService {
           'ollama': 'http://localhost:11434/api'
         }
         
+        // Decrypt the API key if it exists
+        let decryptedApiKey = ''
+        if (setting.api_key) {
+          try {
+            decryptedApiKey = decryptApiKey(setting.api_key)
+          } catch (error) {
+            console.error('Failed to decrypt API key for provider:', rawName, error)
+            decryptedApiKey = ''
+          }
+        }
+        
         return {
           id: setting.id,
           name: `${rawName} (${setting.model_name || ''})`,
           type: mappedType,
-          apiKey: setting.api_key || '',
-          baseUrl: defaultBaseUrls[mappedType] || 'http://localhost:8080',
+          apiKey: decryptedApiKey,
+          baseUrl: setting.base_url || defaultBaseUrls[mappedType] || 'http://localhost:8080',
           model: setting.model_name || '',
           isActive: !!setting.is_active,
-          isConfigured: !!setting.api_key,
+          isConfigured: !!decryptedApiKey,
           temperature: 0.7,
           maxTokens: 1000,
           topP: 1.0

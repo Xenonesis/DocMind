@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.ai_provider_settings (
     provider_name TEXT NOT NULL,
     api_key TEXT NOT NULL,
     model_name TEXT,
+    base_url TEXT,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

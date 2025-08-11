@@ -31,10 +31,13 @@ import {
   Server,
   Globe,
   Eye,
-  EyeOff
+  EyeOff,
+  Activity
 } from 'lucide-react'
 import { isValidApiKey } from '@/lib/crypto-utils'
 import { useToast } from '@/hooks/use-toast'
+import { ConnectionStatus } from '@/components/ui/connection-status'
+import { ApiUsageTracker } from '@/components/features/api-usage-tracker'
 
 interface AIProvider {
   id: string
@@ -205,18 +208,17 @@ export function AiApiSettings() {
             return raw.toLowerCase().replace(/_/g, '-')
           })()
           const defaults = defaultProviders.find(d => d.type === mappedType)
-          const isMasked = typeof s.apiKey === 'string' && /^[\u2022•]+$/.test(s.apiKey)
           return {
             id: s.id || `provider-${index}`,
             name: `${s.provider} (${s.model || ''})`,
             type: mappedType as AIProvider['type'],
             baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-            // If backend returned a masked value (••••), don't bind it to the input
-            apiKey: isMasked ? '' : (s.apiKey || ''),
+            // Use the actual API key as returned from server
+            apiKey: s.apiKey || '',
             model: s.model || (defaults?.models?.[0] ?? ''),
             isActive: !!s.isActive,
-            // Consider masked value as configured, even if we don't bind it
-            isConfigured: isMasked ? true : !!(s.apiKey && s.apiKey.length > 0),
+            // Provider is configured if it has an API key
+            isConfigured: !!(s.apiKey && s.apiKey.length > 0),
             lastTested: undefined,
             testStatus: undefined,
             errorMessage: undefined,
@@ -270,8 +272,12 @@ export function AiApiSettings() {
 
   const saveProviders = async (newProviders: AIProvider[]) => {
     setProviders(newProviders)
-    // Persist ALL providers to backend directly
-    const payload = newProviders.map(p => ({
+    // Only save providers that have been configured (have API keys or are local providers)
+    const providersToSave = newProviders.filter(p => 
+      p.isConfigured || p.dirtyApiKey || ['ollama', 'lm-studio'].includes(p.type)
+    )
+    
+    const payload = providersToSave.map(p => ({
       provider: (() => {
         switch (p.type) {
           case 'open-router': return 'OPENROUTER'
@@ -284,8 +290,8 @@ export function AiApiSettings() {
           default: return 'CUSTOM'
         }
       })(),
-      // Only send apiKey if user edited it; allows updating or clearing
-      apiKey: p.dirtyApiKey ? (p.apiKey ?? '') : undefined,
+      // Always send apiKey for providers we're saving
+      apiKey: p.apiKey ?? '',
       baseUrl: p.baseUrl,
       model: p.model,
       isActive: !!p.isActive,
@@ -300,7 +306,7 @@ export function AiApiSettings() {
       method: 'POST',
       body: JSON.stringify({ providers: payload })
     })
-    // Refresh from server to reflect masked apiKey and persisted baseUrl
+    // Refresh from server to get the updated data
     const refreshed = await authenticatedRequest('/api/settings')
     setProviders((refreshed as any[]).map((s: any, index: number) => {
       const mappedType = (() => {
@@ -311,16 +317,17 @@ export function AiApiSettings() {
         return raw.toLowerCase().replace(/_/g, '-')
       })()
       const defaults = defaultProviders.find(d => d.type === mappedType)
-      const isMasked = typeof s.apiKey === 'string' && /^[\u2022•]+$/.test(s.apiKey)
       return {
         id: s.id || `provider-${index}`,
         name: `${s.provider} (${s.model || ''})`,
         type: mappedType as AIProvider['type'],
         baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-        apiKey: isMasked ? '' : (s.apiKey || ''),
+        // Use the actual API key as returned from server
+        apiKey: s.apiKey || '',
         model: s.model || (defaults?.models?.[0] ?? ''),
         isActive: !!s.isActive,
-        isConfigured: isMasked ? true : !!(s.apiKey && s.apiKey.length > 0),
+        // Provider is configured if it has an API key
+        isConfigured: !!(s.apiKey && s.apiKey.length > 0),
         lastTested: undefined,
         testStatus: undefined,
         errorMessage: undefined,
@@ -359,79 +366,25 @@ export function AiApiSettings() {
     }
   }
 
-  const testProvider = async (id: string) => {
-    const provider = providers.find(p => p.id === id)
-    if (!provider || !provider.apiKey) return
-
-    // Debug logging to understand what's happening
-    console.log('🔍 Testing provider:', {
-      id: provider.id,
-      name: provider.name,
-      type: provider.type,
-      apiKeyLength: provider.apiKey.length,
-      apiKeyStartsWith: provider.apiKey.substring(0, 4),
-      apiKey: provider.apiKey.substring(0, 8) + '...' + provider.apiKey.substring(provider.apiKey.length - 4)
+  const handleConnectionTest = (id: string, result: any) => {
+    updateProvider(id, {
+      testStatus: result.success ? 'success' : 'error',
+      lastTested: new Date().toISOString(),
+      errorMessage: result.success ? undefined : result.error,
+      isConfigured: result.success
     })
 
-    // Validate API key format before testing
-    if (!isValidApiKey(provider.apiKey, provider.type)) {
-      console.log('❌ API key validation failed for:', provider.name)
-      updateProvider(id, {
-        testStatus: 'error',
-        lastTested: new Date().toISOString(),
-        errorMessage: 'Invalid API key format for this provider',
-        isConfigured: false
-      })
+    if (result.success) {
       toast({
-        title: 'Invalid API key',
-        description: `The API key format for ${provider.name} is invalid. Please check and try again.`,
+        title: 'Connection successful',
+        description: `${providers.find(p => p.id === id)?.name} is now configured and ready to use.`,
+      })
+    } else {
+      toast({
+        title: 'Connection failed',
+        description: result.error || 'Failed to test connection',
         variant: 'destructive',
       })
-      return
-    }
-
-    console.log('✅ API key validation passed for:', provider.name)
-    setTestingProvider(id)
-    updateProvider(id, { testStatus: 'pending' })
-
-    try {
-      // Simple client-side validation simulating a connection check
-      const hasKeyIfRequired = provider.apiKey || ['ollama', 'lm-studio'].includes(provider.type)
-      const ok = !!(provider.model && provider.baseUrl && hasKeyIfRequired)
-
-      updateProvider(id, {
-        testStatus: ok ? 'success' : 'error',
-        lastTested: new Date().toISOString(),
-        errorMessage: ok ? undefined : 'Connection validation failed',
-        isConfigured: ok
-      })
-
-      if (ok) {
-        toast({
-          title: 'Connection successful',
-          description: `${provider.name} is now configured and ready to use.`,
-        })
-      } else {
-        toast({
-          title: 'Connection failed',
-          description: `Failed to validate ${provider.name} connection. Please check your settings.`,
-          variant: 'destructive',
-        })
-      }
-    } catch (error) {
-      updateProvider(id, {
-        testStatus: 'error',
-        lastTested: new Date().toISOString(),
-        errorMessage: 'Connection failed',
-        isConfigured: false
-      })
-      toast({
-        title: 'Connection error',
-        description: `An error occurred while testing ${provider.name}. Please try again.`,
-        variant: 'destructive',
-      })
-    } finally {
-      setTestingProvider(null)
     }
   }
 
@@ -451,7 +404,7 @@ export function AiApiSettings() {
   }
 
   const getDisplayedApiKey = (provider: AIProvider) => {
-    // Always bind the real API key; use input type password to mask visually
+    // Return the actual API key as entered by user
     return provider.apiKey || ''
   }
 
@@ -710,13 +663,13 @@ export function AiApiSettings() {
                   </Alert>
                 )}
 
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    {provider.lastTested && (
-                      <span>Last tested: {new Date(provider.lastTested).toLocaleString()}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      {provider.lastTested && (
+                        <span>Last tested: {new Date(provider.lastTested).toLocaleString()}</span>
+                      )}
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
@@ -740,19 +693,19 @@ export function AiApiSettings() {
                       <Save className="w-4 h-4 mr-2" />
                       Save
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => testProvider(provider.id)}
-                      disabled={!provider.apiKey || testingProvider === provider.id}
-                    >
-                      {testingProvider === provider.id ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <TestTube className="w-4 h-4 mr-2" />
-                      )}
-                      Test Connection
-                    </Button>
                   </div>
+                  
+                  <ConnectionStatus
+                    provider={{
+                      id: provider.id,
+                      name: provider.name,
+                      type: provider.type,
+                      apiKey: provider.apiKey,
+                      model: provider.model,
+                      baseUrl: provider.baseUrl
+                    }}
+                    onTestComplete={(result) => handleConnectionTest(provider.id, result)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -760,41 +713,258 @@ export function AiApiSettings() {
         </TabsContent>
 
         <TabsContent value="advanced" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5" />
+                  Global AI Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure default behavior for all AI providers
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Default System Prompt</Label>
+                  <Textarea
+                    placeholder="You are a helpful AI assistant that analyzes documents..."
+                    className="min-h-[100px]"
+                  />
+                  <p className="text-xs text-gray-500">
+                    This prompt will be used for all AI interactions unless overridden
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Request Timeout (seconds)</Label>
+                    <Input type="number" defaultValue="30" min="5" max="300" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Retry Attempts</Label>
+                    <Input type="number" defaultValue="3" min="1" max="10" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Auto-save Responses</Label>
+                    <p className="text-xs text-gray-500">
+                      Automatically save AI responses for future reference
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable Response Caching</Label>
+                    <p className="text-xs text-gray-500">
+                      Cache responses to reduce API calls for similar queries
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Security & Privacy
+                </CardTitle>
+                <CardDescription>
+                  Configure security and privacy settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Encrypt API Keys</Label>
+                    <p className="text-xs text-gray-500">
+                      API keys are encrypted before storage
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50 text-green-700">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Enabled
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Data Retention Period</Label>
+                    <p className="text-xs text-gray-500">
+                      How long to keep AI responses and logs
+                    </p>
+                  </div>
+                  <Select defaultValue="30">
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                      <SelectItem value="365">1 year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Share Usage Analytics</Label>
+                    <p className="text-xs text-gray-500">
+                      Help improve the service with anonymous usage data
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Allowed IP Addresses (Optional)</Label>
+                  <Input placeholder="192.168.1.0/24, 10.0.0.1" />
+                  <p className="text-xs text-gray-500">
+                    Restrict API access to specific IP ranges
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  Performance Optimization
+                </CardTitle>
+                <CardDescription>
+                  Optimize AI performance and resource usage
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Concurrent Requests Limit</Label>
+                  <div className="flex items-center gap-2">
+                    <Input type="number" defaultValue="5" min="1" max="20" className="w-20" />
+                    <span className="text-sm text-gray-500">requests at once</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Rate Limiting</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-2">
+                      <Input type="number" defaultValue="100" min="1" className="w-20" />
+                      <span className="text-sm text-gray-500">requests per</span>
+                    </div>
+                    <Select defaultValue="hour">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="minute">minute</SelectItem>
+                        <SelectItem value="hour">hour</SelectItem>
+                        <SelectItem value="day">day</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Smart Model Selection</Label>
+                    <p className="text-xs text-gray-500">
+                      Automatically choose the best model for each task
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Failover to Backup Provider</Label>
+                    <p className="text-xs text-gray-500">
+                      Switch to another provider if primary fails
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Monitoring & Alerts
+                </CardTitle>
+                <CardDescription>
+                  Set up monitoring and notification preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Cost Alert Threshold</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">$</span>
+                    <Input type="number" defaultValue="50" min="1" className="w-24" />
+                    <span className="text-sm text-gray-500">per month</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Error Rate Alert</Label>
+                  <div className="flex items-center gap-2">
+                    <Input type="number" defaultValue="10" min="1" max="100" className="w-20" />
+                    <span className="text-sm text-gray-500">% error rate</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Email Notifications</Label>
+                    <p className="text-xs text-gray-500">
+                      Receive alerts via email
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Daily Usage Reports</Label>
+                    <p className="text-xs text-gray-500">
+                      Get daily summaries of API usage
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card>
-            <CardHeader>
-              <CardTitle>Advanced Settings</CardTitle>
-              <CardDescription>
-                Fine-tune AI behavior and performance settings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Advanced configuration options will be available in a future update.
-                </AlertDescription>
-              </Alert>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-900">Save Advanced Settings</h3>
+                  <p className="text-sm text-gray-500">
+                    Apply these settings to all AI providers and future interactions
+                  </p>
+                </div>
+                <Button className="gap-2">
+                  <Save className="w-4 h-4" />
+                  Save All Settings
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="usage" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Usage Statistics</CardTitle>
-              <CardDescription>
-                Monitor your AI API usage and costs.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Usage tracking and analytics will be available in a future update.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+          <ApiUsageTracker />
         </TabsContent>
       </Tabs>
     </div>

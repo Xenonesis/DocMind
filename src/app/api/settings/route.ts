@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     const formattedSettings = (settings || []).map(setting => ({
       id: setting.id,
       provider: setting.provider_name,
-      apiKey: setting.api_key ? maskApiKey(decryptApiKey(setting.api_key)) : '', // Properly masked API key
+      apiKey: setting.api_key ? decryptApiKey(setting.api_key) : '', // Return actual API key, no masking
       model: setting.model_name,
       isActive: setting.is_active,
       baseUrl: setting.base_url || '',
@@ -118,12 +118,16 @@ export async function POST(request: NextRequest) {
 
     const results = []
 
+    console.log(`Processing ${providers.length} providers for user ${user.id}`)
+
     for (const item of providers) {
       try {
+        console.log(`Processing provider: ${item.provider}, apiKey length: ${item.apiKey?.length || 0}`)
         const result = await upsertProviderSetting(db, user.id, item)
         results.push(result)
+        console.log(`Successfully processed provider: ${item.provider}`)
       } catch (error: any) {
-        console.error('Error processing provider:', error)
+        console.error('Error processing provider:', item.provider, error)
         results.push({ error: error.message, provider: item.provider })
       }
     }
@@ -154,9 +158,9 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
 
   let result
   if (existingSetting) {
-    // Only update API key if provided (not undefined or empty string for masked values)
+    // Always update API key if provided
     let apiKeyUpdate = existingSetting.api_key
-    if (apiKey !== undefined && apiKey !== '' && !apiKey.includes('•')) {
+    if (apiKey !== undefined && apiKey !== '') {
       // Encrypt the new API key
       apiKeyUpdate = encryptApiKey(apiKey)
     }
