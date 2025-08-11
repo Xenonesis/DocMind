@@ -1,19 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase'
 
+// Keep this route as a simple redirect trampoline back to the client so the
+// browser-side Supabase client can exchange the code and persist the session
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
-
-  if (code && supabaseServer) {
-    const { error } = await supabaseServer.auth.exchangeCodeForSession(code)
-    
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
-    }
-  }
-
-  // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+  return NextResponse.redirect(`${origin}${next}`)
 }

@@ -851,7 +851,7 @@ PORT=3000
 
 # ===== AI PROVIDERS =====
 # OpenAI Configuration
-OPENAI_API_KEY=sk-your_openai_key_here
+OPENAI_API_KEY=your_real_openai_api_key_here
 OPENAI_MODEL=gpt-4-turbo-preview
 OPENAI_MAX_TOKENS=4096
 
@@ -895,7 +895,7 @@ RATE_LIMIT_WINDOW=900000        # 15 minutes
 // In settings panel or environment
 {
   provider: "openai",
-  apiKey: "sk-...",
+  apiKey: "your_real_api_key_here",
   model: "gpt-4-turbo-preview",
   maxTokens: 4096,
   temperature: 0.7
@@ -906,7 +906,7 @@ RATE_LIMIT_WINDOW=900000        # 15 minutes
 ```typescript
 {
   provider: "anthropic", 
-  apiKey: "sk-ant-...",
+  apiKey: "your_real_anthropic_api_key_here",
   model: "claude-3-sonnet-20240229",
   maxTokens: 4096
 }

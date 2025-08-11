@@ -22,7 +22,9 @@ export const supabaseBrowser: SupabaseClient | null =
         auth: {
           autoRefreshToken: true,
           persistSession: true,
-          detectSessionInUrl: true
+          detectSessionInUrl: true,
+          storageKey: 'docmind.auth',
+          flowType: 'pkce'
         }
       })
     : null
