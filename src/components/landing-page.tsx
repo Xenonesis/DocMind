@@ -35,7 +35,13 @@ import {
   Heart,
   Layers,
   Cpu,
-  Database
+  Database,
+  Menu,
+  X,
+  ExternalLink,
+  BookOpen,
+  HelpCircle,
+  Mail
 } from 'lucide-react'
 import { LoginModal } from '@/components/auth/login-modal'
 import { SignupModal } from '@/components/auth/signup-modal'
@@ -46,6 +52,7 @@ export function LandingPage() {
   const [showSignup, setShowSignup] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
   const { scrollY } = useScroll()
@@ -73,6 +80,28 @@ export function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobileMenuOpen && !(event.target as Element).closest('nav')) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isMobileMenuOpen])
+
+  // Close mobile menu on escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isMobileMenuOpen])
+
   const handleShowLogin = () => {
     setShowSignup(false)
     setShowLogin(true)
@@ -81,6 +110,46 @@ export function LandingPage() {
   const handleShowSignup = () => {
     setShowLogin(false)
     setShowSignup(true)
+  }
+
+  // Navigation items
+  const navigationItems = [
+    {
+      name: "Features",
+      href: "#features",
+      description: "Explore our AI-powered capabilities"
+    },
+    {
+      name: "How it Works",
+      href: "#how-it-works",
+      description: "Learn about our simple 3-step process"
+    },
+    {
+      name: "Pricing",
+      href: "#pricing",
+      description: "Choose the perfect plan for your needs"
+    },
+    {
+      name: "Documentation",
+      href: "#docs",
+      icon: <BookOpen className="w-4 h-4" />,
+      description: "Complete guides and API reference"
+    },
+    {
+      name: "Support",
+      href: "#support",
+      icon: <HelpCircle className="w-4 h-4" />,
+      description: "Get help from our team"
+    }
+  ]
+
+  // Smooth scroll to section
+  const scrollToSection = (sectionId: string) => {
+    const element = document.querySelector(sectionId) || document.querySelector(`[data-section="${sectionId.replace('#', '')}"]`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+      setIsMobileMenuOpen(false)
+    }
   }
 
   // Show loading while checking auth
@@ -206,11 +275,11 @@ export function LandingPage() {
         />
       </div>
 
-      {/* Navigation */}
+      {/* Enhanced Navigation */}
       <nav className={`border-b backdrop-blur-md sticky top-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-white/90 dark:bg-slate-900/90 shadow-lg' 
-          : 'bg-white/60 dark:bg-slate-900/60'
+          ? 'bg-white/95 dark:bg-slate-900/95 shadow-lg border-slate-200/50 dark:border-slate-700/50' 
+          : 'bg-white/80 dark:bg-slate-900/80 border-transparent'
       }`}>
         {/* Scroll progress indicator */}
         <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 ease-out" 
@@ -218,10 +287,12 @@ export function LandingPage() {
         
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
+            {/* Logo */}
             <motion.div 
-              className="flex items-center gap-2 sm:gap-3"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               <div className="p-1.5 sm:p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg sm:rounded-xl shadow-lg">
                 <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -230,28 +301,127 @@ export function LandingPage() {
                 DocMind
               </span>
             </motion.div>
-            <div className="flex items-center gap-2 sm:gap-4">
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-8">
+              {navigationItems.map((item, index) => (
+                <motion.button
+                  key={item.name}
+                  onClick={() => scrollToSection(item.href)}
+                  className="group relative flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 py-2"
+                  whileHover={{ y: -2 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
+                  {item.icon && item.icon}
+                  <span className="font-medium">{item.name}</span>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 group-hover:w-full transition-all duration-300" />
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Right side actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
-              <Button 
-                variant="ghost" 
-                onClick={() => setShowLogin(true)}
-                className="hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors text-sm sm:text-base px-2 sm:px-4"
+              
+              {/* Desktop Auth Buttons */}
+              <div className="hidden sm:flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowLogin(true)}
+                  className="hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors text-sm px-4 py-2"
+                  size="sm"
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => setShowSignup(true)}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 text-sm px-4 py-2 group"
+                  size="sm"
+                >
+                  Get Started
+                  <Sparkles className="w-4 h-4 ml-2 group-hover:rotate-12 transition-transform" />
+                </Button>
+              </div>
+
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
                 size="sm"
+                className="lg:hidden p-2"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle mobile menu"
               >
-                <span className="hidden sm:inline">Sign In</span>
-                <span className="sm:hidden">Sign In</span>
-              </Button>
-              <Button 
-                onClick={() => setShowSignup(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base px-3 sm:px-4"
-                size="sm"
-              >
-                <span className="hidden sm:inline">Get Started</span>
-                <span className="sm:hidden">Start</span>
-                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
+                <motion.div
+                  animate={{ rotate: isMobileMenuOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </motion.div>
               </Button>
             </div>
           </div>
+
+          {/* Mobile Navigation Menu */}
+          <motion.div
+            initial={false}
+            animate={{
+              height: isMobileMenuOpen ? "auto" : 0,
+              opacity: isMobileMenuOpen ? 1 : 0
+            }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="lg:hidden overflow-hidden"
+          >
+            <div className="py-4 space-y-2 border-t border-slate-200 dark:border-slate-700 mt-4">
+              {navigationItems.map((item, index) => (
+                <motion.button
+                  key={item.name}
+                  onClick={() => scrollToSection(item.href)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-all duration-200 group"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ 
+                    opacity: isMobileMenuOpen ? 1 : 0, 
+                    x: isMobileMenuOpen ? 0 : -20 
+                  }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  {item.icon && (
+                    <div className="p-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-lg group-hover:scale-110 transition-transform">
+                      {item.icon}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{item.description}</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                </motion.button>
+              ))}
+              
+              {/* Mobile Auth Buttons */}
+              <div className="flex flex-col gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowLogin(true)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="w-full justify-center"
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowSignup(true)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="w-full justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                >
+                  Get Started
+                  <Sparkles className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </nav>
 
@@ -449,7 +619,7 @@ export function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-gradient-to-br from-white via-slate-50 to-blue-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 relative overflow-hidden">
+      <section id="features" data-section="features" className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-gradient-to-br from-white via-slate-50 to-blue-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-800 opacity-50" />
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl" />
@@ -705,6 +875,108 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" data-section="pricing" className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 relative overflow-hidden">
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900 dark:to-blue-900 border-0 text-xs sm:text-sm">
+              <Target className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+              Simple Pricing
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 px-2">
+              Choose Your
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 block sm:inline">
+                {" "}Perfect Plan
+              </span>
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto px-4">
+              Start free and scale as you grow. No hidden fees, cancel anytime.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                name: "Starter",
+                price: "Free",
+                description: "Perfect for individuals getting started",
+                features: ["5 documents/month", "Basic search", "Email support", "1 user"],
+                color: "from-blue-500 to-cyan-500",
+                bgColor: "bg-blue-50 dark:bg-blue-950",
+                popular: false
+              },
+              {
+                name: "Professional",
+                price: "$29",
+                description: "Ideal for teams and growing businesses",
+                features: ["Unlimited documents", "Advanced AI analysis", "Priority support", "10 users", "API access"],
+                color: "from-purple-500 to-pink-500",
+                bgColor: "bg-purple-50 dark:bg-purple-950",
+                popular: true
+              },
+              {
+                name: "Enterprise",
+                price: "Custom",
+                description: "For large organizations with custom needs",
+                features: ["Everything in Pro", "Custom integrations", "Dedicated support", "Unlimited users", "SLA guarantee"],
+                color: "from-green-500 to-emerald-500",
+                bgColor: "bg-green-50 dark:bg-green-950",
+                popular: false
+              }
+            ].map((plan, index) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className={`relative ${plan.popular ? 'scale-105' : ''}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1">
+                      Most Popular
+                    </Badge>
+                  </div>
+                )}
+                <Card className={`h-full ${plan.bgColor} border-0 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden`}>
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-xl font-bold mb-2">{plan.name}</CardTitle>
+                    <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {plan.price}
+                      {plan.price !== "Free" && plan.price !== "Custom" && <span className="text-sm font-normal text-slate-500">/month</span>}
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-300 mt-2">{plan.description}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3 mb-6">
+                      {plan.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span className="text-sm text-slate-600 dark:text-slate-300">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button 
+                      className={`w-full ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'}`}
+                      onClick={() => setShowSignup(true)}
+                    >
+                      {plan.price === "Custom" ? "Contact Sales" : "Get Started"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="py-16 sm:py-20 px-4 sm:px-6">
         <div className="container mx-auto max-w-6xl">
@@ -884,8 +1156,106 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-6 bg-slate-900 text-white">
+      {/* Support Section */}
+      <section id="support" data-section="support" className="py-16 sm:py-20 px-4 sm:px-6 bg-gradient-to-br from-white via-slate-50 to-blue-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
+        <div className="container mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 border-0 text-xs sm:text-sm">
+              <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+              Get Support
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 px-2">
+              We're Here to
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 block sm:inline">
+                {" "}Help You Succeed
+              </span>
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto px-4">
+              Get the support you need to make the most of DocMind
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <BookOpen className="w-8 h-8" />,
+                title: "Documentation",
+                description: "Comprehensive guides, tutorials, and API reference to get you started quickly.",
+                link: "#docs",
+                color: "from-blue-500 to-cyan-500",
+                bgColor: "bg-blue-50 dark:bg-blue-950"
+              },
+              {
+                icon: <Mail className="w-8 h-8" />,
+                title: "Email Support",
+                description: "Get help from our support team. We typically respond within 24 hours.",
+                link: "mailto:support@docmind.com",
+                color: "from-green-500 to-emerald-500",
+                bgColor: "bg-green-50 dark:bg-green-950"
+              },
+              {
+                icon: <MessageSquare className="w-8 h-8" />,
+                title: "Community",
+                description: "Join our community forum to connect with other users and share experiences.",
+                link: "#community",
+                color: "from-purple-500 to-pink-500",
+                bgColor: "bg-purple-50 dark:bg-purple-950"
+              }
+            ].map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -5 }}
+                className="group"
+              >
+                <Card className={`h-full ${item.bgColor} border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer`}>
+                  <CardHeader className="text-center pb-4">
+                    <div className="flex justify-center mb-4">
+                      <div className={`p-4 bg-gradient-to-r ${item.color} rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <div className="text-white">
+                          {item.icon}
+                        </div>
+                      </div>
+                    </div>
+                    <CardTitle className="text-xl font-semibold mb-2">{item.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                      {item.description}
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors"
+                      onClick={() => {
+                        if (item.link.startsWith('mailto:')) {
+                          window.location.href = item.link
+                        } else {
+                          scrollToSection(item.link)
+                        }
+                      }}
+                    >
+                      Learn More
+                      <ExternalLink className="w-4 h-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Footer */}
+      <footer id="docs" data-section="docs" className="py-12 px-6 bg-slate-900 text-white relative overflow-hidden">
         <div className="container mx-auto max-w-6xl">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
