@@ -91,13 +91,14 @@ export async function requireAuth(request: NextRequest): Promise<AuthenticatedUs
 /**
  * Create or get user profile in the database
  */
-export async function ensureUserProfile(user: AuthenticatedUser) {
-  if (!supabaseServer) {
+export async function ensureUserProfile(user: AuthenticatedUser, dbClient?: any) {
+  const db = dbClient || supabaseServer
+  if (!db) {
     throw new Error('Supabase not configured')
   }
 
   // Check if user profile exists
-  const { data: existingProfile, error: fetchError } = await supabaseServer
+  const { data: existingProfile, error: fetchError } = await db
     .from('user_profiles')
     .select('*')
     .eq('id', user.id)
@@ -118,7 +119,7 @@ export async function ensureUserProfile(user: AuthenticatedUser) {
   }
 
   // Create user profile
-  const { data: newProfile, error: createError } = await supabaseServer
+  const { data: newProfile, error: createError } = await db
     .from('user_profiles')
     .insert({
       id: user.id,

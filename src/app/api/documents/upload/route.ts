@@ -1,6 +1,6 @@
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase'
+import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
 import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 
 import * as mammoth from 'mammoth'
@@ -21,13 +21,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    if (!db) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Ensure user profile exists
     try {
-      await ensureUserProfile(user)
+      await ensureUserProfile(user, db)
     } catch (profileError) {
       console.error('Error ensuring user profile:', profileError)
       return NextResponse.json({ error: 'Failed to create user profile' }, { status: 500 })
@@ -38,13 +42,13 @@ export async function POST(request: NextRequest) {
 
     // Ensure storage bucket exists (idempotent)
     try {
-      await supabaseServer.storage.createBucket('documents', { public: true })
+      await db.storage.createBucket('documents', { public: true })
     } catch (e: any) {
       // ignore if bucket already exists
     }
 
     // Create document record in database
-    const { data: document, error: createError } = await supabaseServer
+    const { data: document, error: createError } = await db
       .from('documents')
       .insert({
         user_id: user.id,
@@ -76,7 +80,7 @@ export async function POST(request: NextRequest) {
       let storageRef = ''
       
       // Upload to Supabase storage
-      const { data: uploadData, error: uploadError } = await supabaseServer
+      const { data: uploadData, error: uploadError } = await db
         .storage
         .from('documents')
         .upload(fileName, Buffer.from(fileBuffer), { 
@@ -87,14 +91,14 @@ export async function POST(request: NextRequest) {
       if (uploadError) {
         console.error('Supabase upload error:', uploadError)
         // Update document status to error
-        await supabaseServer
+        await db
           .from('documents')
           .update({ status: 'ERROR' })
           .eq('id', document.id)
         throw uploadError
       }
       
-      const { data: publicUrl } = supabaseServer.storage
+      const { data: publicUrl } = db.storage
         .from('documents')
         .getPublicUrl(fileName)
       
@@ -102,7 +106,7 @@ export async function POST(request: NextRequest) {
       storageRef = fileName
 
       // Update document status to processing
-      const { error: updateError } = await supabaseServer
+      const { error: updateError } = await db
         .from('documents')
         .update({ 
           status: 'PROCESSING',
@@ -125,7 +129,7 @@ export async function POST(request: NextRequest) {
       const content = await extractFileContent(file, fileBuffer)
       
       // Final update with basic info
-      const { error: finalUpdateError } = await supabaseServer
+      const { error: finalUpdateError } = await db
         .from('documents')
         .update({ 
           status: 'COMPLETED',
@@ -141,7 +145,7 @@ export async function POST(request: NextRequest) {
 
       // Generate simple analyses (best effort)
       try {
-        await generateAnalysisFromContent(document.id, file.name, content, user.id)
+        await generateAnalysisFromContent(document.id, file.name, content, user.id, db)
       } catch (analysisError: any) {
         console.warn('Analysis generation error (non-fatal):', analysisError)
       }
@@ -162,7 +166,7 @@ export async function POST(request: NextRequest) {
       console.error('Storage upload error:', storageError)
       
       // Update document status to error
-      await supabaseServer
+      await db
         .from('documents')
         .update({ status: 'ERROR' })
         .eq('id', document.id)
@@ -282,7 +286,7 @@ type GeneratedAnalysis = {
   severity?: string
 }
 
-async function generateAnalysisFromContent(documentId: string, fileName: string, content: string, userId: string) {
+async function generateAnalysisFromContent(documentId: string, fileName: string, content: string, userId: string, db: any) {
   const analyses: GeneratedAnalysis[] = []
   
   // Basic content analysis
@@ -375,9 +379,9 @@ async function generateAnalysisFromContent(documentId: string, fileName: string,
   }
 
   // Save all analyses to Supabase
-  if (supabaseServer) {
+  if (db) {
     for (const analysis of analyses) {
-      await supabaseServer
+      await db
         .from('analyses')
         .insert({
           document_id: documentId,

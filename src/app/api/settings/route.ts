@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Ensure user profile exists
     try {
-      await ensureUserProfile(user)
+      await ensureUserProfile(user, db)
     } catch (profileError: any) {
       console.error('Error ensuring user profile:', profileError)
       if (profileError.code === '23503' || profileError.message === 'User not found in authentication system') {
@@ -109,14 +109,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure user profile exists (best-effort)
-    try { await ensureUserProfile(user) } catch {}
+    try { await ensureUserProfile(user, db) } catch {}
 
     const { providers } = body
     if (!providers || !Array.isArray(providers)) {
       return NextResponse.json({ error: 'Invalid request format' }, { status: 400 })
     }
 
-    const results = []
+    const results: any[] = []
 
     console.log(`Processing ${providers.length} providers for user ${user.id}`)
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase'
+import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
 import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 import { AIService } from '@/lib/ai-service'
 
@@ -18,15 +18,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    if (!db) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Ensure user profile exists
-    await ensureUserProfile(user)
+    await ensureUserProfile(user, db)
 
     // Create query record in database
-    const { data: queryRecord, error: createError } = await supabaseServer
+    const { data: queryRecord, error: createError } = await db
       .from('queries')
       .insert({
         user_id: user.id,
@@ -64,7 +68,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Get relevant documents for context
-      let documentsQuery = supabaseServer
+      let documentsQuery = db
         .from('documents')
         .select('*')
         .eq('user_id', user.id)
@@ -140,7 +144,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Update query record with results
-      const { error: updateError } = await supabaseServer
+      const { error: updateError } = await db
         .from('queries')
         .update({
           response: JSON.stringify(aiResponse),
@@ -172,7 +176,7 @@ export async function POST(request: NextRequest) {
       const isConfigError = /api key not configured|no ai provider configured|unsupported provider/i.test(message)
 
       // Update query record with error
-      await supabaseServer
+      await db
         .from('queries')
         .update({
           response: JSON.stringify({ error: message }),
@@ -204,7 +208,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    if (!db) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
@@ -213,7 +221,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
 
     // Get user's queries
-    const { data: queries, error } = await supabaseServer
+    const { data: queries, error } = await db
       .from('queries')
       .select('*')
       .eq('user_id', user.id)
