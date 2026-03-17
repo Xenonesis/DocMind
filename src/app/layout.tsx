@@ -1,8 +1,22 @@
 import type { Metadata } from "next";
+import { Bricolage_Grotesque, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/components/theme-provider";
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "DocMind - Intelligent Document Processing",
@@ -42,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased bg-background text-foreground font-sans">
+      <body className={`antialiased bg-background text-foreground ${bricolage.variable} ${spaceMono.variable} font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

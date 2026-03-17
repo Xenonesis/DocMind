@@ -55,11 +55,11 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md mx-4 max-w-[calc(100vw-2rem)]">
-        <DialogHeader>
-          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">Welcome Back</DialogTitle>
-          <DialogDescription className="text-center text-sm sm:text-base">
-            Sign in to your DocMind account
+      <DialogContent className="sm:max-w-md mx-4 max-w-[calc(100vw-2rem)] border-4 border-foreground rounded-none brutal-shadow bg-background p-0 font-mono">
+        <DialogHeader className="p-6 border-b-4 border-foreground bg-accent text-white">
+          <DialogTitle className="text-xl sm:text-2xl font-black text-center uppercase tracking-widest">SYSTEM_AUTH</DialogTitle>
+          <DialogDescription className="text-center text-white/80 font-bold uppercase text-xs">
+            Authenticate to access node
           </DialogDescription>
         </DialogHeader>
 
@@ -67,113 +67,113 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="space-y-4 sm:space-y-6"
+          className="space-y-6 p-6"
         >
           {/* Social Login */}
           <div className="space-y-3">
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full rounded-none border-4 border-foreground bg-background hover:bg-foreground hover:text-background font-bold uppercase transition-none"
               onClick={() => handleSocialLogin('google')}
               disabled={isLoading}
             >
-              <Chrome className="w-4 h-4 mr-2" />
-              Continue with Google
+              <Chrome className="w-5 h-5 mr-2" />
+              INIT_GOOGLE_AUTH
             </Button>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full rounded-none border-4 border-foreground bg-background hover:bg-foreground hover:text-background font-bold uppercase transition-none"
               onClick={() => handleSocialLogin('github')}
               disabled={isLoading}
             >
-              <Github className="w-4 h-4 mr-2" />
-              Continue with GitHub
+              <Github className="w-5 h-5 mr-2" />
+              INIT_GITHUB_AUTH
             </Button>
           </div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
+              <Separator className="w-full border-t-4 border-foreground" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            <div className="relative flex justify-center text-xs uppercase font-black">
+              <span className="bg-background px-4 text-foreground border-4 border-foreground brutal-shadow-sm">OR_MANUAL_ENTRY</span>
             </div>
           </div>
 
           {/* Email/Password Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="font-black uppercase text-sm">USER_IDENTIFIER</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-foreground" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="name@domain.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-12 rounded-none border-4 border-foreground bg-background text-foreground h-12 font-bold focus-visible:ring-0 focus-visible:border-accent"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="font-black uppercase text-sm">ACCESS_CODE</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="pl-12 pr-12 rounded-none border-4 border-foreground bg-background text-foreground h-12 font-bold focus-visible:ring-0 focus-visible:border-accent"
                   required
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-foreground hover:text-background rounded-none"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </Button>
               </div>
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
-                {error}
+              <div className="text-sm font-bold uppercase text-destructive-foreground bg-destructive border-4 border-foreground p-3 brutal-shadow-sm">
+                &gt; ERROR: {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
+            <Button type="submit" className="w-full rounded-none border-4 border-foreground bg-foreground text-background hover:bg-accent hover:text-white font-black uppercase text-lg h-14 transition-none" disabled={isLoading}>
+              {isLoading ? 'AUTHENTICATING...' : 'AUTHORIZE_ACCESS'}
             </Button>
           </form>
 
-          <div className="text-center text-sm">
-            <a href="#" className="text-blue-600 hover:underline">
-              Forgot your password?
+          <div className="text-center text-sm font-bold uppercase">
+            <a href="#" className="text-accent hover:underline underline-offset-4 decoration-2">
+              RECOVER_CREDENTIALS
             </a>
           </div>
 
-          <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+          <div className="text-center text-sm font-bold uppercase text-foreground/70">
+            NO_ACCESS_PROFILE?{' '}
             <button
               onClick={() => {
                 onOpenChange(false)
                 onSwitchToSignup?.()
               }}
-              className="text-blue-600 hover:underline"
+              className="text-foreground hover:bg-foreground hover:text-background px-2 py-1 transition-none"
             >
-              Sign up
+              REQUEST_ACCESS
             </button>
           </div>
         </motion.div>

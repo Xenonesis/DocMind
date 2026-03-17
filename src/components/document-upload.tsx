@@ -203,47 +203,39 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg rounded-3xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none" />
-        <CardHeader className="relative z-10 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 p-6 sm:p-8">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl shadow-lg shadow-blue-500/20">
-              <Upload className="w-6 h-6 text-white" />
-            </div>
+    <div className="space-y-6">
+      <Card className="border-4 border-foreground bg-background rounded-none brutal-shadow">
+        <CardHeader className="border-b-4 border-foreground bg-accent text-accent-foreground p-6">
+          <div className="flex items-center gap-4">
+            <Upload className="w-8 h-8" />
             <div>
-              <CardTitle className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
-                Upload Documents
+              <CardTitle className="text-3xl font-black uppercase tracking-tighter">
+                INGEST_DOCUMENTS
               </CardTitle>
             </div>
           </div>
-          <CardDescription className="text-base sm:text-lg text-slate-600 dark:text-slate-400 mt-2">
-            Securely upload your files for intelligent processing. We support PDF, DOC, DOCX, TXT, and images.
+          <CardDescription className="text-lg text-accent-foreground/80 font-mono mt-2 uppercase">
+            System ready. Feed PDF, DOCX, TXT, or images for raw vectorization.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6 sm:p-8 relative z-10">
+        <CardContent className="p-8">
           <div
-            className={`relative overflow-hidden group border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center transition-all duration-300 ${
+            className={`relative overflow-hidden group border-4 border-dashed p-12 text-center transition-none font-mono ${
               isDragOver 
-                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 scale-[1.02]' 
-                : 'border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
+                ? 'border-accent bg-accent/10' 
+                : 'border-foreground hover:bg-foreground/5'
             }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
           >
-            {/* Animated background gradient on hover */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-            
             <div className="relative z-10 flex flex-col items-center">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white dark:bg-slate-800 rounded-full shadow-xl flex items-center justify-center mb-6 group-hover:-translate-y-2 transition-transform duration-300">
-                <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-blue-500 dark:text-blue-400" />
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                Drag & Drop files here
+              <Upload className="w-16 h-16 mb-6 text-foreground group-hover:-translate-y-2 transition-transform" />
+              <h3 className="text-2xl font-black uppercase mb-2">
+                [ DRAG_&_DROP_TARGET ]
               </h3>
-              <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 mb-6">
-                or click the button below to browse your computer
+              <p className="text-lg opacity-70 mb-8 uppercase">
+                Awaiting manual file assignment
               </p>
               
               <input
@@ -254,10 +246,10 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
                 className="hidden"
                 id="file-upload"
               />
-              <Button asChild size="lg" className="w-full sm:w-auto px-8 py-6 text-base font-semibold rounded-2xl bg-gradient-to-r from-slate-900 to-slate-700 hover:from-slate-800 hover:to-slate-600 dark:from-white dark:to-slate-200 dark:hover:from-slate-100 dark:hover:to-slate-300 text-white dark:text-slate-900 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                <label htmlFor="file-upload" className="cursor-pointer flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Select Files
+              <Button asChild size="lg" className="w-full sm:w-auto px-8 py-6 text-xl font-black rounded-none bg-foreground text-background hover:bg-accent hover:text-white brutal-shadow border-2 border-foreground uppercase tracking-widest cursor-pointer">
+                <label htmlFor="file-upload" className="flex items-center gap-2">
+                  <Plus className="w-6 h-6" />
+                  SELECT_FILES
                 </label>
               </Button>
             </div>
@@ -266,34 +258,36 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
       </Card>
 
       {uploadingFiles.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Uploading Files</CardTitle>
+        <Card className="border-4 border-foreground bg-background rounded-none brutal-shadow">
+          <CardHeader className="border-b-4 border-foreground bg-foreground text-background p-4">
+            <CardTitle className="font-mono uppercase font-bold tracking-widest">ACTIVE_UPLOADS</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <div className="space-y-4">
               {uploadingFiles.map((doc) => (
                 <motion.div
                   key={doc.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-4 p-4 border rounded-lg"
+                  className="flex items-center gap-4 p-4 border-4 border-foreground bg-background font-mono"
                 >
                   {getFileIcon(doc.name)}
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{doc.name}</h4>
-                      <Badge className={getStatusColor(doc.status)}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-bold truncate max-w-[200px] sm:max-w-xs">{doc.name}</h4>
+                      <Badge className={`rounded-none border-2 border-foreground uppercase ${getStatusColor(doc.status)}`}>
                         {getStatusIcon(doc.status)}
-                        <span className="ml-1 capitalize">{doc.status}</span>
+                        <span className="ml-2 font-bold">{doc.status}</span>
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-500">{doc.size}</p>
+                    <p className="text-sm opacity-70">SIZE: {doc.size}</p>
                     {doc.status === 'UPLOADING' && doc.progress !== undefined && (
                       <div className="mt-2">
-                        <Progress value={doc.progress} className="h-2" />
-                        <p className="text-xs text-gray-500 mt-1">
-                          {Math.round(doc.progress)}% uploaded
+                        <div className="h-4 border-2 border-foreground bg-background w-full">
+                          <div className="h-full bg-accent" style={{ width: `${doc.progress}%` }} />
+                        </div>
+                        <p className="text-xs mt-1 font-bold">
+                          {Math.round(doc.progress)}% COMPLETED
                         </p>
                       </div>
                     )}

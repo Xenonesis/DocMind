@@ -513,33 +513,33 @@ export function AiApiSettings() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50 rounded-[2rem] overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <CardHeader className="p-6 sm:p-8 border-b border-slate-200/50 dark:border-slate-700/50 relative z-10 bg-white/40 dark:bg-slate-900/40">
-          <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
-            <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20">
+    <div className="space-y-4 sm:space-y-6 font-mono">
+      <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden group">
+        <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        <CardHeader className="p-6 sm:p-8 border-b border-4 border-foreground relative z-10 bg-foreground text-background">
+          <CardTitle className="flex items-center gap-3 text-2xl font-bold text-foreground    dark: dark:">
+            <div className="p-2.5    rounded-none brutal-shadow brutal-shadow">
               <Settings className="w-6 h-6 text-white" />
             </div>
-            AI API Integration Settings
+            AI_API_INTEGRATION_NODE
           </CardTitle>
-          <CardDescription className="mt-2 text-base text-slate-600 dark:text-slate-400">
+          <CardDescription className="mt-2 text-base text-foreground opacity-80 font-bold">
             Configure and manage your AI service providers. Only one provider can be active at a time.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6 sm:p-8 relative z-10 bg-white/40 dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-700/50">
+        <CardContent className="p-6 sm:p-8 relative z-10 bg-foreground text-background border-b border-4 border-foreground">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-sm gap-1.5">
+              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-background border-2 border-foreground brutal-shadow gap-1.5">
                 <Brain className="w-4 h-4 text-indigo-500" />
                 {providers.filter(p => p.isConfigured).length} Configured
               </Badge>
-              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 shadow-sm gap-1.5">
+              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 brutal-shadow gap-1.5">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
                 {providers.filter(p => p.isActive && p.isConfigured).length} Active
               </Badge>
             </div>
-            <Button onClick={saveSettings} disabled={saving} size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all rounded-xl font-medium">
+            <Button onClick={saveSettings} disabled={saving} size="lg" className="w-full sm:w-auto    hover: hover: text-white brutal-shadow brutal-shadow hover:brutal-shadow hover:brutal-shadow transition-all rounded-none font-medium">
               {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
               <span>Save Settings</span>
             </Button>
@@ -548,37 +548,37 @@ export function AiApiSettings() {
       </Card>
 
       <Tabs defaultValue="providers" className="space-y-8">
-        <TabsList className="grid w-full sm:w-[600px] grid-cols-3 mx-auto bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md p-1.5 rounded-2xl shadow-inner border border-slate-200/50 dark:border-slate-700/50">
-          <TabsTrigger value="providers" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Providers</TabsTrigger>
-          <TabsTrigger value="advanced" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Advanced</TabsTrigger>
-          <TabsTrigger value="usage" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Usage</TabsTrigger>
+        <TabsList className="grid w-full sm:w-[600px] grid-cols-3 mx-auto bg-muted border-4 border-foreground  p-1.5 rounded-none brutal-shadow border border-4 border-foreground">
+          <TabsTrigger value="providers" className="rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:brutal-shadow data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Providers</TabsTrigger>
+          <TabsTrigger value="advanced" className="rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:brutal-shadow data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Advanced</TabsTrigger>
+          <TabsTrigger value="usage" className="rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:brutal-shadow data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Usage</TabsTrigger>
         </TabsList>
 
         <TabsContent value="providers" className="space-y-6 outline-none focus-visible:ring-0">
           {providers.map((provider) => (
             <motion.div key={provider.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10">
+              <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group">
+              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className={`p-3 rounded-2xl shadow-sm border ${provider.isActive && provider.isConfigured ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-transparent shadow-indigo-500/20' : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700'}`}>
+                    <div className={`p-3 rounded-none brutal-shadow border ${provider.isActive && provider.isConfigured ? '   border-transparent brutal-shadow' : 'bg-muted border-2 border-foreground'}`}>
                       {/* We need to pass color white if active, else normal */}
                       <span className={provider.isActive && provider.isConfigured ? 'text-white' : ''}>
                         {getProviderIcon(provider.iconType)}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200 truncate">{provider.name}</CardTitle>
-                      <CardDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{provider.description}</CardDescription>
+                      <CardTitle className="text-xl font-bold text-foreground font-black uppercase truncate">{provider.name}</CardTitle>
+                      <CardDescription className="text-sm text-foreground opacity-70 font-bold mt-1 line-clamp-1">{provider.description}</CardDescription>
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                    <Badge className={`px-2.5 py-1 text-xs font-semibold capitalize tracking-wider rounded-lg ${getStatusColor(getProviderStatus(provider))} w-fit flex items-center gap-1.5`}>
+                    <Badge className={`px-2.5 py-1 text-xs font-semibold capitalize tracking-wider rounded-none ${getStatusColor(getProviderStatus(provider))} w-fit flex items-center gap-1.5`}>
                       {getStatusIcon(provider)}
                       {getProviderStatus(provider).replace('_', ' ')}
                     </Badge>
-                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-full border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 bg-background p-1.5 rounded-none border border-2 border-foreground">
                       <span className={`text-xs font-semibold px-2 ${!provider.isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400'}`}>OFF</span>
                       <Switch
                         checked={provider.isActive}
@@ -777,16 +777,16 @@ export function AiApiSettings() {
 
         <TabsContent value="advanced" className="space-y-6 outline-none focus-visible:ring-0">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg text-indigo-600 dark:text-indigo-400">
+            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group flex flex-col h-full">
+              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-none text-indigo-600 dark:text-indigo-400">
                     <Brain className="w-5 h-5" />
                   </div>
-                  Global AI Settings
+                  GLOBAL_AI_DIRECTIVES
                 </CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400">
+                <CardDescription className="text-foreground opacity-70 font-bold">
                   Configure default behavior for all AI providers
                 </CardDescription>
               </CardHeader>
@@ -813,20 +813,20 @@ export function AiApiSettings() {
                   </div>
                 </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                     <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Auto-save Responses</Label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Au Responses</Label>
+                      <p className="text-xs text-foreground opacity-70 font-bold">
                         Automatically save AI responses for future reference
                       </p>
                     </div>
                     <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                     <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Enable Response Caching</Label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Enable Response Caching</Label>
+                      <p className="text-xs text-foreground opacity-70 font-bold">
                         Cache responses to reduce API calls for similar queries
                       </p>
                     </div>
@@ -835,24 +835,24 @@ export function AiApiSettings() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-emerald-600 dark:text-emerald-400">
+            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group flex flex-col h-full">
+              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-none text-emerald-600 dark:text-emerald-400">
                     <Shield className="w-5 h-5" />
                   </div>
-                  Security & Privacy
+                  SECURITY_PROTOCOLS
                 </CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400">
+                <CardDescription className="text-foreground opacity-70 font-bold">
                   Configure security and privacy settings
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-6 relative z-10 flex-1">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                     <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Encrypt API Keys</Label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Encrypt API Keys</Label>
+                      <p className="text-xs text-foreground opacity-70 font-bold">
                         API keys are encrypted before storage
                       </p>
                     </div>
@@ -862,15 +862,15 @@ export function AiApiSettings() {
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                     <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Data Retention Period</Label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Data Retention Period</Label>
+                      <p className="text-xs text-foreground opacity-70 font-bold">
                         How long to keep AI responses and logs
                       </p>
                     </div>
                     <Select defaultValue="30">
-                      <SelectTrigger className="w-[120px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                      <SelectTrigger className="w-[120px] bg-white dark:bg-slate-800 border-2 border-foreground">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -882,53 +882,53 @@ export function AiApiSettings() {
                     </Select>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                     <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Share Usage Analytics</Label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Share Usage Analytics</Label>
+                      <p className="text-xs text-foreground opacity-70 font-bold">
                         Help improve the service with anonymous usage data
                       </p>
                     </div>
                     <Switch className="data-[state=checked]:bg-emerald-600" />
                   </div>
 
-                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Allowed IP Addresses (Optional)</Label>
-                    <Input placeholder="192.168.1.0/24, 10.0.0.1" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-emerald-500" />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
+                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Allowed IP Addresses (Optional)</Label>
+                    <Input placeholder="192.168.1.0/24, 10.0.0.1" className="bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-emerald-500" />
+                    <p className="text-xs text-foreground opacity-70 font-bold">
                       Restrict API access to specific IP ranges
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group lg:col-span-2">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
-                  <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-600 dark:text-amber-400">
+            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group lg:col-span-2">
+              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-none text-amber-600 dark:text-amber-400">
                     <Zap className="w-5 h-5" />
                   </div>
-                  Performance Optimization
+                  PERFORMANCE_TUNING
                 </CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400">
+                <CardDescription className="text-foreground opacity-70 font-bold">
                   Optimize AI performance and resource usage
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Concurrent Requests Limit</Label>
+                  <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
+                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Concurrent Requests Limit</Label>
                     <div className="flex items-center gap-3 mt-2">
-                      <Input type="number" defaultValue="5" min="1" max="20" className="w-24 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-amber-500" />
-                      <span className="text-sm text-slate-500 dark:text-slate-400">requests per minute</span>
+                      <Input type="number" defaultValue="5" min="1" max="20" className="w-24 bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-amber-500" />
+                      <span className="text-sm text-foreground opacity-70 font-bold">requests per minute</span>
                     </div>
                   </div>
 
-                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Processing Priority</Label>
+                  <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
+                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Processing Priority</Label>
                     <Select defaultValue="balanced">
-                      <SelectTrigger className="mt-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                      <SelectTrigger className="mt-2 bg-white dark:bg-slate-800 border-2 border-foreground">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -939,10 +939,10 @@ export function AiApiSettings() {
                     </Select>
                   </div>
                   
-                  <div className="md:col-span-2 flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="md:col-span-2 flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                     <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Streaming Responses</Label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Streaming Responses</Label>
+                      <p className="text-xs text-foreground opacity-70 font-bold">
                         Show AI responses as they are generated for a faster perceived experience
                       </p>
                     </div>
@@ -952,51 +952,51 @@ export function AiApiSettings() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
-              <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
-                  <div className="p-2 bg-rose-100 dark:bg-rose-900/40 rounded-lg text-rose-600 dark:text-rose-400">
+            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group flex flex-col h-full">
+              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
+                  <div className="p-2 bg-rose-100 dark:bg-rose-900/40 rounded-none text-rose-600 dark:text-rose-400">
                     <Activity className="w-5 h-5" />
                   </div>
-                  Monitoring & Alerts
+                  TELEMETRY_SYSTEMS
                 </CardTitle>
-                <CardDescription className="text-slate-500 dark:text-slate-400">
+                <CardDescription className="text-foreground opacity-70 font-bold">
                   Set up monitoring and notification preferences
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-6 relative z-10 flex-1">
-                <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                  <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Cost Alert Threshold</Label>
+                <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
+                  <Label className="text-sm font-semibold text-foreground font-black uppercase">Cost Alert Threshold</Label>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">$</span>
-                    <Input type="number" defaultValue="50" min="1" className="w-24 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-rose-500" />
-                    <span className="text-sm text-slate-500 dark:text-slate-400">per month</span>
+                    <span className="text-sm font-medium text-foreground opacity-80 font-bold">$</span>
+                    <Input type="number" defaultValue="50" min="1" className="w-24 bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-rose-500" />
+                    <span className="text-sm text-foreground opacity-70 font-bold">per month</span>
                   </div>
                 </div>
 
-                <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                  <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Error Rate Alert</Label>
+                <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
+                  <Label className="text-sm font-semibold text-foreground font-black uppercase">Error Rate Alert</Label>
                   <div className="flex items-center gap-3 mt-2">
-                    <Input type="number" defaultValue="10" min="1" max="100" className="w-24 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-rose-500" />
-                    <span className="text-sm text-slate-500 dark:text-slate-400">% error rate</span>
+                    <Input type="number" defaultValue="10" min="1" max="100" className="w-24 bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-rose-500" />
+                    <span className="text-sm text-foreground opacity-70 font-bold">% error rate</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                   <div className="space-y-0.5 pr-4">
-                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Email Notifications</Label>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Email Notifications</Label>
+                    <p className="text-xs text-foreground opacity-70 font-bold">
                       Receive alerts via email
                     </p>
                   </div>
                   <Switch defaultChecked className="data-[state=checked]:bg-rose-600" />
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
                   <div className="space-y-0.5 pr-4">
-                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Daily Usage Reports</Label>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Daily Usage Reports</Label>
+                    <p className="text-xs text-foreground opacity-70 font-bold">
                       Get daily summaries of API usage
                     </p>
                   </div>
@@ -1005,16 +1005,16 @@ export function AiApiSettings() {
               </CardContent>
             </Card>
 
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/30 rounded-[2rem] overflow-hidden">
+          <Card className="   dark: dark: border border-blue-100 dark:border-blue-800/30 rounded-none overflow-hidden">
             <CardContent className="p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Save Advanced Settings</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  <h3 className="text-lg font-bold text-foreground font-black uppercase">Save Advanced Settings</h3>
+                  <p className="text-sm text-foreground opacity-80 font-bold mt-1">
                     Apply these settings to all AI providers and future interactions
                   </p>
                 </div>
-                <Button className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all rounded-xl font-medium px-6 py-2.5 h-auto">
+                <Button className="w-full sm:w-auto    hover: hover: text-white brutal-shadow brutal-shadow hover:brutal-shadow hover:brutal-shadow transition-all rounded-none font-medium px-6 py-2.5 h-auto">
                   <Save className="w-5 h-5 mr-2" />
                   Save All Settings
                 </Button>
@@ -1026,15 +1026,15 @@ export function AiApiSettings() {
 
         <TabsContent value="usage" className="space-y-6 outline-none focus-visible:ring-0">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50 rounded-[2rem] overflow-hidden">
-              <CardHeader className="p-6 sm:p-8 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40">
-                <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
-                  <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden">
+              <CardHeader className="p-6 sm:p-8 border-b border-4 border-foreground bg-foreground text-background">
+                <CardTitle className="flex items-center gap-3 text-2xl font-bold text-foreground    dark: dark:">
+                  <div className="p-2.5    rounded-none brutal-shadow brutal-shadow">
                     <Activity className="w-6 h-6 text-white" />
                   </div>
-                  API Usage & Metrics
+                  API_USAGE_METRICS
                 </CardTitle>
-                <CardDescription className="mt-2 text-base text-slate-600 dark:text-slate-400">
+                <CardDescription className="mt-2 text-base text-foreground opacity-80 font-bold">
                   Monitor your API usage, limits, and costs across different providers.
                 </CardDescription>
               </CardHeader>

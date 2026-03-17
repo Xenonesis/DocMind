@@ -24,7 +24,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  User
+  User,
+  TerminalSquare
 } from 'lucide-react'
 import { DocumentUpload } from '@/components/document-upload'
 import { QueryInterface } from '@/components/query-interface'
@@ -61,7 +62,6 @@ export default function Dashboard() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated && user === null) {
-      // Only redirect if we're sure the user is not authenticated
       // The auth context will handle the redirect
     }
   }, [isAuthenticated, user])
@@ -74,10 +74,6 @@ export default function Dashboard() {
       setDocuments(data)
     } catch (error) {
       console.error('Error fetching documents:', error)
-      // If authentication fails, the auth context will handle redirecting
-      if (error instanceof Error && error.message.includes('authentication')) {
-        // Authentication error, user will be redirected
-      }
     } finally {
       setIsLoading(false)
     }
@@ -88,18 +84,13 @@ export default function Dashboard() {
   }, [])
 
   const handleDocumentUpload = (newDocuments: Document[]) => {
-    // Refresh documents immediately and then periodically to catch status updates
     fetchDocuments()
-    
-    // Switch to documents tab to show the uploaded files
     setActiveTab('documents')
     
-    // Set up periodic refresh for processing documents
     const refreshInterval = setInterval(() => {
       fetchDocuments()
     }, 2000)
     
-    // Stop refreshing after 30 seconds
     setTimeout(() => {
       clearInterval(refreshInterval)
     }, 30000)
@@ -133,21 +124,12 @@ export default function Dashboard() {
     logout()
   }
 
-  const getStatusIcon = (status: Document['status']) => {
-    switch (status) {
-      case 'UPLOADING': return <Clock className="w-4 h-4 text-yellow-500" />
-      case 'PROCESSING': return <Brain className="w-4 h-4 text-blue-500" />
-      case 'COMPLETED': return <CheckCircle className="w-4 h-4 text-green-500" />
-      case 'ERROR': return <AlertCircle className="w-4 h-4 text-red-500" />
-    }
-  }
-
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground font-mono uppercase">
+        <div className="text-center flex flex-col items-center gap-4">
+          <TerminalSquare className="w-12 h-12 animate-pulse" />
+          <p>Authenticating_System_Access...</p>
         </div>
       </div>
     )
@@ -155,196 +137,120 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto p-4 sm:p-6 max-w-7xl">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8 sm:mb-10"
-        >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg">
-                <FileText className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
-                  Dashboard Dashboard
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400 font-medium">
-                  Welcome back, {user.name}
-                </p>
-              </div>
+      <div className="min-h-screen bg-background text-foreground font-sans">
+        
+        {/* Brutalist Top Nav */}
+        <header className="border-b-4 border-foreground bg-background px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 z-50 brutal-shadow">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center font-black text-2xl">
+              DM
             </div>
-            
-            <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
-              <ThemeToggle />
-              <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2 hidden sm:block"></div>
-              <Avatar className="w-10 h-10 border-2 border-white dark:border-slate-800 shadow-sm">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700">
-                  <User className="w-4 h-4" />
-                </AvatarFallback>
-              </Avatar>
-              <Button variant="outline" onClick={handleLogout} className="text-sm font-semibold rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
+            <div>
+              <h1 className="text-2xl font-black uppercase tracking-tighter">CONTROL_PANEL</h1>
+              <p className="font-mono text-sm uppercase opacity-70">
+                USR: {user.name} // AUTH: VERIFIED
+              </p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <motion.div whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
-              <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-xl overflow-hidden rounded-3xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none" />
-                <CardContent className="p-6 relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg shadow-blue-500/20">
-                      <Upload className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Total Uploads</p>
-                      <p className="text-3xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
-                        {documents.length} <span className="text-sm font-medium text-slate-500 dark:text-slate-400">files</span>
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-            
-            <motion.div whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300, delay: 0.1 }}>
-              <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-xl overflow-hidden rounded-3xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent pointer-events-none" />
-                <CardContent className="p-6 relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl shadow-lg shadow-green-500/20">
-                      <Brain className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Indexed Docs</p>
-                      <p className="text-3xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
-                        {documents.filter(d => d.status === 'COMPLETED').length} <span className="text-sm font-medium text-slate-500 dark:text-slate-400">ready</span>
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-            
-            <motion.div whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300, delay: 0.2 }}>
-              <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-xl overflow-hidden rounded-3xl sm:col-span-2 lg:col-span-1">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent pointer-events-none" />
-                <CardContent className="p-6 relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg shadow-purple-500/20">
-                      <Search className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">System Status</p>
-                      <p className="text-xl font-bold text-slate-900 dark:text-white">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800/50">
-                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                          Operational
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <ThemeToggle />
+            <Button 
+              onClick={handleLogout} 
+              className="font-black uppercase tracking-widest bg-destructive text-destructive-foreground hover:bg-foreground hover:text-background rounded-none brutal-shadow border-2 border-foreground"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              TERMINATE
+            </Button>
           </div>
-        </motion.div>
+        </header>
 
-        {/* Main Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-2 rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-lg mb-8 max-w-fit mx-auto lg:mx-0">
-              <TabsList className="bg-transparent h-auto p-0 flex gap-2 w-full justify-start overflow-x-auto hide-scrollbar">
-                <TabsTrigger 
-                  value="upload" 
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="documents" 
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                  <FileText className="w-4 h-4" />
-                  Docs
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="query" 
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Query
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="results" 
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  Results
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="settings" 
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                >
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </TabsTrigger>
+        <main className="p-6 max-w-[1600px] mx-auto space-y-8 mt-8">
+          
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="border-4 border-foreground bg-accent text-accent-foreground p-6 brutal-shadow flex items-start gap-4">
+              <Upload className="w-8 h-8" />
+              <div>
+                <p className="font-mono text-sm uppercase font-bold">TOTAL_UPLOADS</p>
+                <p className="text-5xl font-black">{documents.length}</p>
+              </div>
+            </div>
+            
+            <div className="border-4 border-foreground bg-background p-6 brutal-shadow flex items-start gap-4">
+              <Brain className="w-8 h-8" />
+              <div>
+                <p className="font-mono text-sm uppercase font-bold">INDEXED_DOCS</p>
+                <p className="text-5xl font-black">{documents.filter(d => d.status === 'COMPLETED').length}</p>
+              </div>
+            </div>
+            
+            <div className="border-4 border-foreground bg-background p-6 brutal-shadow flex items-start gap-4">
+              <Search className="w-8 h-8" />
+              <div>
+                <p className="font-mono text-sm uppercase font-bold">SYS_STATUS</p>
+                <div className="mt-2 inline-flex items-center gap-2 border-2 border-foreground px-3 py-1 font-mono text-sm font-bold bg-green-500 text-black">
+                  <span className="w-2 h-2 bg-black animate-ping"></span>
+                  OPERATIONAL
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Interface */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+            <div className="border-4 border-foreground bg-background brutal-shadow p-2">
+              <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-2 w-full justify-start rounded-none">
+                {[
+                  { id: 'upload', icon: Upload, label: 'UPLOAD_DOC' },
+                  { id: 'documents', icon: FileText, label: 'FILE_ARCHIVE' },
+                  { id: 'query', icon: MessageSquare, label: 'QUERY_ENGINE' },
+                  { id: 'results', icon: BarChart3, label: 'ANALYSIS_OUT' },
+                  { id: 'settings', icon: Settings, label: 'SYS_CONFIG' }
+                ].map((tab) => (
+                  <TabsTrigger 
+                    key={tab.id}
+                    value={tab.id} 
+                    className="rounded-none border-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background font-mono uppercase font-bold py-3 px-6 transition-none"
+                  >
+                    <tab.icon className="w-4 h-4 mr-2" />
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </div>
 
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <TabsContent value="upload" className="space-y-6 m-0" key="upload">
+            <div className="border-4 border-foreground bg-background brutal-shadow p-6 min-h-[500px]">
+              <TabsContent value="upload" className="m-0 focus-visible:outline-none h-full">
                 <DocumentUpload onUpload={handleDocumentUpload} />
               </TabsContent>
 
-              <TabsContent value="documents" className="m-0" key="documents">
+              <TabsContent value="documents" className="m-0 focus-visible:outline-none h-full">
                 {isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
-                    <p className="text-slate-500 font-medium">Loading your documents...</p>
+                  <div className="flex flex-col items-center justify-center py-32 font-mono uppercase">
+                    <TerminalSquare className="w-12 h-12 animate-spin mb-4" />
+                    <p>Fetching_Archive_Data...</p>
                   </div>
                 ) : documents.length > 0 ? (
                   <DocumentList documents={documents} />
                 ) : (
-                  <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg text-center py-12">
-                    <CardHeader>
-                      <div className="mx-auto w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                        <FileText className="w-8 h-8 text-blue-500" />
-                      </div>
-                      <CardTitle className="text-2xl">No Documents Found</CardTitle>
-                      <CardDescription className="text-base text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                        Upload your first document to unlock DocMind's powerful AI analysis and semantic search capabilities.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button onClick={() => setActiveTab('upload')} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                        <Upload className="w-5 h-5 mr-2" />
-                        Upload Document
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed border-foreground">
+                    <FileText className="w-16 h-16 mb-4 opacity-50" />
+                    <h3 className="text-2xl font-black uppercase mb-2">VAULT_EMPTY</h3>
+                    <p className="font-mono text-center max-w-md opacity-70 mb-6">
+                      No documents found in system index. Initialize upload to begin processing.
+                    </p>
+                    <Button 
+                      onClick={() => setActiveTab('upload')} 
+                      className="font-black uppercase tracking-widest rounded-none brutal-shadow border-2 border-foreground"
+                    >
+                      INIT_UPLOAD
+                    </Button>
+                  </div>
                 )}
               </TabsContent>
 
-              <TabsContent value="query" className="space-y-6 m-0" key="query">
+              <TabsContent value="query" className="m-0 focus-visible:outline-none h-full">
                 <QueryInterface 
                   query={query}
                   setQuery={setQuery}
@@ -358,17 +264,17 @@ export default function Dashboard() {
                 />
               </TabsContent>
 
-              <TabsContent value="results" className="space-y-6 m-0" key="results">
+              <TabsContent value="results" className="m-0 focus-visible:outline-none h-full">
                 <AnalysisResults />
               </TabsContent>
 
-              <TabsContent value="settings" className="space-y-6 m-0" key="settings">
+              <TabsContent value="settings" className="m-0 focus-visible:outline-none h-full">
                 <AiApiSettings />
               </TabsContent>
-            </motion.div>
+            </div>
           </Tabs>
-        </motion.div>
-        </div>
+
+        </main>
       </div>
     </ProtectedRoute>
   )
