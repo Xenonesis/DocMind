@@ -65,7 +65,7 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
   if (!apiKey || apiKey.length < 10) return false
 
   // Basic validation patterns for different providers
-  const patterns = {
+  const patterns: Record<string, (key: string) => boolean> = {
     // Google API keys can have various formats:
     // - AIza... (most common, typically 39 chars but can vary)
     // - Other formats for different Google services (20+ chars, but not starting with AIza)
@@ -78,22 +78,17 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
       // Other Google keys must be at least 20 characters and not start with AIza
       return key.length >= 20 && /^[A-Za-z0-9\-_]+$/.test(key)
     },
-    mistral: /^[a-zA-Z0-9]{32}$/,
-    'open-router': /^sk-or-[a-zA-Z0-9]{48,}$/,
-    openai: /^sk-[a-zA-Z0-9]{20,}$/,
-    anthropic: /^sk-ant-[a-zA-Z0-9]{20,}$/,
-    'lm-studio': /^[a-zA-Z0-9\-_]{10,}$/,
-    ollama: /^[a-zA-Z0-9\-_]{1,}$/ // Ollama might not require API keys
+    mistral: (key: string) => /^[a-zA-Z0-9]{32}$/.test(key),
+    'open-router': (key: string) => /^sk-or-v1-[a-fA-F0-9]{64}$/.test(key) || /^sk-or-[a-zA-Z0-9\-]{48,}$/.test(key),
+    openai: (key: string) => /^sk-[a-zA-Z0-9]{20,}$/.test(key),
+    anthropic: (key: string) => /^sk-ant-[a-zA-Z0-9]{20,}$/.test(key),
+    'lm-studio': (key: string) => /^[a-zA-Z0-9\-_]{10,}$/.test(key),
+    ollama: (key: string) => /^[a-zA-Z0-9\-_]{1,}$/.test(key) // Ollama might not require API keys
   }
 
   const pattern = patterns[providerType as keyof typeof patterns]
   if (pattern) {
-    // Handle function-based validation for Google
-    if (typeof pattern === 'function') {
-      return pattern(apiKey)
-    }
-    // Handle regex-based validation for other providers
-    return pattern.test(apiKey)
+    return pattern(apiKey)
   }
 
   // Generic validation for unknown providers

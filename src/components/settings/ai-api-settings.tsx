@@ -184,6 +184,7 @@ export function AiApiSettings() {
   const [providers, setProviders] = useState<AIProvider[]>([])
   const [testingProvider, setTestingProvider] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [fetchingModels, setFetchingModels] = useState<Record<string, boolean>>({})
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({})
   const [mounted, setMounted] = useState(false)
   const { toast } = useToast()
@@ -436,6 +437,40 @@ export function AiApiSettings() {
     }
   }
 
+  const handleFetchModels = async (provider: AIProvider) => {
+    setFetchingModels(prev => ({ ...prev, [provider.id]: true }))
+    try {
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const response = await authenticatedRequest('/api/models', {
+        method: 'POST',
+        body: JSON.stringify({ provider })
+      })
+      
+      if (response && response.models && response.models.length > 0) {
+        // Only override if new models found
+        updateProvider(provider.id, { models: response.models })
+        toast({
+          title: 'Models fetched successfully',
+          description: `Loaded ${response.models.length} models for ${provider.name}.`,
+        })
+      } else {
+        toast({
+          title: 'No new models found',
+          description: `Using default or existing models for ${provider.name}.`,
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch models:', error)
+      toast({
+        title: 'Failed to fetch models',
+        description: 'Could not fetch live models. This might be due to an invalid API key or connection issue.',
+        variant: 'destructive',
+      })
+    } finally {
+      setFetchingModels(prev => ({ ...prev, [provider.id]: false }))
+    }
+  }
+
   const getProviderStatus = (provider: AIProvider) => {
     if (!provider.apiKey) return 'not_configured'
     if (provider.testStatus === 'success') return 'connected'
@@ -479,92 +514,102 @@ export function AiApiSettings() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50 rounded-[2rem] overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        <CardHeader className="p-6 sm:p-8 border-b border-slate-200/50 dark:border-slate-700/50 relative z-10 bg-white/40 dark:bg-slate-900/40">
+          <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+            <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20">
+              <Settings className="w-6 h-6 text-white" />
+            </div>
             AI API Integration Settings
           </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+          <CardDescription className="mt-2 text-base text-slate-600 dark:text-slate-400">
             Configure and manage your AI service providers. Only one provider can be active at a time.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="gap-1 text-xs">
-                <Brain className="w-3 h-3" />
+        <CardContent className="p-6 sm:p-8 relative z-10 bg-white/40 dark:bg-slate-900/40 border-b border-slate-200/50 dark:border-slate-700/50">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-sm gap-1.5">
+                <Brain className="w-4 h-4 text-indigo-500" />
                 {providers.filter(p => p.isConfigured).length} Configured
               </Badge>
-              <Badge variant="outline" className="gap-1 text-xs">
-                <CheckCircle className="w-3 h-3" />
+              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 shadow-sm gap-1.5">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
                 {providers.filter(p => p.isActive && p.isConfigured).length} Active
               </Badge>
             </div>
-            <Button onClick={saveSettings} disabled={saving} size="sm" className="w-full sm:w-auto">
-              {saving ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 animate-spin" /> : <Save className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />}
-              <span className="text-sm">Save Settings</span>
+            <Button onClick={saveSettings} disabled={saving} size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all rounded-xl font-medium">
+              {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
+              <span>Save Settings</span>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="providers" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="providers">Providers</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="usage">Usage</TabsTrigger>
+      <Tabs defaultValue="providers" className="space-y-8">
+        <TabsList className="grid w-full sm:w-[600px] grid-cols-3 mx-auto bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md p-1.5 rounded-2xl shadow-inner border border-slate-200/50 dark:border-slate-700/50">
+          <TabsTrigger value="providers" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Providers</TabsTrigger>
+          <TabsTrigger value="advanced" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Advanced</TabsTrigger>
+          <TabsTrigger value="usage" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Usage</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="providers" className="space-y-4">
+        <TabsContent value="providers" className="space-y-6 outline-none focus-visible:ring-0">
           {providers.map((provider) => (
-            <Card key={provider.id}>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-                    <div className="flex-shrink-0">
-                      {getProviderIcon(provider.iconType)}
+            <motion.div key={provider.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+              <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className={`p-3 rounded-2xl shadow-sm border ${provider.isActive && provider.isConfigured ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-transparent shadow-indigo-500/20' : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700'}`}>
+                      {/* We need to pass color white if active, else normal */}
+                      <span className={provider.isActive && provider.isConfigured ? 'text-white' : ''}>
+                        {getProviderIcon(provider.iconType)}
+                      </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base sm:text-lg truncate">{provider.name}</CardTitle>
-                      <CardDescription className="text-xs sm:text-sm line-clamp-2">{provider.description}</CardDescription>
+                      <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200 truncate">{provider.name}</CardTitle>
+                      <CardDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{provider.description}</CardDescription>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                    <Badge className={`${getStatusColor(getProviderStatus(provider))} text-xs w-fit`}>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                    <Badge className={`px-2.5 py-1 text-xs font-semibold capitalize tracking-wider rounded-lg ${getStatusColor(getProviderStatus(provider))} w-fit flex items-center gap-1.5`}>
                       {getStatusIcon(provider)}
-                      <span className="ml-1 capitalize">
-                        {getProviderStatus(provider).replace('_', ' ')}
-                      </span>
+                      {getProviderStatus(provider).replace('_', ' ')}
                     </Badge>
-                    <Switch
-                      checked={provider.isActive}
-                      onCheckedChange={(checked) => {
-                        if (checked && provider.isConfigured) {
-                          // Deactivate other providers locally; persisted on Save
-                          const newProviders = providers.map(p => ({
-                            ...p,
-                            isActive: p.id === provider.id
-                          }))
-                          setProviders(newProviders)
-                          toast({
-                            title: 'Provider activated',
-                            description: `${provider.name} is now the active AI provider.`,
-                          })
-                        } else {
-                          updateProvider(provider.id, { isActive: false })
-                          toast({
-                            title: 'Provider deactivated',
-                            description: `${provider.name} has been deactivated.`,
-                          })
-                        }
-                      }}
-                      disabled={!provider.isConfigured}
-                    />
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-full border border-slate-200 dark:border-slate-700">
+                      <span className={`text-xs font-semibold px-2 ${!provider.isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400'}`}>OFF</span>
+                      <Switch
+                        checked={provider.isActive}
+                        onCheckedChange={(checked) => {
+                          if (checked && provider.isConfigured) {
+                            const newProviders = providers.map(p => ({
+                              ...p,
+                              isActive: p.id === provider.id
+                            }))
+                            setProviders(newProviders)
+                            toast({
+                              title: 'Provider activated',
+                              description: `${provider.name} is now the active AI provider.`,
+                            })
+                          } else {
+                            updateProvider(provider.id, { isActive: false })
+                            toast({
+                              title: 'Provider deactivated',
+                              description: `${provider.name} has been deactivated.`,
+                            })
+                          }
+                        }}
+                        disabled={!provider.isConfigured}
+                        className="data-[state=checked]:bg-indigo-600"
+                      />
+                      <span className={`text-xs font-semibold px-2 ${provider.isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>ON</span>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-6 space-y-6 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor={`base-url-${provider.id}`}>Base URL</Label>
@@ -616,7 +661,24 @@ export function AiApiSettings() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor={`model-${provider.id}`}>Model</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`model-${provider.id}`}>Model</Label>
+                      <Button 
+                        type="button" 
+                        variant="secondary" 
+                        size="sm" 
+                        className="h-6 text-xs px-2"
+                        onClick={() => handleFetchModels(provider)}
+                        disabled={fetchingModels[provider.id]}
+                      >
+                        {fetchingModels[provider.id] ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                        )}
+                        Fetch Live
+                      </Button>
+                    </div>
                     <Select 
                       value={provider.model} 
                       onValueChange={(value) => updateProvider(provider.id, { model: value })}
@@ -709,22 +771,26 @@ export function AiApiSettings() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           ))}
         </TabsContent>
 
-        <TabsContent value="advanced" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="w-5 h-5" />
+        <TabsContent value="advanced" className="space-y-6 outline-none focus-visible:ring-0">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg text-indigo-600 dark:text-indigo-400">
+                    <Brain className="w-5 h-5" />
+                  </div>
                   Global AI Settings
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-500 dark:text-slate-400">
                   Configure default behavior for all AI providers
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-6 space-y-6 relative z-10 flex-1">
                 <div className="space-y-2">
                   <Label>Default System Prompt</Label>
                   <Textarea
@@ -747,224 +813,236 @@ export function AiApiSettings() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Auto-save Responses</Label>
-                    <p className="text-xs text-gray-500">
-                      Automatically save AI responses for future reference
-                    </p>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="space-y-0.5 pr-4">
+                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Auto-save Responses</Label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Automatically save AI responses for future reference
+                      </p>
+                    </div>
+                    <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
                   </div>
-                  <Switch defaultChecked />
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Enable Response Caching</Label>
-                    <p className="text-xs text-gray-500">
-                      Cache responses to reduce API calls for similar queries
-                    </p>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="space-y-0.5 pr-4">
+                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Enable Response Caching</Label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Cache responses to reduce API calls for similar queries
+                      </p>
+                    </div>
+                    <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
                   </div>
-                  <Switch defaultChecked />
-                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg text-emerald-600 dark:text-emerald-400">
+                    <Shield className="w-5 h-5" />
+                  </div>
                   Security & Privacy
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-500 dark:text-slate-400">
                   Configure security and privacy settings
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Encrypt API Keys</Label>
-                    <p className="text-xs text-gray-500">
-                      API keys are encrypted before storage
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="bg-green-50 text-green-700">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Enabled
-                  </Badge>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Data Retention Period</Label>
-                    <p className="text-xs text-gray-500">
-                      How long to keep AI responses and logs
-                    </p>
-                  </div>
-                  <Select defaultValue="30">
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                      <SelectItem value="365">1 year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Share Usage Analytics</Label>
-                    <p className="text-xs text-gray-500">
-                      Help improve the service with anonymous usage data
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Allowed IP Addresses (Optional)</Label>
-                  <Input placeholder="192.168.1.0/24, 10.0.0.1" />
-                  <p className="text-xs text-gray-500">
-                    Restrict API access to specific IP ranges
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
-                  Performance Optimization
-                </CardTitle>
-                <CardDescription>
-                  Optimize AI performance and resource usage
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Concurrent Requests Limit</Label>
-                  <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue="5" min="1" max="20" className="w-20" />
-                    <span className="text-sm text-gray-500">requests at once</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Rate Limiting</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-2">
-                      <Input type="number" defaultValue="100" min="1" className="w-20" />
-                      <span className="text-sm text-gray-500">requests per</span>
+              <CardContent className="p-6 space-y-6 relative z-10 flex-1">
+                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="space-y-0.5 pr-4">
+                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Encrypt API Keys</Label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        API keys are encrypted before storage
+                      </p>
                     </div>
-                    <Select defaultValue="hour">
-                      <SelectTrigger>
+                    <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1">
+                      <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                      Enabled
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="space-y-0.5 pr-4">
+                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Data Retention Period</Label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        How long to keep AI responses and logs
+                      </p>
+                    </div>
+                    <Select defaultValue="30">
+                      <SelectTrigger className="w-[120px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="minute">minute</SelectItem>
-                        <SelectItem value="hour">hour</SelectItem>
-                        <SelectItem value="day">day</SelectItem>
+                        <SelectItem value="7">7 days</SelectItem>
+                        <SelectItem value="30">30 days</SelectItem>
+                        <SelectItem value="90">90 days</SelectItem>
+                        <SelectItem value="365">1 year</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Smart Model Selection</Label>
-                    <p className="text-xs text-gray-500">
-                      Automatically choose the best model for each task
+                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="space-y-0.5 pr-4">
+                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Share Usage Analytics</Label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Help improve the service with anonymous usage data
+                      </p>
+                    </div>
+                    <Switch className="data-[state=checked]:bg-emerald-600" />
+                  </div>
+
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Allowed IP Addresses (Optional)</Label>
+                    <Input placeholder="192.168.1.0/24, 10.0.0.1" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-emerald-500" />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Restrict API access to specific IP ranges
                     </p>
                   </div>
-                  <Switch />
-                </div>
+                </CardContent>
+              </Card>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Failover to Backup Provider</Label>
-                    <p className="text-xs text-gray-500">
-                      Switch to another provider if primary fails
-                    </p>
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group lg:col-span-2">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-600 dark:text-amber-400">
+                    <Zap className="w-5 h-5" />
                   </div>
-                  <Switch />
+                  Performance Optimization
+                </CardTitle>
+                <CardDescription className="text-slate-500 dark:text-slate-400">
+                  Optimize AI performance and resource usage
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Concurrent Requests Limit</Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <Input type="number" defaultValue="5" min="1" max="20" className="w-24 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-amber-500" />
+                      <span className="text-sm text-slate-500 dark:text-slate-400">requests per minute</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Processing Priority</Label>
+                    <Select defaultValue="balanced">
+                      <SelectTrigger className="mt-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="speed">Speed (Lower Latency)</SelectItem>
+                        <SelectItem value="balanced">Balanced</SelectItem>
+                        <SelectItem value="quality">Quality (Higher Latency)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="md:col-span-2 flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                    <div className="space-y-0.5 pr-4">
+                      <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Streaming Responses</Label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Show AI responses as they are generated for a faster perceived experience
+                      </p>
+                    </div>
+                    <Switch defaultChecked className="data-[state=checked]:bg-amber-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 relative group flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-700/50 relative z-10 flex-none">
+                <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800 dark:text-slate-200">
+                  <div className="p-2 bg-rose-100 dark:bg-rose-900/40 rounded-lg text-rose-600 dark:text-rose-400">
+                    <Activity className="w-5 h-5" />
+                  </div>
                   Monitoring & Alerts
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-slate-500 dark:text-slate-400">
                   Set up monitoring and notification preferences
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Cost Alert Threshold</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">$</span>
-                    <Input type="number" defaultValue="50" min="1" className="w-24" />
-                    <span className="text-sm text-gray-500">per month</span>
+              <CardContent className="p-6 space-y-6 relative z-10 flex-1">
+                <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Cost Alert Threshold</Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">$</span>
+                    <Input type="number" defaultValue="50" min="1" className="w-24 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-rose-500" />
+                    <span className="text-sm text-slate-500 dark:text-slate-400">per month</span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Error Rate Alert</Label>
-                  <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue="10" min="1" max="100" className="w-20" />
-                    <span className="text-sm text-gray-500">% error rate</span>
+                <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Error Rate Alert</Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <Input type="number" defaultValue="10" min="1" max="100" className="w-24 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-rose-500" />
+                    <span className="text-sm text-slate-500 dark:text-slate-400">% error rate</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email Notifications</Label>
-                    <p className="text-xs text-gray-500">
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="space-y-0.5 pr-4">
+                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Email Notifications</Label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Receive alerts via email
                     </p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch defaultChecked className="data-[state=checked]:bg-rose-600" />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Daily Usage Reports</Label>
-                    <p className="text-xs text-gray-500">
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="space-y-0.5 pr-4">
+                    <Label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Daily Usage Reports</Label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Get daily summaries of API usage
                     </p>
                   </div>
-                  <Switch />
+                  <Switch className="data-[state=checked]:bg-rose-600" />
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/30 rounded-[2rem] overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div>
-                  <h3 className="font-medium text-gray-900">Save Advanced Settings</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Save Advanced Settings</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     Apply these settings to all AI providers and future interactions
                   </p>
                 </div>
-                <Button className="gap-2">
-                  <Save className="w-4 h-4" />
+                <Button className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all rounded-xl font-medium px-6 py-2.5 h-auto">
+                  <Save className="w-5 h-5 mr-2" />
                   Save All Settings
                 </Button>
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         </TabsContent>
 
-        <TabsContent value="usage" className="space-y-4">
-          <ApiUsageTracker />
+        <TabsContent value="usage" className="space-y-6 outline-none focus-visible:ring-0">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50 rounded-[2rem] overflow-hidden">
+              <CardHeader className="p-6 sm:p-8 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40">
+                <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+                  <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+                    <Activity className="w-6 h-6 text-white" />
+                  </div>
+                  API Usage & Metrics
+                </CardTitle>
+                <CardDescription className="mt-2 text-base text-slate-600 dark:text-slate-400">
+                  Monitor your API usage, limits, and costs across different providers.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ApiUsageTracker />
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
       </Tabs>
     </div>

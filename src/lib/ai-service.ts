@@ -558,6 +558,63 @@ export class AIService {
 
   
 
+  async fetchModels(provider: AIProvider): Promise<string[]> {
+    try {
+      if (!provider.baseUrl) return []
+
+      if (provider.type === 'ollama') {
+        const baseUrl = provider.baseUrl.endsWith('/api') ? provider.baseUrl.replace('/api', '') : provider.baseUrl
+        const res = await fetch(`${baseUrl}/api/tags`)
+        if (res.ok) {
+          const data = await res.json()
+          return data.models?.map((m: any) => m.name) || []
+        }
+      } else if (provider.type === 'open-router') {
+        const res = await fetch(`${provider.baseUrl}/models`, {
+          headers: {
+            'Authorization': `Bearer ${provider.apiKey}`,
+            'HTTP-Referer': 'http://localhost:3000',
+            'X-Title': 'DocuMind AI'
+          }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          return data.data?.map((m: any) => m.id) || []
+        }
+      } else if (provider.type === 'google') {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${provider.apiKey}`)
+        if (res.ok) {
+          const data = await res.json()
+          return data.models?.map((m: any) => m.name.replace('models/', '')) || []
+        }
+      } else if (['openai', 'lm-studio', 'mistral'].includes(provider.type)) {
+        const baseUrl = provider.baseUrl
+        // Ensure not appending /models to something that already has it or is a chat endpoint
+        const modelsUrl = baseUrl.endsWith('/chat/completions') 
+          ? baseUrl.replace('/chat/completions', '/models')
+          : `${baseUrl}/models`
+
+        const res = await fetch(modelsUrl, {
+          headers: {
+            'Authorization': `Bearer ${provider.apiKey}`
+          }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          return data.data?.map((m: any) => m.id) || []
+        }
+      } else if (provider.type === 'anthropic') {
+        // Anthropic doesn't have a standard public models endpoint, return standard list
+        return ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest', 'claude-3-sonnet-20240229']
+      }
+    } catch (e) {
+      console.warn('Failed to fetch live models:', e)
+    }
+
+    // Default fallback if fetch fails or is unsupported
+    return provider.models || []
+  }
+
   updateProviders(providers: AIProvider[]) {
     // Update in-memory providers only - persistence is handled by the API
     this.providers = providers

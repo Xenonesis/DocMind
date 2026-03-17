@@ -258,47 +258,48 @@ export function LandingPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700 relative overflow-hidden">
-      {/* Background decorations */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+      {/* Premium Dynamic Mesh Gradient Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
         <motion.div 
           style={{ y: y1 }}
-          className="absolute top-20 -left-20 w-96 h-96 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"
+          className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full mix-blend-multiply filter blur-[128px] opacity-70 bg-gradient-to-tr from-blue-400 via-indigo-500 to-purple-500 dark:from-blue-600 dark:via-indigo-700 dark:to-purple-800 dark:mix-blend-screen"
         />
         <motion.div 
           style={{ y: y2 }}
-          className="absolute top-40 -right-20 w-96 h-96 bg-gradient-to-r from-pink-400/20 to-orange-400/20 rounded-full blur-3xl"
+          className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full mix-blend-multiply filter blur-[128px] opacity-60 bg-gradient-to-br from-cyan-300 via-blue-400 to-indigo-500 dark:from-cyan-700 dark:via-blue-800 dark:to-indigo-900 dark:mix-blend-screen"
         />
         <motion.div 
           style={{ y: y1 }}
-          className="absolute bottom-20 left-1/2 w-96 h-96 bg-gradient-to-r from-green-400/20 to-blue-400/20 rounded-full blur-3xl"
+          className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full mix-blend-multiply filter blur-[128px] opacity-60 bg-gradient-to-tl from-purple-400 via-pink-400 to-orange-300 dark:from-purple-800 dark:via-pink-800 dark:to-orange-800 dark:mix-blend-screen"
         />
       </div>
 
       {/* Enhanced Navigation */}
-      <nav className={`border-b backdrop-blur-md sticky top-0 z-50 transition-all duration-300 ${
+      <nav className={`border-b backdrop-blur-xl sticky top-0 z-50 transition-all duration-500 ${
         isScrolled 
-          ? 'bg-white/95 dark:bg-slate-900/95 shadow-lg border-slate-200/50 dark:border-slate-700/50' 
-          : 'bg-white/80 dark:bg-slate-900/80 border-transparent'
+          ? 'bg-white/80 dark:bg-slate-950/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border-slate-200/50 dark:border-slate-800/50' 
+          : 'bg-transparent border-transparent'
       }`}>
         {/* Scroll progress indicator */}
-        <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 ease-out" 
+        <div className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-300 ease-out" 
              style={{ width: `${scrollProgress}%` }} />
         
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <motion.div 
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer"
-              whileHover={{ scale: 1.05 }}
+              className="flex items-center gap-3 cursor-pointer group"
+              whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
-              <div className="p-1.5 sm:p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg sm:rounded-xl shadow-lg">
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="p-2 bg-slate-900 dark:bg-white rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white dark:text-slate-900" />
               </div>
-              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-                DocMind
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                DocMind<span className="text-blue-600 dark:text-blue-400">.</span>
               </span>
             </motion.div>
 
@@ -439,25 +440,25 @@ export function LandingPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Badge variant="secondary" className="mb-4 sm:mb-6 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 border-0">
-                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+              <Badge variant="secondary" className="mb-4 sm:mb-6 px-4 py-2 text-xs sm:text-sm font-semibold tracking-wide bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm text-slate-800 dark:text-slate-200 rounded-full">
+                <Sparkles className="w-4 h-4 mr-2 text-blue-500" />
                 AI-Powered Document Intelligence
               </Badge>
             </motion.div>
             <motion.h1 
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 leading-tight px-2"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter text-slate-900 dark:text-white mb-6 leading-[1.1] px-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               Transform Your
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 animate-pulse block sm:inline">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 block sm:inline">
                 {" "}Documents{" "}
               </span>
               Into Knowledge
             </motion.h1>
             <motion.p 
-              className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-600 dark:text-slate-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed px-4"
+              className="text-lg sm:text-xl lg:text-2xl text-slate-600 dark:text-slate-400 mb-10 max-w-3xl mx-auto leading-relaxed px-4 font-medium"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
@@ -466,7 +467,7 @@ export function LandingPage() {
               Upload, analyze, and discover insights from your content like never before.
             </motion.p>
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center mb-8 sm:mb-12 px-4"
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-12 px-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
@@ -474,26 +475,26 @@ export function LandingPage() {
               <Button 
                 size="lg" 
                 onClick={() => setShowSignup(true)} 
-                className="text-base sm:text-lg px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 w-full sm:w-auto group relative overflow-hidden"
+                className="text-base font-semibold px-8 py-6 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 w-full sm:w-auto group relative overflow-hidden shadow-[0_0_40px_-10px_rgba(0,0,0,0.3)] dark:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
               >
                 <span className="relative z-10 flex items-center">
                   Start Free Trial
-                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="text-base sm:text-lg px-6 sm:px-10 py-3 sm:py-4 border-2 hover:bg-slate-50 dark:hover:bg-slate-800 transform hover:scale-105 transition-all duration-300 w-full sm:w-auto group relative overflow-hidden"
+                className="text-base font-semibold px-8 py-6 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 active:scale-[0.98] transition-all duration-300 w-full sm:w-auto group relative overflow-hidden shadow-sm backdrop-blur-sm"
                 onClick={() => {
                   // Smooth scroll to how it works section
                   const howItWorksSection = document.querySelector('[data-section="how-it-works"]');
                   howItWorksSection?.scrollIntoView({ behavior: 'smooth' });
                 }}
               >
-                <span className="relative z-10 flex items-center">
-                  <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 group-hover:scale-110 transition-transform" />
+                <span className="relative z-10 flex items-center text-slate-700 dark:text-slate-300">
+                  <Play className="w-5 h-5 mr-2 group-hover:scale-110 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all" />
                   See How It Works
                 </span>
               </Button>
@@ -633,17 +634,17 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16 lg:mb-20"
           >
-            <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 border-0 text-xs sm:text-sm">
-              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+            <Badge variant="secondary" className="mb-4 px-4 py-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm text-slate-800 dark:text-slate-200 rounded-full text-xs sm:text-sm font-semibold tracking-wide">
+              <TrendingUp className="w-4 h-4 mr-2" />
               Powerful Features
             </Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 px-2">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 px-2 tracking-tight">
               Everything You Need for
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 block sm:inline">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 block sm:inline">
                 {" "}Document Intelligence
               </span>
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto px-4">
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto px-4 font-medium leading-relaxed">
               Unlock the potential of your document library with AI-powered features designed for modern teams
             </p>
           </motion.div>
@@ -738,17 +739,17 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16 lg:mb-20"
           >
-            <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900 dark:to-blue-900 border-0 text-xs sm:text-sm">
-              <Rocket className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+            <Badge variant="secondary" className="mb-4 px-4 py-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm text-slate-800 dark:text-slate-200 rounded-full text-xs sm:text-sm font-semibold tracking-wide">
+              <Rocket className="w-4 h-4 mr-2" />
               How It Works
             </Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 px-2">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 px-2 tracking-tight">
               From Upload to
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 block sm:inline">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 block sm:inline">
                 {" "}Intelligent Insights
               </span>
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto px-4">
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto px-4 font-medium leading-relaxed">
               Transform your documents into searchable knowledge in just three simple steps
             </p>
           </motion.div>
@@ -885,17 +886,17 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16"
           >
-            <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900 dark:to-blue-900 border-0 text-xs sm:text-sm">
-              <Target className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+            <Badge variant="secondary" className="mb-4 px-4 py-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm text-slate-800 dark:text-slate-200 rounded-full text-xs sm:text-sm font-semibold tracking-wide">
+              <Target className="w-4 h-4 mr-2" />
               Simple Pricing
             </Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 px-2">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 px-2 tracking-tight">
               Choose Your
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 block sm:inline">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 block sm:inline">
                 {" "}Perfect Plan
               </span>
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto px-4">
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto px-4 font-medium leading-relaxed">
               Start free and scale as you grow. No hidden fees, cancel anytime.
             </p>
           </motion.div>
@@ -987,10 +988,13 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 px-2">
+            <Badge variant="secondary" className="mb-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 border-0 text-slate-800 dark:text-slate-200 rounded-full text-xs sm:text-sm font-semibold tracking-wide">
+              ⭐ Success Stories
+            </Badge>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 px-2 tracking-tight">
               Trusted by Teams Worldwide
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 px-4">
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto px-4 font-medium leading-relaxed">
               See what our users are saying about DocMind
             </p>
           </motion.div>
@@ -1166,17 +1170,17 @@ export function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16"
           >
-            <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 border-0 text-xs sm:text-sm">
-              <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+            <Badge variant="secondary" className="mb-4 px-4 py-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm text-slate-800 dark:text-slate-200 rounded-full text-xs sm:text-sm font-semibold tracking-wide">
+              <HelpCircle className="w-4 h-4 mr-2" />
               Get Support
             </Badge>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6 px-2">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 px-2 tracking-tight">
               We're Here to
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 block sm:inline">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 block sm:inline">
                 {" "}Help You Succeed
               </span>
             </h2>
-            <p className="text-base sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto px-4">
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto px-4 font-medium leading-relaxed">
               Get the support you need to make the most of DocMind
             </p>
           </motion.div>

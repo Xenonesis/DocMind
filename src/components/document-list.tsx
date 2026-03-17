@@ -134,17 +134,24 @@ export function DocumentList({ documents }: DocumentListProps) {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-            Document Library
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg rounded-3xl overflow-hidden mb-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none" />
+        <CardHeader className="relative z-10 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 p-6 sm:p-8">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl shadow-lg shadow-blue-500/20">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+                Document Library
+              </CardTitle>
+            </div>
+          </div>
+          <CardDescription className="text-base sm:text-lg text-slate-600 dark:text-slate-400 mt-2">
             Manage and analyze your uploaded documents
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 sm:p-8 relative z-10">
           <div className="flex flex-col gap-3 sm:gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -187,63 +194,72 @@ export function DocumentList({ documents }: DocumentListProps) {
       </Card>
 
       {/* Document List */}
-      <Card>
-        <CardHeader>
+      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg rounded-3xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none" />
+        <CardHeader className="relative z-10 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 p-6 sm:p-8">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Documents</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+                Documents
+              </CardTitle>
+              <CardDescription className="text-base text-slate-600 dark:text-slate-400 mt-1">
                 {filteredDocuments.length} document{filteredDocuments.length !== 1 ? 's' : ''} found
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 border-slate-200/50 dark:border-slate-700/50 shadow-sm text-slate-700 dark:text-slate-300 transition-all duration-300">
               <Filter className="w-4 h-4 mr-2" />
               More Filters
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[600px]">
-            <div className="space-y-3">
+        <CardContent className="p-0 sm:p-4 lg:p-6 relative z-10">
+          <ScrollArea className="h-[600px] w-full pr-4">
+            <div className="space-y-4">
               {filteredDocuments.map((doc) => (
                 <motion.div
                   key={doc.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/60 rounded-2xl p-4 sm:p-5 hover:shadow-xl hover:border-blue-400/50 dark:hover:border-blue-500/50 transition-all duration-300"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                      <div className="flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-4 sm:gap-5 flex-1 min-w-0">
+                      <div className="flex-shrink-0 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-inner">
                         {getFileIcon(doc.name)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate text-sm sm:text-base">{doc.name}</h3>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <HardDrive className="w-3 h-3" />
+                        <h3 className="font-semibold text-lg text-slate-900 dark:text-white truncate mb-1">{doc.name}</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          <div className="flex items-center gap-1.5">
+                            <HardDrive className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                             <span>{doc.size}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                          <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                             <span className="hidden sm:inline">{formatDate(doc.uploadDate)}</span>
                             <span className="sm:hidden">{new Date(doc.uploadDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                           </div>
                           {doc.category && (
-                            <Badge variant="outline" className="text-xs w-fit">
-                              {doc.category}
-                            </Badge>
+                            <>
+                              <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                              <Badge variant="outline" className="text-xs font-semibold bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                                {doc.category}
+                              </Badge>
+                            </>
                           )}
                         </div>
                         {doc.tags && doc.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
+                          <div className="flex flex-wrap gap-1.5 mt-3">
                             {doc.tags.slice(0, 3).map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
+                              <Badge key={index} variant="secondary" className="text-[10px] sm:text-xs uppercase tracking-wider font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50">
                                 {tag}
                               </Badge>
                             ))}
                             {doc.tags.length > 3 && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-[10px] sm:text-xs uppercase tracking-wider font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                                 +{doc.tags.length - 3}
                               </Badge>
                             )}
@@ -252,49 +268,51 @@ export function DocumentList({ documents }: DocumentListProps) {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                      <Badge className={`${getStatusColor(doc.status)} text-xs w-fit`}>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 sm:gap-4 mt-3 sm:mt-0 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-700 pt-3 sm:pt-0 sm:pl-4">
+                      <Badge className={`${getStatusColor(doc.status)} px-3 py-1 text-xs font-bold uppercase tracking-wide border rounded-full shadow-sm`}>
                         {getStatusIcon(doc.status)}
-                        <span className="ml-1 capitalize">{doc.status}</span>
+                        <span className="ml-1.5">{doc.status}</span>
                       </Badge>
                       
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
                         <Button 
                           variant="ghost" 
                           size="sm"
                           onClick={() => handlePreview(doc)}
                           title="Preview document"
-                          className="h-8 w-8 p-0"
+                          className="h-9 w-9 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors"
                         >
-                          <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <Eye className="w-4 h-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleDownload(doc)}
                           title="Download document"
-                          className="h-8 w-8 p-0"
+                          className="h-9 w-9 p-0 hover:bg-green-100 dark:hover:bg-green-900/50 hover:text-green-600 dark:hover:text-green-400 rounded-lg transition-colors"
                         >
-                          <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <Download className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreVertical className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                          <MoreVertical className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                   </div>
                   
                   {doc.status === 'UPLOADING' && doc.progress !== undefined && (
-                    <div className="mt-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Uploading...</span>
-                        <span>{Math.round(doc.progress)}%</span>
+                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+                        <span className="flex items-center gap-2"><div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" /> Uploading in progress...</span>
+                        <span className="text-blue-600 dark:text-blue-400">{Math.round(doc.progress)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden shadow-inner">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-300 relative"
                           style={{ width: `${doc.progress}%` }}
-                        />
+                        >
+                          <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite] -skew-x-12" />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -302,13 +320,15 @@ export function DocumentList({ documents }: DocumentListProps) {
               ))}
               
               {filteredDocuments.length === 0 && (
-                <div className="text-center py-12">
-                  <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="text-center py-16 bg-white/40 dark:bg-slate-900/40 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <FileText className="w-10 h-10 text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                     No documents found
                   </h3>
-                  <p className="text-gray-500">
-                    Try adjusting your search or filters to find what you're looking for.
+                  <p className="text-base text-slate-500 dark:text-slate-400 max-w-sm mx-auto font-medium">
+                    Try adjusting your search criteria or adding new documents to the library.
                   </p>
                 </div>
               )}

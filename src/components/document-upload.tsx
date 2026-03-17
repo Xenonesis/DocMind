@@ -16,7 +16,8 @@ import {
   AlertCircle,
   File,
   Image,
-  FileCode
+  FileCode,
+  Plus
 } from 'lucide-react'
 
 interface Document {
@@ -203,48 +204,63 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
-            Upload Documents
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
-            Upload your documents for intelligent processing and analysis. 
-            Supports PDF, DOC, DOCX, TXT, and image files.
+      <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg rounded-3xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none" />
+        <CardHeader className="relative z-10 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 p-6 sm:p-8">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl shadow-lg shadow-blue-500/20">
+              <Upload className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+                Upload Documents
+              </CardTitle>
+            </div>
+          </div>
+          <CardDescription className="text-base sm:text-lg text-slate-600 dark:text-slate-400 mt-2">
+            Securely upload your files for intelligent processing. We support PDF, DOC, DOCX, TXT, and images.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 sm:p-8 relative z-10">
           <div
-            className={`border-2 border-dashed rounded-lg p-4 sm:p-6 lg:p-8 text-center transition-colors ${
+            className={`relative overflow-hidden group border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center transition-all duration-300 ${
               isDragOver 
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' 
-                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 scale-[1.02]' 
+                : 'border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
             }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
           >
-            <Upload className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 mx-auto mb-3 sm:mb-4 text-gray-400" />
-            <p className="text-base sm:text-lg font-medium mb-2">
-              Drag and drop your files here
-            </p>
-            <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">
-              or click to browse files
-            </p>
-            <input
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.json,.xml,.csv"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="file-upload"
-            />
-            <Button asChild size="sm" className="w-full sm:w-auto">
-              <label htmlFor="file-upload" className="cursor-pointer">
-                Choose Files
-              </label>
-            </Button>
+            {/* Animated background gradient on hover */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white dark:bg-slate-800 rounded-full shadow-xl flex items-center justify-center mb-6 group-hover:-translate-y-2 transition-transform duration-300">
+                <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-blue-500 dark:text-blue-400" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                Drag & Drop files here
+              </h3>
+              <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 mb-6">
+                or click the button below to browse your computer
+              </p>
+              
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.json,.xml,.csv"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button asChild size="lg" className="w-full sm:w-auto px-8 py-6 text-base font-semibold rounded-2xl bg-gradient-to-r from-slate-900 to-slate-700 hover:from-slate-800 hover:to-slate-600 dark:from-white dark:to-slate-200 dark:hover:from-slate-100 dark:hover:to-slate-300 text-white dark:text-slate-900 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                <label htmlFor="file-upload" className="cursor-pointer flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Select Files
+                </label>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

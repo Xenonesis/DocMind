@@ -162,83 +162,99 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-6 sm:mb-8"
+          className="mb-8 sm:mb-10"
         >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 sm:p-2 bg-blue-600 rounded-lg">
-                <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg">
+                <FileText className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
-                  DocMind
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">
+                  Dashboard Dashboard
                 </h1>
-                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                <p className="text-slate-600 dark:text-slate-400 font-medium">
                   Welcome back, {user.name}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
               <ThemeToggle />
-              <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
+              <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2 hidden sm:block"></div>
+              <Avatar className="w-10 h-10 border-2 border-white dark:border-slate-800 shadow-sm">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback>
-                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                <AvatarFallback className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700">
+                  <User className="w-4 h-4" />
                 </AvatarFallback>
               </Avatar>
-              <Button variant="outline" onClick={handleLogout} size="sm" className="text-xs sm:text-sm">
-                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <Button variant="outline" onClick={handleLogout} className="text-sm font-semibold rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                <LogOut className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Logout</span>
-                <span className="sm:hidden">Exit</span>
               </Button>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                    <Upload className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+              <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-xl overflow-hidden rounded-3xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none" />
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg shadow-blue-500/20">
+                      <Upload className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Total Uploads</p>
+                      <p className="text-3xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
+                        {documents.length} <span className="text-sm font-medium text-slate-500 dark:text-slate-400">files</span>
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Upload Documents</p>
-                    <p className="font-semibold">{documents.length} files</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
             
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                    <Brain className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <motion.div whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300, delay: 0.1 }}>
+              <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-xl overflow-hidden rounded-3xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent pointer-events-none" />
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl shadow-lg shadow-green-500/20">
+                      <Brain className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Indexed Docs</p>
+                      <p className="text-3xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
+                        {documents.filter(d => d.status === 'COMPLETED').length} <span className="text-sm font-medium text-slate-500 dark:text-slate-400">ready</span>
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Processed</p>
-                    <p className="font-semibold">
-                      {documents.filter(d => d.status === 'COMPLETED').length} files
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
             
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                    <Search className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <motion.div whileHover={{ y: -5 }} transition={{ type: "spring", stiffness: 300, delay: 0.2 }}>
+              <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-xl overflow-hidden rounded-3xl sm:col-span-2 lg:col-span-1">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent pointer-events-none" />
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg shadow-purple-500/20">
+                      <Search className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">System Status</p>
+                      <p className="text-xl font-bold text-slate-900 dark:text-white">
+                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm border border-green-200 dark:border-green-800/50">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                          Operational
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Queries</p>
-                    <p className="font-semibold">Semantic search ready</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </motion.div>
 
@@ -248,80 +264,108 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-5 h-auto p-1">
-              <TabsTrigger value="upload" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
-                <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">Upload</span>
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
-                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">Docs</span>
-              </TabsTrigger>
-              <TabsTrigger value="query" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
-                <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">Query</span>
-              </TabsTrigger>
-              <TabsTrigger value="results" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
-                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">Results</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-1 sm:px-3 text-xs sm:text-sm">
-                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline sm:inline">Settings</span>
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-2 rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-lg mb-8 max-w-fit mx-auto lg:mx-0">
+              <TabsList className="bg-transparent h-auto p-0 flex gap-2 w-full justify-start overflow-x-auto hide-scrollbar">
+                <TabsTrigger 
+                  value="upload" 
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="documents" 
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <FileText className="w-4 h-4" />
+                  Docs
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="query" 
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Query
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="results" 
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Results
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="settings" 
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md rounded-xl py-3 px-5 text-sm font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value="upload" className="space-y-6" key="upload">
-              <DocumentUpload onUpload={handleDocumentUpload} />
-            </TabsContent>
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TabsContent value="upload" className="space-y-6 m-0" key="upload">
+                <DocumentUpload onUpload={handleDocumentUpload} />
+              </TabsContent>
 
-            <TabsContent value="documents" key="documents">
-              {isLoading ? (
-                <div className="text-center p-8">
-                  <p>Loading documents...</p>
-                </div>
-              ) : documents.length > 0 ? (
-                <DocumentList documents={documents} />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>No Documents Found</CardTitle>
-                    <CardDescription>
-                      Upload documents to get started with DocMind's intelligent processing.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button onClick={() => setActiveTab('upload')}>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Documents
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
+              <TabsContent value="documents" className="m-0" key="documents">
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+                    <p className="text-slate-500 font-medium">Loading your documents...</p>
+                  </div>
+                ) : documents.length > 0 ? (
+                  <DocumentList documents={documents} />
+                ) : (
+                  <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg text-center py-12">
+                    <CardHeader>
+                      <div className="mx-auto w-16 h-16 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                        <FileText className="w-8 h-8 text-blue-500" />
+                      </div>
+                      <CardTitle className="text-2xl">No Documents Found</CardTitle>
+                      <CardDescription className="text-base text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                        Upload your first document to unlock DocMind's powerful AI analysis and semantic search capabilities.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button onClick={() => setActiveTab('upload')} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                        <Upload className="w-5 h-5 mr-2" />
+                        Upload Document
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
 
-            <TabsContent value="query" className="space-y-6" key="query">
-              <QueryInterface 
-                query={query}
-                setQuery={setQuery}
-                isProcessing={isProcessing}
-                documents={documents}
-                onSubmit={({ query: q, documentIds, provider }) => {
-                  setSelectedDocumentIds(documentIds)
-                  setSelectedProvider(provider)
-                  handleQuerySubmit({ query: q, documentIds, provider })
-                }}
-              />
-            </TabsContent>
+              <TabsContent value="query" className="space-y-6 m-0" key="query">
+                <QueryInterface 
+                  query={query}
+                  setQuery={setQuery}
+                  isProcessing={isProcessing}
+                  documents={documents}
+                  onSubmit={({ query: q, documentIds, provider }) => {
+                    setSelectedDocumentIds(documentIds)
+                    setSelectedProvider(provider)
+                    handleQuerySubmit({ query: q, documentIds, provider })
+                  }}
+                />
+              </TabsContent>
 
-            <TabsContent value="results" className="space-y-6" key="results">
-              <AnalysisResults />
-            </TabsContent>
+              <TabsContent value="results" className="space-y-6 m-0" key="results">
+                <AnalysisResults />
+              </TabsContent>
 
-            <TabsContent value="settings" className="space-y-6" key="settings">
-              <AiApiSettings />
-            </TabsContent>
+              <TabsContent value="settings" className="space-y-6 m-0" key="settings">
+                <AiApiSettings />
+              </TabsContent>
+            </motion.div>
           </Tabs>
         </motion.div>
         </div>

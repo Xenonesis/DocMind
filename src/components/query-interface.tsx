@@ -343,7 +343,7 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
     recognition.onend = () => setIsListening(false)
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript
-      setQuery(prev => prev + (prev ? ' ' : '') + transcript)
+      setQuery(query + (query ? ' ' : '') + transcript)
     }
 
     recognition.start()
@@ -353,19 +353,24 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
     <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Hero Section */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center space-y-3 sm:space-y-4 py-4 sm:py-6 lg:py-8 px-4"
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        className="text-center space-y-4 py-8 sm:py-12 px-4 relative"
       >
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-          <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl">
-            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Ask Anything
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.1),transparent_50%)] pointer-events-none" />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <motion.div 
+            whileHover={{ scale: 1.05, rotate: 5 }} 
+            className="p-3 sm:p-4 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-2xl sm:rounded-3xl shadow-lg shadow-blue-500/20"
+          >
+            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+          </motion.div>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 tracking-tight">
+            Ask DocMind
           </h1>
         </div>
-        <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
           Transform your documents into intelligent conversations. Ask questions in natural language and get instant, contextual answers.
         </p>
       </motion.div>
@@ -378,11 +383,11 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
           transition={{ delay: 0.1 }}
           className="px-4 mb-6"
         >
-          <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-            <AlertDescription className="text-orange-800 dark:text-orange-200">
+          <Alert className="border-orange-200/50 bg-orange-50/80 dark:border-orange-900/50 dark:bg-orange-950/80 backdrop-blur-md rounded-2xl shadow-sm">
+            <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200 ml-2 font-medium">
               No AI providers are configured. Please go to{' '}
-              <a href="/settings" className="font-medium underline hover:no-underline">
+              <a href="/settings" className="font-bold underline decoration-2 underline-offset-4 hover:text-orange-900 dark:hover:text-orange-100 transition-colors">
                 Settings
               </a>{' '}
               to configure at least one AI provider before asking questions.
@@ -395,22 +400,24 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 25 }}
         className="relative px-4"
       >
-        <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors duration-300">
-          <CardContent className="p-4 sm:p-6 lg:p-8">
+        <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50 rounded-[2rem] overflow-hidden group transition-all duration-500 hover:shadow-blue-500/10 dark:hover:shadow-blue-900/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <CardContent className="p-6 sm:p-8 lg:p-10 relative z-10">
             <div className="space-y-4 sm:space-y-6">
               {/* Query Input Area */}
               <div className="relative">
-                <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-                  <div className="flex-1 relative w-full">
+                <div className="flex flex-col sm:flex-row items-start gap-4">
+                  <div className="flex-1 relative w-full group/input">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur opacity-25 group-hover/input:opacity-50 transition duration-500"></div>
                     <Textarea
                       ref={textareaRef}
                       value={query}
                       onChange={(e) => onTextareaChange(e.target.value)}
                       placeholder="What would you like to know about your documents? Try asking something like 'What are the key risks in my contracts?' or 'Show me all compliance-related documents'..."
-                      className="min-h-[120px] sm:min-h-[140px] text-base sm:text-lg border-0 shadow-none resize-none focus-visible:ring-0 placeholder:text-gray-400"
+                      className="relative min-h-[140px] sm:min-h-[160px] text-base sm:text-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl shadow-inner resize-none focus-visible:ring-2 focus-visible:ring-blue-500/50 placeholder:text-slate-400 p-5 transition-all duration-300"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                           handleSubmit()
@@ -455,28 +462,29 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex sm:flex-col gap-2 w-full sm:w-auto">
+                  <div className="flex sm:flex-col gap-3 w-full sm:w-auto relative z-10">
                     <Button
                       onClick={toggleVoiceRecognition}
                       variant="outline"
-                      size="sm"
-                      className={`flex-1 sm:flex-none ${isListening ? 'bg-red-50 border-red-200 text-red-600' : ''}`}
+                      size="icon"
+                      className={`h-12 w-full sm:w-12 rounded-2xl border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-md ${isListening ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 animate-pulse' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800'}`}
+                      aria-label="Voice input"
                     >
-                      {isListening ? <MicOff className="w-3 h-3 sm:w-4 sm:h-4" /> : <Mic className="w-3 h-3 sm:w-4 sm:h-4" />}
-                      <span className="ml-1 sm:hidden text-xs">{isListening ? 'Stop' : 'Voice'}</span>
+                      {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                      <span className="ml-2 sm:hidden font-medium">{isListening ? 'Stop Listening' : 'Voice Input'}</span>
                     </Button>
                     <Button
                       onClick={handleSubmit}
                       disabled={isProcessing || !query.trim() || providers.length === 0}
-                      className="flex-1 sm:flex-none bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                      size="sm"
+                      className="h-12 w-full sm:w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
+                      aria-label="Send query"
                     >
                       {isProcessing ? (
-                        <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                        <RefreshCw className="w-5 h-5 animate-spin" />
                       ) : (
-                        <Send className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <Send className="w-5 h-5" />
                       )}
-                      <span className="ml-1 sm:hidden text-xs">Send</span>
+                      <span className="ml-2 sm:hidden font-medium">Send Query</span>
                     </Button>
                   </div>
                 </div>
@@ -589,22 +597,26 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-yellow-500" />
-                    Quick Start
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-4 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 relative z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent pointer-events-none" />
+                <div className="flex items-center justify-between relative z-10">
+                  <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                    <div className="p-2 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl shadow-md shadow-yellow-500/20">
+                      <Lightbulb className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">Quick Start</span>
                   </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowExamples(!showExamples)}
+                    className="hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full w-8 h-8 p-0"
                   >
                     {showExamples ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </Button>
                 </div>
-                <CardDescription>
+                <CardDescription className="mt-2 text-slate-600 dark:text-slate-400 relative z-10">
                   Get started with these common queries or explore example questions
                 </CardDescription>
               </CardHeader>
@@ -640,20 +652,21 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                             className="w-full"
                           >
                             <div 
-                              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 bg-white dark:bg-gray-800"
+                              className="group p-5 border border-slate-200 dark:border-slate-700/60 rounded-2xl cursor-pointer shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md relative overflow-hidden"
                               onClick={() => handleExampleClick(example)}
                             >
-                              <div className="flex items-start justify-between gap-3 mb-3">
-                                <Badge variant="secondary" className="text-xs font-medium flex-shrink-0">
+                              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-transparent to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 transition-all duration-500" />
+                              <div className="relative z-10 flex items-start justify-between gap-3 mb-4">
+                                <Badge variant="secondary" className="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex-shrink-0 border-0">
                                   {example.category}
                                 </Badge>
-                                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0 mt-0.5" />
                               </div>
-                              <div className="space-y-2">
-                                <h4 className="font-medium text-sm leading-5 text-gray-900 dark:text-gray-100 break-words">
+                              <div className="relative z-10 space-y-2">
+                                <h4 className="font-bold text-sm sm:text-base leading-snug text-slate-900 dark:text-white break-words group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                                   {example.question}
                                 </h4>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 leading-4 break-words">
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed break-words">
                                   {example.description}
                                 </p>
                               </div>
@@ -681,13 +694,16 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-purple-500" />
-                  AI Capabilities
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300">
+              <CardHeader className="border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 relative z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent pointer-events-none" />
+                <CardTitle className="flex items-center gap-3 text-xl font-bold relative z-10">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-md shadow-purple-500/20">
+                    <Layers className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">AI Capabilities</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="mt-2 text-slate-600 dark:text-slate-400 relative z-10">
                   Powered by advanced language models for intelligent document analysis
                 </CardDescription>
               </CardHeader>
@@ -731,17 +747,21 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="w-5 h-5 text-green-500" />
-                    Recent Queries
+            <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300">
+              <CardHeader className="pb-4 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 relative z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
+                <div className="flex items-center justify-between relative z-10">
+                  <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                    <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl shadow-md shadow-green-500/20">
+                      <History className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300">Recent Queries</span>
                   </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowHistory(!showHistory)}
+                    className="hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full w-8 h-8 p-0"
                   >
                     {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </Button>
@@ -755,19 +775,21 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                   >
-                    <CardContent>
-                      <ScrollArea className="h-[300px]">
-                        <div className="space-y-3">
+                    <CardContent className="p-0 sm:p-4">
+                      <ScrollArea className="h-[350px]">
+                        <div className="space-y-3 pr-4">
                           {isLoadingHistory ? (
-                            <div className="text-center py-8">
-                              <RefreshCw className="w-6 h-6 mx-auto animate-spin text-gray-400 mb-3" />
-                              <p className="text-sm text-gray-500">Loading history...</p>
+                            <div className="text-center py-10">
+                              <RefreshCw className="w-8 h-8 mx-auto animate-spin text-blue-500 mb-4" />
+                              <p className="font-medium text-slate-500 dark:text-slate-400">Loading history...</p>
                             </div>
                           ) : queryHistory.length === 0 ? (
-                            <div className="text-center py-8">
-                              <MessageCircle className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-2">No queries yet</h3>
-                              <p className="text-sm text-gray-500">Your query history will appear here</p>
+                            <div className="text-center py-12 px-4 backdrop-blur-sm bg-white/30 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 mx-2 mt-2">
+                              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                                <MessageCircle className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                              </div>
+                              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">No queries yet</h3>
+                              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Your query history will appear here once you start asking questions.</p>
                             </div>
                           ) : (
                             queryHistory.map((history, index) => (
@@ -776,23 +798,25 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className="group p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-all duration-200"
+                                className="group p-4 border border-slate-200 dark:border-slate-700/60 rounded-2xl hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 cursor-pointer transition-all duration-300 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md relative overflow-hidden"
                                 onClick={() => setQuery(history.query)}
                               >
-                                <div className="flex items-start gap-3">
-                                  <div className="mt-0.5">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 transition-all duration-500" />
+                                <div className="flex items-start gap-4 relative z-10">
+                                  <div className="mt-1 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg shadow-inner group-hover:bg-white dark:group-hover:bg-slate-700 transition-colors">
                                     {getStatusIcon(history.status)}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-2 leading-relaxed group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                       {history.query}
                                     </p>
-                                    <div className="flex items-center justify-between mt-1">
-                                      <p className="text-xs text-gray-500">
+                                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+                                      <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5" />
                                         {new Date(history.timestamp).toLocaleDateString()}
                                       </p>
                                       {history.results !== undefined && (
-                                        <Badge variant="outline" className="text-xs">
+                                        <Badge variant="secondary" className="text-[10px] uppercase tracking-wider font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50">
                                           {history.results} results
                                         </Badge>
                                       )}
