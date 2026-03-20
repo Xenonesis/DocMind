@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, FileText, Terminal, Shield, Zap } from 'lucide-react'
+import { ArrowRight, FileText, Database, Shield, Zap } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export function LandingPage() {
@@ -28,81 +28,92 @@ export function LandingPage() {
   if (!isClient) return null
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-white">
-      {/* Brutalist Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b-4 border-border px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-foreground brutal-shadow" />
-          <span className="text-2xl font-black tracking-tighter uppercase">DocMind.SYS</span>
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-foreground flex flex-col">
+      {/* Modern, clean header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border px-6 py-4 flex justify-between items-center transition-all">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-sm">
+            D
+          </div>
+          <span className="text-xl font-bold tracking-tight">DocMind</span>
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <Button 
             onClick={handleGetStarted}
-            className="uppercase font-bold tracking-widest bg-accent text-white hover:bg-foreground hover:text-background transition-colors rounded-none brutal-shadow border-2 border-border"
+            className="font-medium rounded-full px-6 shadow-sm hover:shadow-md transition-all"
           >
-            {user ? 'ENTER_SYSTEM' : 'INIT_LOGIN'}
+            {user ? 'Go to Dashboard' : 'Get Started'}
           </Button>
         </div>
       </header>
 
       {/* Main Hero */}
-      <main className="pt-32 pb-16 px-6 max-w-7xl mx-auto flex flex-col gap-24">
-        <section className="flex flex-col gap-8">
+      <main className="pt-32 pb-24 px-6 max-w-7xl mx-auto flex flex-col gap-24 flex-grow">
+        <section className="flex flex-col items-center text-center gap-8 mt-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-block"
           >
-            <div className="border-4 border-foreground bg-accent text-white px-4 py-2 font-mono text-sm uppercase tracking-widest inline-flex w-fit brutal-shadow">
-              SYSTEM_STATUS: ONLINE V.1.0.0
+            <div className="border border-border bg-secondary/50 text-foreground px-4 py-1.5 rounded-full text-sm font-medium inline-flex items-center gap-2 shadow-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              Platform v1.0 is now live
             </div>
           </motion.div>
 
           <motion.h1 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-7xl md:text-9xl font-black uppercase leading-[0.85] tracking-tighter"
+            className="text-5xl md:text-7xl font-bold tracking-tight text-balance max-w-4xl"
           >
-            EXTRACT <br/>
-            ANALYZE <br/>
-            DOMINATE.
+            Intelligent document processing for modern teams.
           </motion.h1>
 
           <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="font-mono text-xl md:text-2xl max-w-2xl border-l-4 border-accent pl-6 py-2"
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl text-balance"
           >
-            Raw intelligence extraction for your documents. 
-            No fluff. No standard UI. Just pure data manipulation and semantic querying.
+            Unlock the intelligence hidden within your files. Seamlessly extract data, summarize content, and query complex documents using advanced AI.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className="flex gap-4 mt-4"
           >
             <Button 
               size="lg"
               onClick={handleGetStarted}
-              className="text-xl px-12 py-8 bg-foreground text-background uppercase font-black tracking-widest hover:bg-accent hover:text-white brutal-shadow border-4 border-foreground group"
+              className="text-base px-8 py-6 rounded-full font-medium shadow-md hover:shadow-lg transition-all group"
             >
-              INITIALIZE_SCAN
-              <ArrowRight className="ml-4 w-6 h-6 group-hover:translate-x-2 transition-transform" />
+              Start for free
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button 
+              size="lg"
+              variant="outline"
+              className="text-base px-8 py-6 rounded-full font-medium"
+            >
+              View demo
             </Button>
           </motion.div>
         </section>
 
-        {/* Brutalist Grid Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t-4 border-border pt-16">
+        {/* Minimal Features Grid Section */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-16">
           {[
-            { icon: FileText, title: 'RAW_INGESTION', desc: 'Feed the system PDFs, Word docs, text files. It eats everything.' },
-            { icon: Terminal, title: 'SEMANTIC_QUERY', desc: 'Interrogate your data via command line logic.' },
-            { icon: Zap, title: 'HYPER_PROCESSING', desc: 'Powered by state-of-the-art LLM vectorization.' },
-            { icon: Shield, title: 'SECURE_VAULT', desc: 'Your documents locked behind standard-compliant auth.' }
+            { icon: FileText, title: 'Universal Support', desc: 'Securely upload PDFs, Word documents, text files, and images.' },
+            { icon: Database, title: 'Semantic Querying', desc: 'Find exact answers within complex documents instantly using natural language.' },
+            { icon: Zap, title: 'High Performance', desc: 'Powered by highly optimized state-of-the-art vector processing.' },
+            { icon: Shield, title: 'Enterprise Security', desc: 'Your data is encrypted and strictly isolated within your workspace.' }
           ].map((feature, i) => (
             <motion.div 
               key={i}
@@ -110,18 +121,28 @@ export function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="border-4 border-foreground bg-background p-8 brutal-shadow hover:bg-accent hover:text-white transition-colors group"
+              className="border border-border bg-card rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group"
             >
-              <feature.icon className="w-12 h-12 mb-6 group-hover:animate-pulse" />
-              <h3 className="text-2xl font-black uppercase mb-4">{feature.title}</h3>
-              <p className="font-mono text-lg opacity-80">{feature.desc}</p>
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+                <feature.icon className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </section>
       </main>
 
-      <footer className="border-t-4 border-border bg-foreground text-background p-6 text-center font-mono uppercase text-sm mt-32">
-        DOCMIND.SYS // END_OF_FILE // © {new Date().getFullYear()}
+      <footer className="border-t border-border bg-card/50 text-muted-foreground py-8 text-center text-sm">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded overflow-hidden bg-primary flex items-center justify-center text-primary-foreground font-bold text-[10px]">
+              D
+            </div>
+            <span className="font-medium text-foreground">DocMind</span>
+          </div>
+          <p>© {new Date().getFullYear()} DocMind AI. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   )

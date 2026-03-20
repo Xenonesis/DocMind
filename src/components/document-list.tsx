@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -10,11 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   Search, 
-  Filter, 
   Download, 
   Eye, 
-  Trash2, 
-  MoreVertical,
   FileText,
   Image,
   File,
@@ -25,7 +21,7 @@ import {
   Clock,
   AlertCircle,
   Brain,
-  TerminalSquare
+  Inbox
 } from 'lucide-react'
 
 import { DocumentPreview } from './document-preview'
@@ -58,35 +54,35 @@ export function DocumentList({ documents }: DocumentListProps) {
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase()
     switch (extension) {
-      case 'pdf': return <FileText className="w-6 h-6" />
+      case 'pdf': return <FileText className="w-5 h-5 text-rose-500" />
       case 'doc':
-      case 'docx': return <FileText className="w-6 h-6" />
-      case 'txt': return <FileText className="w-6 h-6" />
+      case 'docx': return <FileText className="w-5 h-5 text-blue-500" />
+      case 'txt': return <FileText className="w-5 h-5 text-slate-500" />
       case 'jpg':
       case 'jpeg':
-      case 'png': return <Image className="w-6 h-6" />
+      case 'png': return <Image className="w-5 h-5 text-emerald-500" />
       case 'json':
       case 'xml':
-      case 'csv': return <FileCode className="w-6 h-6" />
-      default: return <File className="w-6 h-6" />
+      case 'csv': return <FileCode className="w-5 h-5 text-violet-500" />
+      default: return <File className="w-5 h-5 text-slate-500" />
     }
   }
 
   const getStatusColor = (status: Document['status']) => {
     switch (status) {
-      case 'UPLOADING': return 'bg-yellow-500 text-black border-4 border-black'
-      case 'PROCESSING': return 'bg-blue-500 text-black border-4 border-black'
-      case 'COMPLETED': return 'bg-green-500 text-black border-4 border-black'
-      case 'ERROR': return 'bg-red-500 text-white border-4 border-black'
+      case 'UPLOADING': return 'bg-amber-100/50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+      case 'PROCESSING': return 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+      case 'COMPLETED': return 'bg-green-100/50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+      case 'ERROR': return 'bg-red-100/50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
     }
   }
 
   const getStatusIcon = (status: Document['status']) => {
     switch (status) {
-      case 'UPLOADING': return <Clock className="w-4 h-4" />
-      case 'PROCESSING': return <Brain className="w-4 h-4 animate-pulse" />
-      case 'COMPLETED': return <CheckCircle className="w-4 h-4" />
-      case 'ERROR': return <AlertCircle className="w-4 h-4" />
+      case 'UPLOADING': return <Clock className="w-3.5 h-3.5" />
+      case 'PROCESSING': return <Brain className="w-3.5 h-3.5 animate-pulse" />
+      case 'COMPLETED': return <CheckCircle className="w-3.5 h-3.5" />
+      case 'ERROR': return <AlertCircle className="w-3.5 h-3.5" />
     }
   }
 
@@ -102,7 +98,7 @@ export function DocumentList({ documents }: DocumentListProps) {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
-    }).toUpperCase()
+    })
   }
 
   const documentTypes = Array.from(new Set(documents.map(doc => doc.type)))
@@ -133,142 +129,129 @@ export function DocumentList({ documents }: DocumentListProps) {
   }
 
   return (
-    <div className="space-y-8 font-mono">
-      {/* Filters */}
-      <Card className="border-4 border-foreground bg-background rounded-none brutal-shadow">
-        <CardHeader className="border-b-4 border-foreground bg-foreground text-background p-6">
-          <div className="flex items-center gap-4">
-            <TerminalSquare className="w-8 h-8" />
-            <CardTitle className="text-2xl font-black uppercase tracking-widest">
-              QUERY_ARCHIVE
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-foreground" />
-              <Input
-                placeholder="SEARCH_INDEX..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-14 text-lg py-6 uppercase font-bold border-4 border-foreground rounded-none bg-background focus-visible:ring-0 focus-visible:border-accent"
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[250px] border-4 border-foreground rounded-none py-6 font-bold uppercase uppercase">
-                  <SelectValue placeholder="FILTER_STATUS" />
-                </SelectTrigger>
-                <SelectContent className="border-4 border-foreground rounded-none font-mono uppercase font-bold">
-                  <SelectItem value="all">ALL_STATUS</SelectItem>
-                  <SelectItem value="UPLOADING">UPLOADING</SelectItem>
-                  <SelectItem value="PROCESSING">PROCESSING</SelectItem>
-                  <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-                  <SelectItem value="ERROR">ERROR</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-[250px] border-4 border-foreground rounded-none py-6 font-bold uppercase uppercase">
-                  <SelectValue placeholder="FILTER_TYPE" />
-                </SelectTrigger>
-                <SelectContent className="border-4 border-foreground rounded-none font-mono uppercase font-bold">
-                  <SelectItem value="all">ALL_TYPES</SelectItem>
-                  {documentTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type.toUpperCase()}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-6 flex flex-col h-full">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Document Archive</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Manage, view, and organize your uploaded files.
+          </p>
+        </div>
+        <Badge variant="outline" className="text-sm font-medium py-1 px-3 bg-secondary/30">
+          {filteredDocuments.length} total documents
+        </Badge>
+      </div>
 
-      {/* Document List */}
-      <Card className="border-4 border-foreground bg-background rounded-none brutal-shadow">
-        <CardHeader className="border-b-4 border-foreground bg-accent text-white p-6">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-black uppercase tracking-widest flex items-center gap-4">
-              SYSTEM_INDEX
-              <span className="bg-background text-foreground px-3 py-1 text-sm brutal-shadow border-2 border-foreground">
-                {filteredDocuments.length} RECORDS
-              </span>
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ScrollArea className="h-[600px] w-full">
-            <div className="divide-y-4 divide-foreground">
-              {filteredDocuments.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="p-6 bg-background hover:bg-foreground hover:text-background transition-colors group flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
-                >
-                  <div className="flex items-start gap-6 flex-1 min-w-0">
-                    <div className="p-4 border-4 border-current bg-background text-foreground group-hover:bg-foreground group-hover:text-background transition-colors brutal-shadow-sm">
-                      {getFileIcon(doc.name)}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-black text-xl truncate">{doc.name}</h3>
-                      <div className="flex flex-wrap items-center gap-4 text-sm font-bold opacity-80 uppercase">
-                        <span className="flex items-center gap-2"><HardDrive className="w-4 h-4" /> {doc.size}</span>
-                        <span className="flex items-center gap-2"><Calendar className="w-4 h-4" /> {formatDate(doc.uploadDate)}</span>
-                      </div>
-                      {doc.tags && doc.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          {doc.tags.map((tag, index) => (
-                            <span key={index} className="border-2 border-current px-2 py-1 text-xs font-bold uppercase tracking-widest">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
-                    <Badge className={`${getStatusColor(doc.status)} px-4 py-2 text-sm font-black uppercase tracking-widest rounded-none shadow-none`}>
-                      {getStatusIcon(doc.status)}
-                      <span className="ml-2">{doc.status}</span>
-                    </Badge>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => handlePreview(doc)}
-                        className="rounded-none border-4 border-current hover:bg-background hover:text-foreground w-12 h-12 brutal-shadow-sm"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => handleDownload(doc)}
-                        className="rounded-none border-4 border-current hover:bg-background hover:text-foreground w-12 h-12 brutal-shadow-sm"
-                      >
-                        <Download className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search documents by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-background border-border shadow-sm rounded-xl h-10"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl border-border">
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="UPLOADING">Uploading</SelectItem>
+            <SelectItem value="PROCESSING">Processing</SelectItem>
+            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="ERROR">Error</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl border-border">
+            <SelectItem value="all">All Types</SelectItem>
+            {documentTypes.map(type => (
+              <SelectItem key={type} value={type} className="uppercase">{type}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <ScrollArea className="flex-1 border border-border/50 rounded-2xl bg-card shadow-sm overflow-hidden h-[500px]">
+        <div className="divide-y divide-border/40">
+          {filteredDocuments.map((doc) => (
+            <div
+              key={doc.id}
+              className="p-5 hover:bg-secondary/20 transition-colors group flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="p-3 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground shadow-sm">
+                  {getFileIcon(doc.name)}
                 </div>
-              ))}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground truncate mb-1">{doc.name}</h3>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> {doc.size}</span>
+                    <span className="text-border">•</span>
+                    <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formatDate(doc.uploadDate)}</span>
+                  </div>
+                  {doc.tags && doc.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {doc.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-[10px] px-2 py-0 font-medium">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
               
-              {filteredDocuments.length === 0 && (
-                <div className="text-center py-24 bg-background border-dashed">
-                  <TerminalSquare className="w-16 h-16 mx-auto mb-6 opacity-50" />
-                  <h3 className="text-2xl font-black uppercase tracking-widest mb-4">
-                    NO_RECORDS_FOUND
-                  </h3>
-                  <p className="text-lg opacity-70 font-bold max-w-md mx-auto uppercase">
-                    Adjust search parameters or initialize new document upload.
-                  </p>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
+                <Badge className={`${getStatusColor(doc.status)} px-3 py-1 shadow-none border-0 gap-1.5 capitalize font-medium`}>
+                  {getStatusIcon(doc.status)}
+                  {doc.status.toLowerCase()}
+                </Badge>
+                
+                <div className="flex items-center gap-1.5">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handlePreview(doc)}
+                    className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
+                    title="Preview Document"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDownload(doc)}
+                    className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
+                    title="Download Document"
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
                 </div>
-              )}
+              </div>
             </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+          ))}
+          
+          {filteredDocuments.length === 0 && (
+            <div className="text-center py-20 bg-background/50 h-full flex flex-col items-center justify-center">
+              <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mb-4 text-muted-foreground">
+                <Inbox className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                No documents found
+              </h3>
+              <p className="text-muted-foreground text-sm max-w-[250px] mx-auto">
+                Adjust your filters or query to find what you are looking for.
+              </p>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
 
       <DocumentPreview
         document={previewDocument}

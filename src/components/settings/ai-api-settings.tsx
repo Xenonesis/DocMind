@@ -71,14 +71,11 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     isActive: true,
     isConfigured: false,
     models: [
-      // Gemini 2.5 family (text output)
       'gemini-2.5-pro',
       'gemini-2.5-flash',
       'gemini-2.5-flash-lite',
-      // Gemini 2.0 family (text output)
       'gemini-2.0-flash',
       'gemini-2.0-flash-lite',
-      // Gemini 1.5 stable family (text output)
       'gemini-1.5-pro',
       'gemini-1.5-flash'
     ],
@@ -233,8 +230,6 @@ export function AiApiSettings() {
           }
         })
 
-        // Show all configured providers (removed test filtering)
-
         // Always merge in default providers so all options are visible
         const existingTypes = new Set(mapped.map(m => m.type))
         const missingDefaults = defaultProviders
@@ -250,10 +245,10 @@ export function AiApiSettings() {
         setProviders(mapped)
         
         // Show success message if providers were loaded
-        if (mapped.length > 0) {
+        if (data.length > 0) {
           toast({
             title: 'Settings loaded',
-            description: `Loaded ${mapped.length} AI provider configuration(s).`,
+            description: `Loaded ${data.length} AI provider configuration(s).`,
           })
         }
       } catch (error) {
@@ -481,561 +476,437 @@ export function AiApiSettings() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'connected': return 'bg-green-100 text-green-800 border-green-200'
-      case 'error': return 'bg-red-100 text-red-800 border-red-200'
-      case 'testing': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'needs_test': return 'bg-blue-100 text-blue-800 border-blue-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'connected': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/50'
+      case 'error': return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800/50'
+      case 'testing': return 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50'
+      case 'needs_test': return 'bg-blue-100/50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/50'
+      default: return 'bg-secondary text-muted-foreground border-transparent'
     }
   }
 
   const getStatusIcon = (provider: AIProvider) => {
-    if (testingProvider === provider.id) return <Loader2 className="w-4 h-4 animate-spin" />
-    if (provider.testStatus === 'success') return <CheckCircle className="w-4 h-4 text-green-500" />
-    if (provider.testStatus === 'error') return <AlertCircle className="w-4 h-4 text-red-500" />
-    return <Key className="w-4 h-4 text-gray-500" />
+    if (testingProvider === provider.id) return <Loader2 className="w-3.5 h-3.5 animate-spin" />
+    if (provider.testStatus === 'success') return <CheckCircle className="w-3.5 h-3.5" />
+    if (provider.testStatus === 'error') return <AlertCircle className="w-3.5 h-3.5" />
+    return <Key className="w-3.5 h-3.5" />
   }
 
   const getProviderIcon = (iconType: string) => {
     switch (iconType) {
-      case 'brain': return <Brain className="w-5 h-5 text-blue-500" />
-      case 'zap': return <Zap className="w-5 h-5 text-purple-500" />
-      case 'server': return <Server className="w-5 h-5 text-green-500" />
-      case 'shield': return <Shield className="w-5 h-5 text-orange-500" />
-      case 'globe': return <Globe className="w-5 h-5 text-indigo-500" />
-      default: return <Brain className="w-5 h-5 text-gray-500" />
+      case 'brain': return <Brain className="w-5 h-5" />
+      case 'zap': return <Zap className="w-5 h-5" />
+      case 'server': return <Server className="w-5 h-5" />
+      case 'shield': return <Shield className="w-5 h-5" />
+      case 'globe': return <Globe className="w-5 h-5" />
+      default: return <Brain className="w-5 h-5" />
     }
   }
 
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
-    return <div className="space-y-6">Loading...</div>
+    return <div className="space-y-6 flex items-center justify-center p-12 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-3"/> Loading settings...</div>
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 font-mono">
-      <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden group">
-        <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        <CardHeader className="p-6 sm:p-8 border-b border-4 border-foreground relative z-10 bg-foreground text-background">
-          <CardTitle className="flex items-center gap-3 text-2xl font-bold text-foreground    dark: dark:">
-            <div className="p-2.5    rounded-none brutal-shadow brutal-shadow">
-              <Settings className="w-6 h-6 text-white" />
-            </div>
-            AI_API_INTEGRATION_NODE
+    <div className="space-y-6">
+      <Card className="shadow-sm border-border bg-card overflow-hidden">
+        <CardHeader className="p-6 md:p-8 bg-background relative z-10">
+          <CardTitle className="flex items-center gap-3 text-2xl font-semibold tracking-tight text-foreground">
+            <Settings className="w-6 h-6 text-primary" />
+            AI Service Integration
           </CardTitle>
-          <CardDescription className="mt-2 text-base text-foreground opacity-80 font-bold">
+          <CardDescription className="text-sm mt-1">
             Configure and manage your AI service providers. Only one provider can be active at a time.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6 sm:p-8 relative z-10 bg-foreground text-background border-b border-4 border-foreground">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-background border-2 border-foreground brutal-shadow gap-1.5">
-                <Brain className="w-4 h-4 text-indigo-500" />
-                {providers.filter(p => p.isConfigured).length} Configured
-              </Badge>
-              <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 brutal-shadow gap-1.5">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                {providers.filter(p => p.isActive && p.isConfigured).length} Active
-              </Badge>
-            </div>
-            <Button onClick={saveSettings} disabled={saving} size="lg" className="w-full sm:w-auto    hover: hover: text-white brutal-shadow brutal-shadow hover:brutal-shadow hover:brutal-shadow transition-all rounded-none font-medium">
-              {saving ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Save className="w-5 h-5 mr-2" />}
-              <span>Save Settings</span>
-            </Button>
+        <CardContent className="p-6 md:p-8 relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-border/50 bg-secondary/10">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-background shadow-sm gap-1.5 font-normal">
+              <Brain className="w-4 h-4 text-indigo-500" />
+              {providers.filter(p => p.isConfigured).length} Configured
+            </Badge>
+            <Badge variant="outline" className="px-3 py-1.5 text-sm font-medium bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 gap-1.5 shadow-sm font-normal">
+              <CheckCircle className="w-4 h-4" />
+              {providers.filter(p => p.isActive && p.isConfigured).length} Active
+            </Badge>
           </div>
+          <Button onClick={saveSettings} disabled={saving} size="lg" className="w-full sm:w-auto shadow-sm">
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+            Save Integrations
+          </Button>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="providers" className="space-y-8">
-        <TabsList className="grid w-full sm:w-[600px] grid-cols-3 mx-auto bg-muted border-4 border-foreground  p-1.5 rounded-none brutal-shadow border border-4 border-foreground">
-          <TabsTrigger value="providers" className="rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:brutal-shadow data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Providers</TabsTrigger>
-          <TabsTrigger value="advanced" className="rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:brutal-shadow data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Advanced</TabsTrigger>
-          <TabsTrigger value="usage" className="rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:brutal-shadow data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 font-medium transition-all duration-300">Usage</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="providers" className="space-y-6">
+        <div className="bg-background rounded-2xl p-1.5 shadow-sm border border-border inline-flex w-fit">
+          <TabsList className="bg-transparent h-auto p-0 flex gap-1">
+            <TabsTrigger value="providers" className="rounded-xl data-[state=active]:bg-card data-[state=active]:text-foreground font-medium py-2 px-6 transition-all shadow-none text-muted-foreground border border-transparent data-[state=active]:border-border data-[state=active]:shadow-sm">Providers</TabsTrigger>
+            <TabsTrigger value="advanced" className="rounded-xl data-[state=active]:bg-card data-[state=active]:text-foreground font-medium py-2 px-6 transition-all shadow-none text-muted-foreground border border-transparent data-[state=active]:border-border data-[state=active]:shadow-sm">Advanced</TabsTrigger>
+            <TabsTrigger value="usage" className="rounded-xl data-[state=active]:bg-card data-[state=active]:text-foreground font-medium py-2 px-6 transition-all shadow-none text-muted-foreground border border-transparent data-[state=active]:border-border data-[state=active]:shadow-sm">Usage</TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="providers" className="space-y-6 outline-none focus-visible:ring-0">
+        <TabsContent value="providers" className="space-y-6 m-0 outline-none">
           {providers.map((provider) => (
             <motion.div key={provider.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group">
-              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className={`p-3 rounded-none brutal-shadow border ${provider.isActive && provider.isConfigured ? '   border-transparent brutal-shadow' : 'bg-muted border-2 border-foreground'}`}>
-                      {/* We need to pass color white if active, else normal */}
-                      <span className={provider.isActive && provider.isConfigured ? 'text-white' : ''}>
+              <Card className="shadow-sm border-border bg-card transition-shadow hover:shadow-md">
+                <CardHeader className="p-6 border-b border-border/50 bg-background/50">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className={`p-3 rounded-2xl shadow-sm border ${provider.isActive && provider.isConfigured ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-secondary/50 border-border/50 text-muted-foreground'}`}>
                         {getProviderIcon(provider.iconType)}
-                      </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-lg font-semibold text-foreground truncate">{provider.name}</CardTitle>
+                        <CardDescription className="text-sm mt-1 line-clamp-1">{provider.description}</CardDescription>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="text-xl font-bold text-foreground font-black uppercase truncate">{provider.name}</CardTitle>
-                      <CardDescription className="text-sm text-foreground opacity-70 font-bold mt-1 line-clamp-1">{provider.description}</CardDescription>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                      <Badge className={`px-2.5 py-1 text-xs font-medium tracking-wide shadow-none border ${getStatusColor(getProviderStatus(provider))} flex items-center gap-1.5`}>
+                        {getStatusIcon(provider)}
+                        {getProviderStatus(provider).replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                      <div className="flex items-center gap-2 bg-secondary/40 p-1.5 rounded-full border border-border/50">
+                        <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 ${!provider.isActive ? 'text-muted-foreground' : 'text-muted-foreground/40'}`}>Off</span>
+                        <Switch
+                          checked={provider.isActive}
+                          onCheckedChange={(checked) => {
+                            if (checked && provider.isConfigured) {
+                              const newProviders = providers.map(p => ({
+                                ...p,
+                                isActive: p.id === provider.id
+                              }))
+                              setProviders(newProviders)
+                              toast({
+                                title: 'Provider activated',
+                                description: `${provider.name} is now the active AI provider.`,
+                              })
+                            } else {
+                              updateProvider(provider.id, { isActive: false })
+                              toast({
+                                title: 'Provider deactivated',
+                                description: `${provider.name} has been deactivated.`,
+                              })
+                            }
+                          }}
+                          disabled={!provider.isConfigured}
+                        />
+                        <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 ${provider.isActive ? 'text-primary' : 'text-muted-foreground/40'}`}>On</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                    <Badge className={`px-2.5 py-1 text-xs font-semibold capitalize tracking-wider rounded-none ${getStatusColor(getProviderStatus(provider))} w-fit flex items-center gap-1.5`}>
-                      {getStatusIcon(provider)}
-                      {getProviderStatus(provider).replace('_', ' ')}
-                    </Badge>
-                    <div className="flex items-center gap-2 bg-background p-1.5 rounded-none border border-2 border-foreground">
-                      <span className={`text-xs font-semibold px-2 ${!provider.isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400'}`}>OFF</span>
-                      <Switch
-                        checked={provider.isActive}
-                        onCheckedChange={(checked) => {
-                          if (checked && provider.isConfigured) {
-                            const newProviders = providers.map(p => ({
-                              ...p,
-                              isActive: p.id === provider.id
-                            }))
-                            setProviders(newProviders)
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor={`base-url-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Base URL</Label>
+                      <Input
+                        id={`base-url-${provider.id}`}
+                        value={provider.baseUrl}
+                        onChange={(e) => updateProvider(provider.id, { baseUrl: e.target.value })}
+                        placeholder="API base URL"
+                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`api-key-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">API Key</Label>
+                      <div className="relative">
+                        <Input
+                          id={`api-key-${provider.id}`}
+                          type={showApiKeys[provider.id] ? 'text' : 'password'}
+                          value={getDisplayedApiKey(provider)}
+                          onChange={(e) => updateProvider(provider.id, { apiKey: e.target.value, dirtyApiKey: true })}
+                          placeholder="Enter your API key"
+                          className="pr-10 bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1 h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-transparent"
+                          onClick={() => toggleApiKeyVisibility(provider.id)}
+                        >
+                          {showApiKeys[provider.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                      {provider.apiKey && !isValidApiKey(provider.apiKey, provider.type) && (
+                        <p className="text-xs text-rose-500 font-medium mt-1.5 flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" /> Invalid required API key format
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor={`model-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Model</Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 text-[10px] px-2 py-0 hover:bg-secondary text-muted-foreground"
+                          onClick={() => handleFetchModels(provider)}
+                          disabled={fetchingModels[provider.id]}
+                        >
+                          {fetchingModels[provider.id] ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1.5" />}
+                          Sync
+                        </Button>
+                      </div>
+                      <Select 
+                        value={provider.model} 
+                        onValueChange={(value) => updateProvider(provider.id, { model: value })}
+                      >
+                        <SelectTrigger id={`model-${provider.id}`} className="bg-background rounded-xl shadow-sm h-10">
+                          <SelectValue placeholder="Select model" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          {provider.models.map((model) => (
+                            <SelectItem key={model} value={model} className="py-2.5">{model}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`max-tokens-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tokens</Label>
+                      <Input
+                        id={`max-tokens-${provider.id}`}
+                        type="number"
+                        value={provider.maxTokens}
+                        onChange={(e) => updateProvider(provider.id, { maxTokens: parseInt(e.target.value) })}
+                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`temperature-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creativity (Temp)</Label>
+                      <Input
+                        id={`temperature-${provider.id}`}
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="2"
+                        value={provider.temperature}
+                        onChange={(e) => updateProvider(provider.id, { temperature: parseFloat(e.target.value) })}
+                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {provider.errorMessage && (
+                    <Alert variant="destructive" className="bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-400">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm font-medium ml-2">{provider.errorMessage}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="pt-4 border-t border-border/50 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:items-center justify-between">
+                    <div className="text-xs font-medium text-muted-foreground/80 flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5" />
+                      {provider.lastTested ? `Last check: ${new Date(provider.lastTested).toLocaleString()}` : 'Never tested'}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <ConnectionStatus
+                        provider={{
+                          id: provider.id,
+                          name: provider.name,
+                          type: provider.type,
+                          apiKey: provider.apiKey,
+                          model: provider.model,
+                          baseUrl: provider.baseUrl
+                        }}
+                        onTestComplete={(result) => handleConnectionTest(provider.id, result)}
+                      />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="rounded-lg shadow-sm font-medium px-4"
+                        onClick={async () => {
+                          try {
+                            await saveProviders(providers)
                             toast({
-                              title: 'Provider activated',
-                              description: `${provider.name} is now the active AI provider.`,
+                              title: 'Provider saved',
+                              description: `${provider.name} configuration has been saved.`,
                             })
-                          } else {
-                            updateProvider(provider.id, { isActive: false })
+                          } catch (error) {
+                            console.error('Failed to save provider:', error)
                             toast({
-                              title: 'Provider deactivated',
-                              description: `${provider.name} has been deactivated.`,
+                              title: 'Failed to save provider',
+                              description: `There was an error saving ${provider.name}. Please try again.`,
+                              variant: 'destructive',
                             })
                           }
                         }}
-                        disabled={!provider.isConfigured}
-                        className="data-[state=checked]:bg-indigo-600"
-                      />
-                      <span className={`text-xs font-semibold px-2 ${provider.isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`}>ON</span>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6 relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`base-url-${provider.id}`}>Base URL</Label>
-                    <Input
-                      id={`base-url-${provider.id}`}
-                      value={provider.baseUrl}
-                      onChange={(e) => updateProvider(provider.id, { baseUrl: e.target.value })}
-                      placeholder="API base URL"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`api-key-${provider.id}`}>API Key</Label>
-                    <div className="relative">
-                      <Input
-                        id={`api-key-${provider.id}`}
-                        type={showApiKeys[provider.id] ? 'text' : 'password'}
-                        value={getDisplayedApiKey(provider)}
-                        onChange={(e) => updateProvider(provider.id, { apiKey: e.target.value, dirtyApiKey: true })}
-                        placeholder="Enter your API key"
-                        className="pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2"
-                        onClick={() => toggleApiKeyVisibility(provider.id)}
                       >
-                        {showApiKeys[provider.id] ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
+                        <Save className="w-4 h-4 mr-1.5" /> Option
                       </Button>
                     </div>
-                    {provider.apiKey && !isValidApiKey(provider.apiKey, provider.type) && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-red-500">
-                          Invalid API key format for {provider.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Debug: Type={provider.type}, Length={provider.apiKey.length}, 
-                          Starts with: {provider.apiKey.substring(0, 4)}
-                        </p>
-                      </div>
-                    )}
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`model-${provider.id}`}>Model</Label>
-                      <Button 
-                        type="button" 
-                        variant="secondary" 
-                        size="sm" 
-                        className="h-6 text-xs px-2"
-                        onClick={() => handleFetchModels(provider)}
-                        disabled={fetchingModels[provider.id]}
-                      >
-                        {fetchingModels[provider.id] ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        ) : (
-                          <RefreshCw className="w-3 h-3 mr-1" />
-                        )}
-                        Fetch Live
-                      </Button>
-                    </div>
-                    <Select 
-                      value={provider.model} 
-                      onValueChange={(value) => updateProvider(provider.id, { model: value })}
-                    >
-                      <SelectTrigger id={`model-${provider.id}`}>
-                        <SelectValue placeholder="Select model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provider.models.map((model) => (
-                          <SelectItem key={model} value={model}>
-                            {model}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`max-tokens-${provider.id}`}>Max Tokens</Label>
-                    <Input
-                      id={`max-tokens-${provider.id}`}
-                      type="number"
-                      value={provider.maxTokens}
-                      onChange={(e) => updateProvider(provider.id, { maxTokens: parseInt(e.target.value) })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`temperature-${provider.id}`}>Temperature</Label>
-                    <Input
-                      id={`temperature-${provider.id}`}
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="2"
-                      value={provider.temperature}
-                      onChange={(e) => updateProvider(provider.id, { temperature: parseFloat(e.target.value) })}
-                    />
-                  </div>
-                </div>
-
-                {provider.errorMessage && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{provider.errorMessage}</AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      {provider.lastTested && (
-                        <span>Last tested: {new Date(provider.lastTested).toLocaleString()}</span>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          await saveProviders(providers)
-                          toast({
-                            title: 'Provider saved',
-                            description: `${provider.name} configuration has been saved.`,
-                          })
-                        } catch (error) {
-                          console.error('Failed to save provider:', error)
-                          toast({
-                            title: 'Failed to save provider',
-                            description: `There was an error saving ${provider.name}. Please try again.`,
-                            variant: 'destructive',
-                          })
-                        }
-                      }}
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </Button>
-                  </div>
-                  
-                  <ConnectionStatus
-                    provider={{
-                      id: provider.id,
-                      name: provider.name,
-                      type: provider.type,
-                      apiKey: provider.apiKey,
-                      model: provider.model,
-                      baseUrl: provider.baseUrl
-                    }}
-                    onTestComplete={(result) => handleConnectionTest(provider.id, result)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </motion.div>
           ))}
         </TabsContent>
 
-        <TabsContent value="advanced" className="space-y-6 outline-none focus-visible:ring-0">
+        <TabsContent value="advanced" className="space-y-6 m-0 outline-none">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group flex flex-col h-full">
-              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-none text-indigo-600 dark:text-indigo-400">
-                    <Brain className="w-5 h-5" />
-                  </div>
-                  GLOBAL_AI_DIRECTIVES
+            <Card className="shadow-sm border-border bg-card">
+              <CardHeader className="p-6 border-b border-border/50 bg-background/50">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-indigo-500" /> System Prompting
                 </CardTitle>
-                <CardDescription className="text-foreground opacity-70 font-bold">
-                  Configure default behavior for all AI providers
-                </CardDescription>
+                <CardDescription>Configure core behavioral directives for all models</CardDescription>
               </CardHeader>
-              <CardContent className="p-6 space-y-6 relative z-10 flex-1">
+              <CardContent className="p-6 space-y-5">
                 <div className="space-y-2">
-                  <Label>Default System Prompt</Label>
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Base Persona</Label>
                   <Textarea
                     placeholder="You are a helpful AI assistant that analyzes documents..."
-                    className="min-h-[100px]"
+                    className="min-h-[120px] bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary resize-none"
                   />
-                  <p className="text-xs text-gray-500">
-                    This prompt will be used for all AI interactions unless overridden
-                  </p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <Label>Request Timeout (seconds)</Label>
-                    <Input type="number" defaultValue="30" min="5" max="300" />
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timeout (sec)</Label>
+                    <Input type="number" defaultValue="30" min="5" max="300" className="bg-background rounded-xl shadow-sm" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Retry Attempts</Label>
-                    <Input type="number" defaultValue="3" min="1" max="10" />
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Retries</Label>
+                    <Input type="number" defaultValue="3" min="1" max="10" className="bg-background rounded-xl shadow-sm" />
                   </div>
                 </div>
 
-                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                    <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Au Responses</Label>
-                      <p className="text-xs text-foreground opacity-70 font-bold">
-                        Automatically save AI responses for future reference
-                      </p>
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium">Archival Responses</Label>
+                      <p className="text-xs text-muted-foreground">Save payloads structurally</p>
                     </div>
-                    <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
+                    <Switch defaultChecked />
                   </div>
-
-                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                    <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Enable Response Caching</Label>
-                      <p className="text-xs text-foreground opacity-70 font-bold">
-                        Cache responses to reduce API calls for similar queries
-                      </p>
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium">Vector Caching</Label>
+                      <p className="text-xs text-muted-foreground">Reuse historical embeddings</p>
                     </div>
-                    <Switch defaultChecked className="data-[state=checked]:bg-indigo-600" />
-                  </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group flex flex-col h-full">
-              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-none text-emerald-600 dark:text-emerald-400">
-                    <Shield className="w-5 h-5" />
-                  </div>
-                  SECURITY_PROTOCOLS
-                </CardTitle>
-                <CardDescription className="text-foreground opacity-70 font-bold">
-                  Configure security and privacy settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6 relative z-10 flex-1">
-                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                    <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Encrypt API Keys</Label>
-                      <p className="text-xs text-foreground opacity-70 font-bold">
-                        API keys are encrypted before storage
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1">
-                      <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                      Enabled
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                    <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Data Retention Period</Label>
-                      <p className="text-xs text-foreground opacity-70 font-bold">
-                        How long to keep AI responses and logs
-                      </p>
-                    </div>
-                    <Select defaultValue="30">
-                      <SelectTrigger className="w-[120px] bg-white dark:bg-slate-800 border-2 border-foreground">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="7">7 days</SelectItem>
-                        <SelectItem value="30">30 days</SelectItem>
-                        <SelectItem value="90">90 days</SelectItem>
-                        <SelectItem value="365">1 year</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                    <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Share Usage Analytics</Label>
-                      <p className="text-xs text-foreground opacity-70 font-bold">
-                        Help improve the service with anonymous usage data
-                      </p>
-                    </div>
-                    <Switch className="data-[state=checked]:bg-emerald-600" />
-                  </div>
-
-                  <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
-                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Allowed IP Addresses (Optional)</Label>
-                    <Input placeholder="192.168.1.0/24, 10.0.0.1" className="bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-emerald-500" />
-                    <p className="text-xs text-foreground opacity-70 font-bold">
-                      Restrict API access to specific IP ranges
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group lg:col-span-2">
-              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
-                  <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-none text-amber-600 dark:text-amber-400">
-                    <Zap className="w-5 h-5" />
-                  </div>
-                  PERFORMANCE_TUNING
-                </CardTitle>
-                <CardDescription className="text-foreground opacity-70 font-bold">
-                  Optimize AI performance and resource usage
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
-                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Concurrent Requests Limit</Label>
-                    <div className="flex items-center gap-3 mt-2">
-                      <Input type="number" defaultValue="5" min="1" max="20" className="w-24 bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-amber-500" />
-                      <span className="text-sm text-foreground opacity-70 font-bold">requests per minute</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
-                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Processing Priority</Label>
-                    <Select defaultValue="balanced">
-                      <SelectTrigger className="mt-2 bg-white dark:bg-slate-800 border-2 border-foreground">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="speed">Speed (Lower Latency)</SelectItem>
-                        <SelectItem value="balanced">Balanced</SelectItem>
-                        <SelectItem value="quality">Quality (Higher Latency)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="md:col-span-2 flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                    <div className="space-y-0.5 pr-4">
-                      <Label className="text-sm font-semibold text-foreground font-black uppercase">Streaming Responses</Label>
-                      <p className="text-xs text-foreground opacity-70 font-bold">
-                        Show AI responses as they are generated for a faster perceived experience
-                      </p>
-                    </div>
-                    <Switch defaultChecked className="data-[state=checked]:bg-amber-600" />
+                    <Switch defaultChecked />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden hover:brutal-shadow transition-all duration-300 relative group flex flex-col h-full">
-              <div className="absolute inset-0     opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              <CardHeader className="p-6 border-b border-4 border-foreground relative z-10 flex-none">
-                <CardTitle className="flex items-center gap-3 text-lg font-bold text-foreground font-black uppercase">
-                  <div className="p-2 bg-rose-100 dark:bg-rose-900/40 rounded-none text-rose-600 dark:text-rose-400">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  TELEMETRY_SYSTEMS
+            <Card className="shadow-sm border-border bg-card">
+              <CardHeader className="p-6 border-b border-border/50 bg-background/50">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-emerald-500" /> Security Layer
                 </CardTitle>
-                <CardDescription className="text-foreground opacity-70 font-bold">
-                  Set up monitoring and notification preferences
-                </CardDescription>
+                <CardDescription>Manage keys, data lifecycles, and access</CardDescription>
               </CardHeader>
-              <CardContent className="p-6 space-y-6 relative z-10 flex-1">
-                <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
-                  <Label className="text-sm font-semibold text-foreground font-black uppercase">Cost Alert Threshold</Label>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-sm font-medium text-foreground opacity-80 font-bold">$</span>
-                    <Input type="number" defaultValue="50" min="1" className="w-24 bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-rose-500" />
-                    <span className="text-sm text-foreground opacity-70 font-bold">per month</span>
+              <CardContent className="p-6 space-y-5">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">At-Rest Encryption</Label>
+                    <p className="text-xs text-muted-foreground">Keys undergo AES-256 wrapping</p>
                   </div>
+                  <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none shadow-sm gap-1.5 font-normal">
+                    <CheckCircle className="w-3.5 h-3.5" /> Enforced
+                  </Badge>
                 </div>
 
-                <div className="space-y-2 p-4 bg-background rounded-none border border-4 border-foreground">
-                  <Label className="text-sm font-semibold text-foreground font-black uppercase">Error Rate Alert</Label>
-                  <div className="flex items-center gap-3 mt-2">
-                    <Input type="number" defaultValue="10" min="1" max="100" className="w-24 bg-white dark:bg-slate-800 border-2 border-foreground focus-visible:ring-rose-500" />
-                    <span className="text-sm text-foreground opacity-70 font-bold">% error rate</span>
+                <div className="space-y-3 p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">Lifecycle Policy</Label>
+                    <p className="text-xs text-muted-foreground mb-3">Retention window for raw logs</p>
                   </div>
+                  <Select defaultValue="30">
+                    <SelectTrigger className="w-full bg-background rounded-xl shadow-sm h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="7">7 Days (Ephemeral)</SelectItem>
+                      <SelectItem value="30">30 Days (Standard)</SelectItem>
+                      <SelectItem value="90">90 Days (Compliance)</SelectItem>
+                      <SelectItem value="365">365 Days (Archival)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                  <div className="space-y-0.5 pr-4">
-                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Email Notifications</Label>
-                    <p className="text-xs text-foreground opacity-70 font-bold">
-                      Receive alerts via email
-                    </p>
+                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">Telemetry Sharing</Label>
+                    <p className="text-xs text-muted-foreground">Submit anonymous operational data</p>
                   </div>
-                  <Switch defaultChecked className="data-[state=checked]:bg-rose-600" />
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-background rounded-none border border-4 border-foreground">
-                  <div className="space-y-0.5 pr-4">
-                    <Label className="text-sm font-semibold text-foreground font-black uppercase">Daily Usage Reports</Label>
-                    <p className="text-xs text-foreground opacity-70 font-bold">
-                      Get daily summaries of API usage
-                    </p>
-                  </div>
-                  <Switch className="data-[state=checked]:bg-rose-600" />
+                  <Switch />
                 </div>
               </CardContent>
             </Card>
 
-          <Card className="   dark: dark: border border-blue-100 dark:border-blue-800/30 rounded-none overflow-hidden">
-            <CardContent className="p-8">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <Card className="shadow-sm border-border bg-card lg:col-span-2">
+              <CardHeader className="p-6 border-b border-border/50 bg-background/50">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-amber-500" /> Operations Center
+                </CardTitle>
+                <CardDescription>Pipeline monitoring and resource throttles</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Concurrency Cap</Label>
+                  <div className="flex items-center gap-3">
+                    <Input type="number" defaultValue="5" min="1" max="20" className="w-24 bg-background rounded-xl shadow-sm" />
+                    <span className="text-sm text-muted-foreground">req/min</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Traffic Shaping</Label>
+                  <Select defaultValue="balanced">
+                    <SelectTrigger className="bg-background rounded-xl shadow-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="speed">Optimize for Latency</SelectItem>
+                      <SelectItem value="balanced">Balanced Mode</SelectItem>
+                      <SelectItem value="quality">Optimize for Payload</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="md:col-span-2 flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">Event Stream (SSE)</Label>
+                    <p className="text-xs text-muted-foreground">Deliver chunks organically as generated</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border/50 bg-primary/5 dark:bg-primary/10 shadow-sm lg:col-span-2 mt-2">
+              <CardContent className="p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div>
-                  <h3 className="text-lg font-bold text-foreground font-black uppercase">Save Advanced Settings</h3>
-                  <p className="text-sm text-foreground opacity-80 font-bold mt-1">
-                    Apply these settings to all AI providers and future interactions
+                  <h3 className="text-lg font-semibold text-foreground">Global Registry Commit</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Apply these policies universally across all configured units.
                   </p>
                 </div>
-                <Button className="w-full sm:w-auto    hover: hover: text-white brutal-shadow brutal-shadow hover:brutal-shadow hover:brutal-shadow transition-all rounded-none font-medium px-6 py-2.5 h-auto">
-                  <Save className="w-5 h-5 mr-2" />
-                  Save All Settings
+                <Button className="w-full sm:w-auto shadow-sm px-6 rounded-full font-medium">
+                  <Save className="w-4 h-4 mr-2" />
+                  Synchronize
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
           </motion.div>
         </TabsContent>
 
-        <TabsContent value="usage" className="space-y-6 outline-none focus-visible:ring-0">
+        <TabsContent value="usage" className="space-y-6 m-0 outline-none">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-            <Card className="bg-background  border border-4 border-foreground brutal-shadow brutal-shadow dark:brutal-shadow rounded-none overflow-hidden">
-              <CardHeader className="p-6 sm:p-8 border-b border-4 border-foreground bg-foreground text-background">
-                <CardTitle className="flex items-center gap-3 text-2xl font-bold text-foreground    dark: dark:">
-                  <div className="p-2.5    rounded-none brutal-shadow brutal-shadow">
-                    <Activity className="w-6 h-6 text-white" />
-                  </div>
-                  API_USAGE_METRICS
+            <Card className="shadow-sm border-border bg-card overflow-hidden">
+              <CardHeader className="p-6 md:p-8 border-b border-border/50 bg-background/50">
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold tracking-tight">
+                  <Activity className="w-5 h-5 text-blue-500" /> Analytics Digest
                 </CardTitle>
-                <CardDescription className="mt-2 text-base text-foreground opacity-80 font-bold">
-                  Monitor your API usage, limits, and costs across different providers.
+                <CardDescription className="mt-1.5 text-sm">
+                  Review computational costs and payload consumption metrics.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">

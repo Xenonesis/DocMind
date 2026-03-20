@@ -32,92 +32,84 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
-  --radius: 0px; /* STRICT BRUTALISM: NO ROUNDED CORNERS */
+  --radius: 0.75rem;
   
-  /* BRUTALIST LIGHT THEME */
-  --background: oklch(0.98 0 0); /* Off-white / paper */
-  --foreground: oklch(0.1 0 0);  /* Deep black */
+  /* MINIMAL LIGHT THEME */
+  --background: oklch(0.99 0 0); /* Pure white/off-white */
+  --foreground: oklch(0.15 0 0);  /* Dark gray, softer than pure black */
   
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.1 0 0);
+  --card-foreground: oklch(0.15 0 0);
   
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
   
-  --primary: oklch(0.1 0 0); /* Black */
-  --primary-foreground: oklch(0.98 0 0); /* White */
+  /* Primary: Professional deep slate/blueish */
+  --primary: oklch(0.2 0.02 240); 
+  --primary-foreground: oklch(0.98 0 0); 
   
-  --secondary: oklch(0.9 0 0);
-  --secondary-foreground: oklch(0.1 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.2 0.02 240);
   
-  --muted: oklch(0.9 0 0);
-  --muted-foreground: oklch(0.4 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.5 0 0);
   
-  /* Bright Safety Orange / Electric Blue for accents */
-  --accent: oklch(0.7 0.2 40); 
-  --accent-foreground: oklch(1 0 0);
+  --accent: oklch(0.95 0.02 240); 
+  --accent-foreground: oklch(0.2 0.02 240);
   
-  --destructive: oklch(0.6 0.25 25);
+  --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.1 0 0); /* Black borders */
-  --input: oklch(0.1 0 0);
-  --ring: oklch(0.1 0 0);
+  --border: oklch(0.92 0 0); /* Soft light borders */
+  --input: oklch(0.92 0 0);
+  --ring: oklch(0.2 0.02 240);
 }
 
 .dark {
-  /* BRUTALIST DARK THEME */
-  --background: oklch(0.1 0 0); /* Deep black */
-  --foreground: oklch(0.98 0 0); /* Off-white */
+  /* MINIMAL DARK THEME */
+  --background: oklch(0.12 0.01 240); /* Very dark slate, elegant */
+  --foreground: oklch(0.95 0 0); 
   
-  --card: oklch(0.15 0 0);
-  --card-foreground: oklch(0.98 0 0);
+  --card: oklch(0.15 0.01 240);
+  --card-foreground: oklch(0.95 0 0);
   
-  --popover: oklch(0.15 0 0);
-  --popover-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.15 0.01 240);
+  --popover-foreground: oklch(0.95 0 0);
   
-  --primary: oklch(0.98 0 0); /* White */
-  --primary-foreground: oklch(0.1 0 0); /* Black */
+  --primary: oklch(0.95 0 0); 
+  --primary-foreground: oklch(0.12 0.01 240); 
   
-  --secondary: oklch(0.2 0 0);
-  --secondary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.2 0.01 240);
+  --secondary-foreground: oklch(0.95 0 0);
   
-  --muted: oklch(0.2 0 0);
+  --muted: oklch(0.2 0.01 240);
   --muted-foreground: oklch(0.7 0 0);
   
-  --accent: oklch(0.7 0.2 260); /* Electric Blue */
-  --accent-foreground: oklch(1 0 0);
+  --accent: oklch(0.2 0.01 240); 
+  --accent-foreground: oklch(0.95 0 0);
   
-  --destructive: oklch(0.6 0.25 25);
+  --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(1 0 0);
   
-  --border: oklch(0.98 0 0); /* White borders */
-  --input: oklch(0.98 0 0);
-  --ring: oklch(0.98 0 0);
+  --border: oklch(0.22 0.01 240); 
+  --input: oklch(0.22 0.01 240);
+  --ring: oklch(0.8 0 0);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    /* Enforce thick borders globally on anything that has a border */
-    border-width: 0px; 
   }
   
   body {
-    @apply bg-background text-foreground;
-    /* Paper texture / grit overlay for brutalist feel */
-    background-image: 
-      radial-gradient(var(--border) 1px, transparent 1px);
-    background-size: 24px 24px;
-    background-position: 0 0, 12px 12px;
-    background-attachment: fixed;
+    @apply bg-background text-foreground antialiased;
   }
   
   html {
@@ -125,63 +117,40 @@
   }
 }
 
+/* Fallback utilities to gracefully replace brutalist classes before components are updated */
 @utility brutal-shadow {
-  box-shadow: 4px 4px 0px var(--border);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 4px 14px 0 rgba(0,0,0,0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   
   &:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px var(--border);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 rgba(0,0,0,0.08);
   }
 
   &:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px var(--border);
+    transform: translateY(0);
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
   }
 }
 
 @utility brutal-shadow-sm {
-  box-shadow: 2px 2px 0px var(--border);
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
 }
 
 @utility brutal-border {
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
 }
 
 @utility glass {
-  background-color: var(--background);
-  border: 2px solid var(--border);
-  box-shadow: 4px 4px 0px var(--border);
-  backdrop-filter: none;
+  background-color: color-mix(in oklch, var(--background) 80%, transparent);
+  border: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+  backdrop-filter: blur(12px);
 }
 
 @utility glass-dark {
-  background-color: var(--background);
-  border: 2px solid var(--border);
-  box-shadow: 4px 4px 0px var(--border);
-  backdrop-filter: none;
-}
-
-@layer base {
-  .bg-gradient-to-br, .bg-gradient-to-r {
-    background: var(--background) !important;
-  }
-  
-  .text-transparent.bg-clip-text {
-    background: none !important;
-    color: var(--foreground) !important;
-    -webkit-text-fill-color: var(--foreground) !important;
-  }
-}
-
-/* Override Shadcn Defaults */
-@layer components {
-  .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-full {
-    border-radius: 0 !important;
-  }
-
-  /* Force Inputs and Buttons to have thick borders */
-  input, button, select, textarea, .card {
-    @apply brutal-border brutal-shadow;
-  }
+  background-color: color-mix(in oklch, var(--background) 80%, transparent);
+  border: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  backdrop-filter: blur(12px);
 }

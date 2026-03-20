@@ -25,7 +25,8 @@ import {
   CheckCircle,
   Cpu,
   Cloud,
-  Shield
+  Shield,
+  MessageSquare
 } from 'lucide-react'
 
 interface QueryInterfaceProps {
@@ -113,14 +114,14 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
 
   const getProviderIcon = (type: string) => {
     switch (type) {
-      case 'google': return <Cloud className="w-4 h-4" />
-      case 'mistral': return <Cloud className="w-4 h-4" />
-      case 'lm-studio': return <Server className="w-4 h-4" />
-      case 'ollama': return <Cpu className="w-4 h-4" />
-      case 'open-router': return <Cloud className="w-4 h-4" />
-      case 'openai': return <Brain className="w-4 h-4" />
-      case 'anthropic': return <Shield className="w-4 h-4" />
-      default: return <Brain className="w-4 h-4" />
+      case 'google': return <Cloud className="w-4 h-4 text-blue-500" />
+      case 'mistral': return <Cloud className="w-4 h-4 text-orange-500" />
+      case 'lm-studio': return <Server className="w-4 h-4 text-slate-500" />
+      case 'ollama': return <Cpu className="w-4 h-4 text-slate-500" />
+      case 'open-router': return <Cloud className="w-4 h-4 text-indigo-500" />
+      case 'openai': return <Brain className="w-4 h-4 text-emerald-500" />
+      case 'anthropic': return <Shield className="w-4 h-4 text-rose-500" />
+      default: return <Brain className="w-4 h-4 text-primary" />
     }
   }
 
@@ -221,105 +222,110 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-8 font-mono">
-      {/* Hero Section */}
-      <div className="border-4 border-foreground bg-accent text-accent-foreground p-8 brutal-shadow">
-        <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-4 flex items-center gap-4">
-          <Terminal className="w-12 h-12" />
-          QUERY_ENGINE
-        </h1>
-        <p className="text-xl font-bold uppercase opacity-90 max-w-2xl">
-          Execute natural language parameters against vectorized index.
-        </p>
+    <div className="max-w-5xl mx-auto space-y-6 h-full flex flex-col">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Query Engine</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Ask questions, summarize, or extract data from your documents using AI.
+          </p>
+        </div>
       </div>
 
-      {/* No Providers Warning */}
       {providers.length === 0 && (
-        <Alert className="border-4 border-destructive bg-destructive/10 text-destructive font-bold uppercase rounded-none brutal-shadow">
-          <AlertCircle className="h-5 w-5" />
-          <AlertDescription className="ml-4">
-            ERR_NO_PROVIDERS: Navigate to{' '}
-            <a href="/settings" className="underline decoration-2">SYS_CONFIG</a>{' '}
-            to assign LLM backend.
+        <Alert variant="destructive" className="bg-destructive/5 border-destructive/20 text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="ml-2 font-medium">
+            No active AI models found. Please configure a provider in <a href="/dashboard" onClick={(e) => { e.preventDefault(); document.getElementById('tab-settings')?.click() }} className="underline underline-offset-2">Settings</a> to enable querying.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Main Query Interface */}
-      <Card className="border-4 border-foreground bg-background rounded-none brutal-shadow">
-        <CardContent className="p-8">
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1 relative">
-                <Textarea
-                  ref={textareaRef}
-                  value={query}
-                  onChange={(e) => onTextareaChange(e.target.value)}
-                  placeholder="[ ENTER QUERY STRING ] use @ to target specific nodes..."
-                  className="min-h-[180px] text-lg font-bold border-4 border-foreground bg-background rounded-none p-6 focus-visible:ring-0 focus-visible:border-accent brutal-shadow-sm uppercase"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit()
-                  }}
-                />
+      <Card className="flex-1 shadow-sm border-border bg-card flex flex-col overflow-visible">
+        <CardContent className="p-6 flex flex-col h-full gap-6">
+          <div className="flex-1 relative flex flex-col">
+            <div className="relative flex-1 rounded-2xl border border-border bg-background focus-within:ring-1 focus-within:ring-primary focus-within:border-primary shadow-sm transition-all overflow-hidden flex flex-col">
+              <Textarea
+                ref={textareaRef}
+                value={query}
+                onChange={(e) => onTextareaChange(e.target.value)}
+                placeholder="Ask anything... (use @ to target specific documents)"
+                className="flex-1 min-h-[220px] text-base border-0 focus-visible:ring-0 resize-none p-5 bg-transparent"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit()
+                }}
+              />
+              
+              {/* Controls inside textarea bottom */}
+              <div className="flex items-center justify-between p-3 bg-secondary/20 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={toggleVoiceRecognition}
+                    variant="ghost"
+                    size="icon"
+                    className={`rounded-full hover:bg-secondary transition-colors ${isListening ? 'text-destructive bg-destructive/10 animate-pulse' : 'text-muted-foreground'}`}
+                    title={isListening ? "Stop listening" : "Voice input"}
+                  >
+                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  </Button>
+                  <Tooltip text="Tip: Press Ctrl+Enter to submit instantly" />
+                </div>
                 
-                {/* Mention Dropdown */}
-                {showMentionList && (
-                  <div className="absolute left-0 top-full mt-2 w-full z-20 border-4 border-foreground bg-background brutal-shadow">
-                    <div className="max-h-48 overflow-auto">
-                      {filteredMentionDocs.length === 0 ? (
-                        <div className="p-4 text-center font-bold opacity-50 uppercase">404_NOT_FOUND</div>
-                      ) : (
-                        filteredMentionDocs.map(doc => (
-                          <button
-                            key={doc.id}
-                            className="w-full text-left px-4 py-3 hover:bg-foreground hover:text-background font-bold uppercase flex items-center gap-3 border-b-2 border-foreground/20 last:border-0"
-                            onMouseDown={(e) => { e.preventDefault(); handleSelectMention(doc) }}
-                          >
-                            <FileText className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">{doc.name}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex md:flex-col gap-4">
-                <Button
-                  onClick={toggleVoiceRecognition}
-                  variant="outline"
-                  className={`h-16 md:h-1/2 rounded-none border-4 border-foreground uppercase font-black tracking-widest brutal-shadow ${isListening ? 'bg-destructive text-destructive-foreground animate-pulse' : 'bg-background hover:bg-accent hover:text-white'}`}
-                >
-                  {isListening ? <MicOff className="w-6 h-6 md:mr-2" /> : <Mic className="w-6 h-6 md:mr-2" />}
-                  <span className="hidden md:inline">{isListening ? 'HALT' : 'AUDIO'}</span>
-                </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={isProcessing || !query.trim() || providers.length === 0}
-                  className="h-16 md:h-1/2 flex-1 rounded-none border-4 border-foreground bg-foreground text-background hover:bg-accent hover:text-white font-black uppercase tracking-widest brutal-shadow disabled:opacity-50"
+                  className="rounded-full px-6 font-medium shadow-sm"
                 >
-                  {isProcessing ? <RefreshCw className="w-6 h-6 animate-spin md:mr-2" /> : <Send className="w-6 h-6 md:mr-2" />}
-                  <span className="hidden md:inline">EXECUTE</span>
+                  {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                  Submit Query
                 </Button>
               </div>
             </div>
+            
+            {/* Mention Dropdown */}
+            {showMentionList && (
+              <div className="absolute left-4 bottom-16 mb-2 w-80 z-20 border border-border bg-card rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Target Documents
+                </div>
+                <div className="max-h-48 overflow-auto py-1">
+                  {filteredMentionDocs.length === 0 ? (
+                    <div className="px-4 py-3 text-center text-sm text-muted-foreground">No documents found</div>
+                  ) : (
+                    filteredMentionDocs.map(doc => (
+                      <button
+                        key={doc.id}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/80 flex items-center gap-2.5 transition-colors"
+                        onMouseDown={(e) => { e.preventDefault(); handleSelectMention(doc) }}
+                      >
+                        <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">{doc.name}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
+          <div className="flex flex-col gap-5">
             {/* Selected Documents */}
             {selectedDocumentIds.length > 0 && (
-              <div className="pt-6 border-t-4 border-foreground">
-                <p className="text-sm font-black uppercase mb-3">TARGET_NODES:</p>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Targeting:</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedDocumentIds.map(id => {
                     const doc = documents?.find(d => d.id === id)
                     if (!doc) return null
                     return (
-                      <Badge key={id} className="rounded-none border-2 border-foreground bg-accent text-white font-bold px-3 py-1 flex items-center gap-2">
-                        <FileText className="w-3 h-3" />
-                        {doc.name}
-                        <button onClick={() => removeSelectedDoc(id)} className="ml-2 hover:text-black">
-                          <X className="w-4 h-4" />
+                      <Badge key={id} variant="secondary" className="pl-2 pr-1 py-1 rounded-full font-medium gap-1 flex items-center shadow-sm border border-border/50 bg-background hover:bg-secondary/80">
+                        <FileText className="w-3.5 h-3.5 text-primary" />
+                        <span className="max-w-[150px] truncate">{doc.name}</span>
+                        <button 
+                          onClick={() => removeSelectedDoc(id)} 
+                          className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </Badge>
                     )
@@ -329,36 +335,50 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
             )}
 
             {/* Provider Selection */}
-            <div className="pt-6 border-t-4 border-foreground flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <Server className="w-6 h-6" />
+            <div className="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="p-2 rounded-lg bg-secondary/50 text-muted-foreground">
+                  <Cpu className="w-4 h-4" />
+                </div>
                 <Select
                   value={selectedProviderId || ''}
                   onValueChange={setSelectedProviderId}
                   disabled={providers.length === 0}
                 >
-                  <SelectTrigger className="w-full md:w-[300px] border-4 border-foreground rounded-none font-bold uppercase uppercase py-6 brutal-shadow-sm focus:ring-0">
-                    <SelectValue placeholder="SELECT_BACKEND" />
+                  <SelectTrigger className="w-full sm:w-[280px] bg-background border-border shadow-sm rounded-xl h-10 text-sm focus:ring-1 focus:ring-primary">
+                    <SelectValue placeholder="Select AI Model" />
                   </SelectTrigger>
-                  <SelectContent className="border-4 border-foreground rounded-none font-mono uppercase font-bold">
+                  <SelectContent className="rounded-xl border-border">
                     {providers.map(p => (
-                      <SelectItem key={p.id} value={p.id} className="flex items-center gap-2 py-3">
-                        <span className="flex items-center gap-2">
+                      <SelectItem key={p.id} value={p.id} className="py-2">
+                        <div className="flex items-center gap-2.5">
                           {getProviderIcon(p.type)}
-                          {p.name}
-                        </span>
+                          <span className="font-medium text-sm">{p.name}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-sm font-bold uppercase opacity-70">
-                {isProcessing ? 'PROCESSING_QUERY...' : 'IDLE'} // CTRL+ENTER TO EXECUTE
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                {isProcessing ? (
+                  <><RefreshCw className="w-3 h-3 animate-spin"/> Processing...</>
+                ) : (
+                  <><CheckCircle className="w-3 h-3 text-green-500"/> System Ready</>
+                )}
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+function Tooltip({ text }: { text: string }) {
+  return (
+    <span className="text-xs text-muted-foreground hidden sm:block">
+      {text}
+    </span>
   )
 }
