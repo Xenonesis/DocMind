@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Eye, EyeOff, Mail, Lock, User, Github, Chrome } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, Github, Chrome, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
 interface SignupModalProps {
@@ -79,183 +79,185 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto border-4 border-foreground rounded-none brutal-shadow bg-background p-0 font-mono">
-        <DialogHeader className="p-6 border-b-4 border-foreground bg-accent text-white">
-          <DialogTitle className="text-2xl font-black text-center uppercase tracking-widest">INITIALIZE_NODE</DialogTitle>
-          <DialogDescription className="text-center text-white/80 font-bold uppercase text-xs">
-            Create new operator profile
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto border-border rounded-2xl shadow-lg bg-card p-0">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-xl sm:text-2xl font-semibold text-center tracking-tight">Create an account</DialogTitle>
+          <DialogDescription className="text-center text-muted-foreground">
+            Get started with DocMind today
           </DialogDescription>
         </DialogHeader>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="space-y-6 p-6"
+          className="space-y-6 p-6 pt-4"
         >
           {/* Social Signup */}
           <div className="space-y-3">
             <Button
               variant="outline"
-              className="w-full rounded-none border-4 border-foreground bg-background hover:bg-foreground hover:text-background font-bold uppercase transition-none"
+              className="w-full rounded-xl shadow-sm h-11 transition-colors"
               onClick={() => handleSocialSignup('google')}
               disabled={isLoading}
             >
-              <Chrome className="w-5 h-5 mr-2" />
-              INIT_GOOGLE_AUTH
+              <Chrome className="w-5 h-5 mr-3 text-muted-foreground" />
+              Continue with Google
             </Button>
             <Button
               variant="outline"
-              className="w-full rounded-none border-4 border-foreground bg-background hover:bg-foreground hover:text-background font-bold uppercase transition-none"
+              className="w-full rounded-xl shadow-sm h-11 transition-colors"
               onClick={() => handleSocialSignup('github')}
               disabled={isLoading}
             >
-              <Github className="w-5 h-5 mr-2" />
-              INIT_GITHUB_AUTH
+              <Github className="w-5 h-5 mr-3 text-muted-foreground" />
+              Continue with GitHub
             </Button>
           </div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full border-t-4 border-foreground" />
+              <Separator className="w-full border-t border-border/50" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase font-black">
-              <span className="bg-background px-4 text-foreground border-4 border-foreground brutal-shadow-sm">OR_MANUAL_ENTRY</span>
+            <div className="relative flex justify-center text-xs font-medium">
+              <span className="bg-card px-4 text-muted-foreground">Or continue with</span>
             </div>
           </div>
 
           {/* Signup Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="font-black uppercase text-sm">OPERATOR_NAME</Label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Full Name</Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-5 w-5 text-foreground" />
+                <User className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="name"
                   type="text"
                   placeholder="John Doe"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="pl-12 rounded-none border-4 border-foreground bg-background text-foreground h-12 font-bold focus-visible:ring-0 focus-visible:border-accent"
+                  className="pl-10 rounded-xl bg-background border-border text-foreground h-11 focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="font-black uppercase text-sm">USER_IDENTIFIER</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-foreground" />
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@domain.com"
+                  placeholder="name@company.com"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="pl-12 rounded-none border-4 border-foreground bg-background text-foreground h-12 font-bold focus-visible:ring-0 focus-visible:border-accent"
+                  className="pl-10 rounded-xl bg-background border-border text-foreground h-11 focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="font-black uppercase text-sm">ACCESS_CODE</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-foreground" />
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="pl-12 pr-12 rounded-none border-4 border-foreground bg-background text-foreground h-12 font-bold focus-visible:ring-0 focus-visible:border-accent"
+                  className="pl-10 pr-11 rounded-xl bg-background border-border text-foreground h-11 focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                   required
                 />
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-foreground hover:text-background rounded-none"
+                  size="icon"
+                  className="absolute right-1 top-1.5 h-8 w-8 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
+                    <EyeOff className="h-4 w-4" />
                   ) : (
-                    <Eye className="h-5 w-5" />
+                    <Eye className="h-4 w-4" />
                   )}
                 </Button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="font-black uppercase text-sm">VERIFY_ACCESS_CODE</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-foreground" />
+                <Lock className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  className="pl-12 pr-12 rounded-none border-4 border-foreground bg-background text-foreground h-12 font-bold focus-visible:ring-0 focus-visible:border-accent"
+                  className="pl-10 pr-11 rounded-xl bg-background border-border text-foreground h-11 focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
                   required
                 />
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-foreground hover:text-background rounded-none"
+                  size="icon"
+                  className="absolute right-1 top-1.5 h-8 w-8 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5" />
+                    <EyeOff className="h-4 w-4" />
                   ) : (
-                    <Eye className="h-5 w-5" />
+                    <Eye className="h-4 w-4" />
                   )}
                 </Button>
               </div>
             </div>
 
-            <div className="flex items-start space-x-3 pt-2">
+            <div className="flex items-start space-x-3 pt-3">
               <Checkbox
                 id="terms"
                 checked={acceptTerms}
                 onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                className="mt-1 rounded-none border-2 border-foreground"
+                className="mt-0.5 rounded shadow-sm border-muted-foreground/30 data-[state=checked]:bg-primary"
               />
-              <Label htmlFor="terms" className="text-xs font-bold leading-tight uppercase">
-                I ACKNOWLEDGE AND ACCEPT THE{' '}
-                <a href="#" className="text-accent hover:bg-accent hover:text-white px-1">
-                  TERMS_OF_SERVICE
+              <Label htmlFor="terms" className="text-xs text-muted-foreground leading-snug">
+                I agree to the{' '}
+                <a href="#" className="font-medium text-primary hover:underline">
+                  Terms of Service
                 </a>{' '}
-                AND{' '}
-                <a href="#" className="text-accent hover:bg-accent hover:text-white px-1">
-                  PRIVACY_PROTOCOL
+                and{' '}
+                <a href="#" className="font-medium text-primary hover:underline">
+                  Privacy Policy
                 </a>
               </Label>
             </div>
 
             {error && (
-              <div className="text-sm font-bold uppercase text-destructive-foreground bg-destructive border-4 border-foreground p-3 brutal-shadow-sm">
-                &gt; ERROR: {error}
+              <div className="flex items-center gap-2 text-sm font-medium text-rose-600 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg border border-rose-100 dark:border-rose-900/50 mt-4">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <p>{error}</p>
               </div>
             )}
 
-            <Button type="submit" className="w-full rounded-none border-4 border-foreground bg-foreground text-background hover:bg-accent hover:text-white font-black uppercase text-lg h-14 transition-none" disabled={isLoading}>
-              {isLoading ? 'INITIALIZING...' : 'CREATE_PROFILE'}
+            <Button type="submit" className="w-full rounded-xl shadow-sm h-11 font-medium mt-4" disabled={isLoading}>
+              {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
           </form>
 
-          <div className="text-center text-sm font-bold uppercase text-foreground/70">
-            EXISTING_PROFILE?{' '}
+          <div className="text-center text-sm text-muted-foreground pt-2">
+            Already have an account?{' '}
             <button
+              type="button"
               onClick={() => {
                 onOpenChange(false)
                 onSwitchToLogin?.()
               }}
-              className="text-foreground hover:bg-foreground hover:text-background px-2 py-1 transition-none"
+              className="text-primary hover:underline underline-offset-4 font-medium"
             >
-              INITIATE_LOGIN
+              Sign in
             </button>
           </div>
         </motion.div>

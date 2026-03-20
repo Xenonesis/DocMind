@@ -7,11 +7,15 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, FileText, Database, Shield, Zap } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { LoginModal } from '@/components/auth/login-modal'
+import { SignupModal } from '@/components/auth/signup-modal'
 
 export function LandingPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showSignupModal, setShowSignupModal] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
@@ -21,7 +25,7 @@ export function LandingPage() {
     if (user) {
       router.push('/dashboard')
     } else {
-      router.push('/auth')
+      setShowSignupModal(true)
     }
   }
 
@@ -39,6 +43,15 @@ export function LandingPage() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
+          {!user && (
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowLoginModal(true)}
+              className="font-medium rounded-full px-4 hidden sm:inline-flex"
+            >
+              Log in
+            </Button>
+          )}
           <Button 
             onClick={handleGetStarted}
             className="font-medium rounded-full px-6 shadow-sm hover:shadow-md transition-all"
@@ -144,6 +157,24 @@ export function LandingPage() {
           <p>© {new Date().getFullYear()} DocMind AI. All rights reserved.</p>
         </div>
       </footer>
+
+      <LoginModal 
+        open={showLoginModal} 
+        onOpenChange={setShowLoginModal}
+        onSwitchToSignup={() => {
+          setShowLoginModal(false)
+          setShowSignupModal(true)
+        }}
+      />
+
+      <SignupModal 
+        open={showSignupModal} 
+        onOpenChange={setShowSignupModal}
+        onSwitchToLogin={() => {
+          setShowSignupModal(false)
+          setShowLoginModal(true)
+        }}
+      />
     </div>
   )
 }
