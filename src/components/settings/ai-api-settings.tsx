@@ -32,7 +32,8 @@ import {
   Globe,
   Eye,
   EyeOff,
-  Activity
+  Activity,
+  Clock
 } from 'lucide-react'
 import { isValidApiKey } from '@/lib/crypto-utils'
 import { useToast } from '@/hooks/use-toast'
@@ -42,7 +43,7 @@ import { ApiUsageTracker } from '@/components/features/api-usage-tracker'
 interface AIProvider {
   id: string
   name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom'
+  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible'
   baseUrl: string
   apiKey: string
   model: string
@@ -174,6 +175,21 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     topP: 0.9,
     description: 'Access multiple AI models through OpenRouter.',
     iconType: 'globe'
+  },
+  {
+    name: 'OpenAI Compatible API',
+    type: 'openai-compatible',
+    baseUrl: 'https://api.your-provider.com/v1',
+    apiKey: '',
+    model: 'gpt-3.5-turbo',
+    isActive: false,
+    isConfigured: false,
+    models: ['gpt-3.5-turbo', 'gpt-4', 'custom-model'],
+    maxTokens: 4096,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'Connect to any custom OpenAI-compatible endpoint.',
+    iconType: 'server'
   }
 ]
 
@@ -203,6 +219,7 @@ export function AiApiSettings() {
             if (raw === 'OPENROUTER') return 'open-router'
             if (raw === 'GOOGLE_AI') return 'google'
             if (raw === 'LM_STUDIO') return 'lm-studio'
+            if (raw === 'OPENAI_COMPATIBLE') return 'openai-compatible'
             return raw.toLowerCase().replace(/_/g, '-')
           })()
           const defaults = defaultProviders.find(d => d.type === mappedType)

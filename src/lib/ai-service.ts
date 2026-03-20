@@ -4,7 +4,7 @@ import { encryptApiKey, decryptApiKey, isValidApiKey, maskApiKey, sanitizeError 
 export interface AIProvider {
   id?: string
   name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom'
+  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible'
   baseUrl: string
   apiKey: string
   model: string
@@ -125,6 +125,8 @@ export class AIService {
           // Anthropic
           'anthropic': 'anthropic',
           'claude': 'anthropic',
+          // OpenAI Compatible
+          'openai-compatible': 'openai-compatible',
           // Fallback
           'custom': 'custom'
         }
@@ -140,7 +142,8 @@ export class AIService {
           'anthropic': 'https://api.anthropic.com/v1',
           'open-router': 'https://openrouter.ai/api/v1',
           'lm-studio': 'http://localhost:1234/v1',
-          'ollama': 'http://localhost:11434/api'
+          'ollama': 'http://localhost:11434/api',
+          'openai-compatible': 'https://api.your-provider.com/v1'
         }
         
         // Decrypt the API key if it exists
@@ -199,6 +202,7 @@ export class AIService {
         case 'open-router':
           return this.callOpenRouter(config)
         case 'openai':
+        case 'openai-compatible':
           return this.callOpenAI(config)
         case 'anthropic':
           return this.callAnthropic(config)
@@ -587,7 +591,7 @@ export class AIService {
           const data = await res.json()
           return data.models?.map((m: any) => m.name.replace('models/', '')) || []
         }
-      } else if (['openai', 'lm-studio', 'mistral'].includes(provider.type)) {
+      } else if (['openai', 'lm-studio', 'mistral', 'openai-compatible'].includes(provider.type)) {
         const baseUrl = provider.baseUrl
         // Ensure not appending /models to something that already has it or is a chat endpoint
         const modelsUrl = baseUrl.endsWith('/chat/completions') 
