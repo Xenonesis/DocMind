@@ -1,5 +1,8 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { documentService } from '@/lib/db'
+import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
+import { getAuthenticatedUser } from '@/lib/auth-server'
 
 export async function GET(
   request: NextRequest,
@@ -8,15 +11,37 @@ export async function GET(
   try {
     const { id: documentId } = await params
 
-    // Get document from database
-    const document = await documentService.getById(documentId)
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
 
-    if (!document) {
+    if (!db) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    // Get document from Supabase database
+    const { data: document, error } = await db
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single()
+
+    if (error || !document) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
     // Return the document data
-    return NextResponse.json(document)
+    return NextResponse.json({
+      id: document.id,
+      name: document.name,
+      type: document.type,
+      size: document.size,
+      status: document.status,
+      uploadDate: document.upload_date,
+      processedAt: document.processed_at,
+      category: document.category,
+      tags: document.tags ? (typeof document.tags === 'string' ? JSON.parse(document.tags) : document.tags) : [],
+    })
 
   } catch (error) {
     console.error('Error fetching document:', error)
@@ -37,8 +62,16 @@ export async function DELETE(
   try {
     const { id: documentId } = await params
 
-    // Delete document from database
-    await documentService.delete(documentId)
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    // Delete document from Supabase
+    const { error } = await db!.from('documents').delete().eq('id', documentId)
+
+    if (error) {
+       return NextResponse.json({ error: 'Failed to delete document' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, message: 'Document deleted successfully' })
 
@@ -62,13 +95,19 @@ export async function PUT(
     const { id: documentId } = await params
     const updates = await request.json()
     
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
     // Update document in database
-    await documentService.update(documentId, updates)
+    const { data: updatedDocument, error } = await db!
+      .from('documents')
+      .update(updates)
+      .eq('id', documentId)
+      .select()
+      .single()
 
-    // Get the updated document
-    const updatedDocument = await documentService.getById(documentId)
-
-    if (!updatedDocument) {
+    if (error || !updatedDocument) {
       return NextResponse.json({ error: 'Document not found after update' }, { status: 404 })
     }
 
