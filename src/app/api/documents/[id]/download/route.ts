@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { documentService } from '@/lib/db'
-import fs from 'fs'
+import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
+import { getAuthenticatedUser } from '@/lib/auth-server'
 import path from 'path'
 
 export async function GET(
@@ -10,10 +10,29 @@ export async function GET(
   try {
     const documentId = params.id
 
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    if (!db) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
     // Get document from database
-    const document = await documentService.getById(documentId)
-    if (!document) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    const { data: document, error: docError } = await db
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .eq('user_id', user.id) // Enforce ownership
+      .single()
+
+    if (docError || !document) {
+      return NextResponse.json({ error: 'Document not found or access denied' }, { status: 404 })
     }
 
     // Parse metadata to get storage information
@@ -24,31 +43,19 @@ export async function GET(
       console.warn('Failed to parse document metadata:', e)
     }
 
-    // Try different possible file locations
-    const possiblePaths = [
-      // New format: documents/{documentId}/{filename}
-      path.join(process.cwd(), 'public', 'uploads', 'documents', documentId, document.name),
-      // Legacy format: just the filename
-      path.join(process.cwd(), 'public', 'uploads', document.name),
-      // Metadata storage reference
-      metadata.storageRef ? path.join(process.cwd(), 'public', 'uploads', metadata.storageRef) : null
-    ].filter(Boolean) as string[]
+    const storageRef = metadata.storageRef || `users/${user.email.replace(/[^a-zA-Z0-9@.-]/g, '_')}/documents/${documentId}/${document.name}`
 
-    let filePath: string | null = null
-    let fileBuffer: Buffer | null = null
+    const { data: fileBlob, error: downloadError } = await db
+      .storage
+      .from('documents')
+      .download(storageRef)
 
-    for (const possiblePath of possiblePaths) {
-      if (fs.existsSync(possiblePath)) {
-        filePath = possiblePath
-        fileBuffer = fs.readFileSync(filePath)
-        break
-      }
+    if (downloadError || !fileBlob) {
+      console.error('File not found in Supabase storage:', downloadError)
+      return NextResponse.json({ error: 'File not found in storage' }, { status: 404 })
     }
-
-    if (!fileBuffer || !filePath) {
-      console.error('File not found in any of these locations:', possiblePaths)
-      return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
-    }
+    
+    const fileBuffer = Buffer.from(await fileBlob.arrayBuffer())
     
     // Determine content type
     const fileExtension = path.extname(document.name).toLowerCase()

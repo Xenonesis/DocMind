@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { documentService } from '@/lib/db'
-import fs from 'fs'
+import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
+import { getAuthenticatedUser } from '@/lib/auth-server'
 import path from 'path'
 import mammoth from 'mammoth'
 
@@ -11,17 +11,30 @@ export async function GET(
   try {
     const { id: documentId } = await params
 
-    // Get document from database
-    let document
-    try {
-      document = await documentService.getById(documentId)
-    } catch (dbError) {
-      console.error('Database error:', dbError)
-      return NextResponse.json({ error: 'Database error: ' + (dbError as Error).message }, { status: 500 })
+    // Get authenticated user and instantiate DB client
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    if (!document) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    if (!db) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+    }
+
+    // Get document from database securely
+    const { data: document, error: docError } = await db
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .eq('user_id', user.id) // Enforce ownership
+      .single()
+
+    if (docError || !document) {
+      return NextResponse.json({ error: 'Document not found or access denied' }, { status: 404 })
     }
 
     // Parse metadata to get storage information
@@ -32,72 +45,47 @@ export async function GET(
       console.warn('Failed to parse document metadata:', e)
     }
 
-    // Determine file path based on storage location (try multiple possibilities)
-    let filePath: string | null = null
-    let fileBuffer: Buffer | null = null
+    const storageRef = metadata.storageRef || `users/${user.email.replace(/[^a-zA-Z0-9@.-]/g, '_')}/documents/${documentId}/${document.name}`
+    const ext = path.extname(document.name).toLowerCase()
 
-    // Construct possible local file paths
-    // Try new user-organized structure first
-    const userEmail = metadata.userEmail || 'anonymous@example.com'
-    const sanitizedEmail = userEmail.replace(/[^a-zA-Z0-9@.-]/g, '_')
-    const userOrganizedPath = path.join(process.cwd(), 'public', 'uploads', 'users', sanitizedEmail, 'documents', documentId, document.name)
-    
-    // Legacy paths for backward compatibility
-    const expectedFilePath = path.join(process.cwd(), 'public', 'uploads', 'documents', documentId, document.name)
-    const legacyPath = path.join(process.cwd(), 'public', 'uploads', document.name)
-    const storageRefPath = (metadata && metadata.storageRef)
-      ? path.join(process.cwd(), 'public', 'uploads', metadata.storageRef)
-      : null
-
-    const possiblePaths = [userOrganizedPath, expectedFilePath, legacyPath, storageRefPath].filter(Boolean) as string[]
-
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        filePath = p
-        fileBuffer = fs.readFileSync(p)
-        break
-      }
+    // For images, generate a secure temporary signed URL
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
+      const { data } = await db.storage.from('documents').createSignedUrl(storageRef, 3600) // 1 hour
+      if (!data) return NextResponse.json({ error: 'Could not generate signed URL' }, { status: 500 })
+      return NextResponse.json({
+        content: data.signedUrl,
+        contentType: 'image',
+        metadata: { size: document.size }
+      })
     }
 
-    if (!fileBuffer) {
-      // If not found locally, attempt graceful fallbacks for previewable types
-      const ext = path.extname(document.name).toLowerCase()
+    // For PDFs, generate a secure temporary signed URL
+    if (ext === '.pdf') {
+      const { data } = await db.storage.from('documents').createSignedUrl(storageRef, 3600) // 1 hour
+      if (!data) return NextResponse.json({ error: 'Could not generate signed URL' }, { status: 500 })
+      return NextResponse.json({
+        content: data.signedUrl,
+        contentType: 'pdf',
+        metadata: {}
+      })
+    }
 
-      // For images, we can return a URL even without local file
-      if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
-        const imageUrl = (metadata && metadata.downloadURL)
-          ? metadata.downloadURL
-          : `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
-        return NextResponse.json({
-          content: imageUrl,
-          contentType: 'image',
-          metadata: { size: document.size }
-        })
-      }
+    // For text-based documents, we must download the buffer to parse it
+    const { data: fileBlob, error: downloadError } = await db
+      .storage
+      .from('documents')
+      .download(storageRef)
 
-      // For PDFs, return a URL to let the client embed it
-      if (ext === '.pdf') {
-        const pdfUrl = (metadata && metadata.downloadURL)
-          ? metadata.downloadURL
-          : `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
-        return NextResponse.json({
-          content: pdfUrl,
-          contentType: 'pdf',
-          metadata: {}
-        })
-      }
-
-      // Otherwise, we cannot preview without bytes
-      console.error('File not found at any expected local path:', possiblePaths)
-      console.error('Document name:', document.name)
-      console.error('Document metadata:', document.metadata)
+    if (downloadError || !fileBlob) {
+      console.error('File not found in Supabase storage:', downloadError)
       return NextResponse.json({ 
-        error: 'File not found on disk',
-        details: `File "${document.name}" could not be located in the expected directories`,
-        searchedPaths: possiblePaths,
+        error: 'File not found in storage',
+        details: 'The document file could not be located in your private bucket',
         documentId: documentId
       }, { status: 404 })
     }
+
+    const fileBuffer = Buffer.from(await fileBlob.arrayBuffer())
 
     const fileExtension = path.extname(document.name).toLowerCase()
 
@@ -122,26 +110,7 @@ export async function GET(
           }
           break
 
-        case '.pdf':
-          const pdfUrl = `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
-          let pages = 0
-          try {
-            if (fileBuffer) {
-              const pdfParse = (await import('pdf-parse')).default
-              const pdfData = await pdfParse(fileBuffer)
-              pages = pdfData.numpages
-            }
-          } catch (e) {
-            console.error("Could not get page count from PDF", e)
-          }
-          previewContent = {
-            content: pdfUrl,
-            contentType: 'pdf',
-            metadata: {
-              pages: pages > 0 ? pages : undefined
-            }
-          }
-          break
+
 
         case '.doc':
         case '.docx':
@@ -165,22 +134,7 @@ export async function GET(
           }
           break
 
-        case '.jpg':
-        case '.jpeg':
-        case '.png':
-        case '.gif':
-        case '.webp':
-          // Return the correct URL path for the image
-          const imageUrl = `/uploads/users/${sanitizedEmail}/documents/${documentId}/${document.name}`
-          
-          previewContent = {
-            content: imageUrl,
-            contentType: 'image',
-            metadata: {
-              size: document.size
-            }
-          }
-          break
+
 
         case '.json':
           if (!fileBuffer) throw new Error('File buffer is null')

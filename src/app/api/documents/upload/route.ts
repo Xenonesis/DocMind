@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     try {
       await db.storage.createBucket('documents', { public: true })
     } catch (e: any) {
-      // ignore if bucket already exists
+      console.warn('Bucket creation warning (If the bucket does not exist, you must create it manually in the Supabase Dashboard since the anon key lacks permissions):', e.message || e)
     }
 
     // Create document record in database
