@@ -419,8 +419,8 @@ export class AIService {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${provider.apiKey}`,
-        'HTTP-Referer': 'http://localhost:3000',
-        'X-Title': 'DocuMind AI'
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://docmind.app'),
+        'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'DocMind'
       },
       body: JSON.stringify({
         model: provider.model,
@@ -577,8 +577,8 @@ export class AIService {
         const res = await fetch(`${provider.baseUrl}/models`, {
           headers: {
             'Authorization': `Bearer ${provider.apiKey}`,
-            'HTTP-Referer': 'http://localhost:3000',
-            'X-Title': 'DocuMind AI'
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://docmind.app'),
+            'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'DocMind'
           }
         })
         if (res.ok) {

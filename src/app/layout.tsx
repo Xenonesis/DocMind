@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "DocMind",
     description: "Intelligent document processing with semantic understanding",
-    url: "https://localhost:3000",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://docmind.app",
     siteName: "DocMind",
     type: "website",
   },

@@ -71,15 +71,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'gemini-2.5-flash',
     isActive: true,
     isConfigured: false,
-    models: [
-      'gemini-2.5-pro',
-      'gemini-2.5-flash',
-      'gemini-2.5-flash-lite',
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
-      'gemini-1.5-pro',
-      'gemini-1.5-flash'
-    ],
+    models: [], // fetched live on demand
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -94,7 +86,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'mistral-large-latest',
     isActive: false,
     isConfigured: false,
-    models: ['mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest', 'mistral-embed'],
+    models: [], // fetched live on demand
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -109,7 +101,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'gpt-4o-mini',
     isActive: false,
     isConfigured: false,
-    models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1'],
+    models: [], // fetched live on demand
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -124,7 +116,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'claude-3-5-sonnet-latest',
     isActive: false,
     isConfigured: false,
-    models: ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest'],
+    models: ['claude-opus-4-0', 'claude-sonnet-4-0', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest'], // Anthropic has no public models endpoint
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -139,7 +131,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'local-model',
     isActive: false,
     isConfigured: false,
-    models: ['local-model'],
+    models: [], // fetched live from LM Studio
     maxTokens: 4096,
     temperature: 0.7,
     topP: 0.9,
@@ -154,7 +146,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'llama2',
     isActive: false,
     isConfigured: false,
-    models: ['llama2', 'llama3', 'mistral', 'codellama', 'phi3'],
+    models: [], // fetched live from Ollama
     maxTokens: 4096,
     temperature: 0.7,
     topP: 0.9,
@@ -169,7 +161,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'anthropic/claude-3.5-sonnet',
     isActive: false,
     isConfigured: false,
-    models: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'meta-llama/llama-3.1-70b'],
+    models: [], // fetched live from OpenRouter
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -190,6 +182,21 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     topP: 0.9,
     description: 'Connect to any custom OpenAI-compatible endpoint.',
     iconType: 'server'
+  },
+  {
+    name: 'DocScan Free ✨',
+    type: 'openai-compatible',
+    baseUrl: 'https://api.us-west-2.modal.direct/v1',
+    apiKey: '', // injected from server at runtime
+    model: 'zai-org/GLM-5-FP8',
+    isActive: false,
+    isConfigured: false,
+    models: ['zai-org/GLM-5-FP8'],
+    maxTokens: 4096,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'Free built-in provider powered by DocScan. No API key needed — just activate and use!',
+    iconType: 'zap'
   }
 ]
 
@@ -200,6 +207,7 @@ export function AiApiSettings() {
   const [fetchingModels, setFetchingModels] = useState<Record<string, boolean>>({})
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({})
   const [mounted, setMounted] = useState(false)
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -210,10 +218,15 @@ export function AiApiSettings() {
     const load = async () => {
       try {
         const { authenticatedRequest } = await import('@/lib/api-client')
-        const data = await authenticatedRequest('/api/settings')
+        const [data, freeProviderRes] = await Promise.allSettled([
+          authenticatedRequest('/api/settings'),
+          fetch('/api/free-provider').then(r => r.ok ? r.json() : null)
+        ])
+        const settingsData = data.status === 'fulfilled' ? data.value : []
+        const freeConfig = freeProviderRes.status === 'fulfilled' ? freeProviderRes.value : null
         
         // Map backend records to UI provider model
-        let mapped: AIProvider[] = data.map((s: any, index: number) => {
+        let mapped: AIProvider[] = settingsData.map((s: any, index: number) => {
           const mappedType = (() => {
             const raw = (s.provider || 'custom').toString().toUpperCase()
             if (raw === 'OPENROUTER') return 'open-router'
@@ -228,11 +241,9 @@ export function AiApiSettings() {
             name: `${s.provider} (${s.model || ''})`,
             type: mappedType as AIProvider['type'],
             baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-            // Use the actual API key as returned from server
             apiKey: s.apiKey || '',
             model: s.model || (defaults?.models?.[0] ?? ''),
             isActive: !!s.isActive,
-            // Provider is configured if it has an API key
             isConfigured: !!(s.apiKey && s.apiKey.length > 0),
             lastTested: undefined,
             testStatus: undefined,
@@ -247,6 +258,31 @@ export function AiApiSettings() {
           }
         })
 
+        // Inject DocScan Free provider from server config
+        if (freeConfig) {
+          const freeId = 'docscan-free-builtin'
+          const alreadyHasFree = mapped.some(m => m.id === freeId)
+          if (!alreadyHasFree) {
+            mapped = [{
+              id: freeId,
+              name: 'DocScan Free ✨',
+              type: 'openai-compatible',
+              baseUrl: freeConfig.baseUrl,
+              apiKey: freeConfig.apiKey,
+              model: freeConfig.model,
+              isActive: false,
+              isConfigured: true,
+              models: freeConfig.models || ['zai-org/GLM-5-FP8'],
+              maxTokens: freeConfig.maxTokens || 4096,
+              temperature: freeConfig.temperature || 0.7,
+              topP: freeConfig.topP || 0.9,
+              description: freeConfig.description || 'Free built-in provider. No API key needed!',
+              iconType: 'zap',
+              dirtyApiKey: false,
+            }, ...mapped]
+          }
+        }
+
         // Always merge in default providers so all options are visible
         const existingTypes = new Set(mapped.map(m => m.type))
         const missingDefaults = defaultProviders
@@ -260,12 +296,33 @@ export function AiApiSettings() {
         }
 
         setProviders(mapped)
+        const active = mapped.find(p => p.isActive)
+        const firstId = active?.id || mapped[0]?.id || ''
+        setSelectedProviderId(firstId)
+
+        // Auto-fetch live models for all configured providers
+        for (const p of mapped) {
+          if (p.apiKey && p.baseUrl) {
+            // Fire async without blocking UI — errors are swallowed silently
+            const { authenticatedRequest } = await import('@/lib/api-client')
+            authenticatedRequest('/api/models', {
+              method: 'POST',
+              body: JSON.stringify({ provider: p })
+            }).then((res: any) => {
+              if (res?.models?.length > 0) {
+                setProviders(prev => prev.map(pp =>
+                  pp.id === p.id ? { ...pp, models: res.models } : pp
+                ))
+              }
+            }).catch(() => { /* silently ignore if fetch fails */ })
+          }
+        }
         
         // Show success message if providers were loaded
-        if (data.length > 0) {
+        if (settingsData.length > 0) {
           toast({
             title: 'Settings loaded',
-            description: `Loaded ${data.length} AI provider configuration(s).`,
+            description: `Loaded ${settingsData.length} AI provider configuration(s).`,
           })
         }
       } catch (error) {
@@ -292,7 +349,7 @@ export function AiApiSettings() {
     
     const payload = providersToSave.map(p => ({
       provider: (() => {
-        switch (p.type) {
+          switch (p.type) {
           case 'open-router': return 'OPENROUTER'
           case 'lm-studio': return 'LM_STUDIO'
           case 'google': return 'GOOGLE_AI'
@@ -300,7 +357,8 @@ export function AiApiSettings() {
           case 'ollama': return 'OLLAMA'
           case 'openai': return 'OPENAI'
           case 'anthropic': return 'ANTHROPIC'
-          default: return 'CUSTOM'
+          case 'openai-compatible': return 'OPENAI_COMPATIBLE'
+          default: return p.type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
         }
       })(),
       // Always send apiKey for providers we're saving
@@ -564,7 +622,25 @@ export function AiApiSettings() {
         </div>
 
         <TabsContent value="providers" className="space-y-6 m-0 outline-none">
-          {providers.map((provider) => (
+          <div className="space-y-3 p-1 mb-2">
+            <Label className="text-sm font-semibold text-foreground">Select AI Provider to Configure</Label>
+            <Select value={selectedProviderId} onValueChange={setSelectedProviderId}>
+              <SelectTrigger className="w-full bg-background h-12 rounded-xl shadow-sm border-border text-base">
+                <SelectValue placeholder="Select a provider" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {providers.map(p => (
+                  <SelectItem key={p.id} value={p.id} className="cursor-pointer py-3 h-auto">
+                    <span className="font-medium text-sm">
+                      {p.name} {p.isActive && p.isConfigured ? ' (Active)' : ''}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {providers.filter(p => p.id === selectedProviderId).map((provider) => (
             <motion.div key={provider.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
               <Card className="shadow-sm border-border bg-card transition-shadow hover:shadow-md">
                 <CardHeader className="p-6 border-b border-border/50 bg-background/50">
@@ -614,6 +690,15 @@ export function AiApiSettings() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
+                  {provider.id === 'docscan-free-builtin' ? (
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                      <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Managed automatically</p>
+                        <p className="text-xs text-muted-foreground mt-1">This provider is pre-configured by DocScan. No setup needed — just toggle it on to start using it for free.</p>
+                      </div>
+                    </div>
+                  ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor={`base-url-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Base URL</Label>
@@ -621,6 +706,11 @@ export function AiApiSettings() {
                         id={`base-url-${provider.id}`}
                         value={provider.baseUrl}
                         onChange={(e) => updateProvider(provider.id, { baseUrl: e.target.value })}
+                        onBlur={() => {
+                          if (provider.baseUrl && provider.apiKey) {
+                            handleFetchModels(provider)
+                          }
+                        }}
                         placeholder="API base URL"
                         className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
                       />
@@ -633,6 +723,11 @@ export function AiApiSettings() {
                           type={showApiKeys[provider.id] ? 'text' : 'password'}
                           value={getDisplayedApiKey(provider)}
                           onChange={(e) => updateProvider(provider.id, { apiKey: e.target.value, dirtyApiKey: true })}
+                          onBlur={() => {
+                            if (provider.baseUrl && provider.apiKey) {
+                              handleFetchModels({ ...provider, apiKey: provider.apiKey })
+                            }
+                          }}
                           placeholder="Enter your API key"
                           className="pr-10 bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
                         />
@@ -651,9 +746,16 @@ export function AiApiSettings() {
                           <AlertCircle className="w-3.5 h-3.5" /> Invalid required API key format
                         </p>
                       )}
+                      {fetchingModels[provider.id] && (
+                        <p className="text-xs text-primary font-medium mt-1.5 flex items-center gap-1.5">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Fetching live models...
+                        </p>
+                      )}
                     </div>
                   </div>
+                  )}
 
+                  {provider.id !== 'docscan-free-builtin' && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -708,6 +810,7 @@ export function AiApiSettings() {
                       />
                     </div>
                   </div>
+                  )}
 
                   {provider.errorMessage && (
                     <Alert variant="destructive" className="bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-400">
