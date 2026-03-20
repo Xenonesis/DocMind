@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase'
+import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
 import { getAuthenticatedUser } from '@/lib/auth-server'
 
 export async function GET(request: NextRequest) {
@@ -16,12 +16,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+    const db = createServerClientForToken(token) || supabaseServer
+
+    if (!db) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Get user's documents from Supabase (without the problematic joins for now)
-    let { data: documents, error } = await supabaseServer
+    let { data: documents, error } = await db
       .from('documents')
       .select('*')
       .eq('user_id', user.id)
@@ -55,14 +59,14 @@ export async function GET(request: NextRequest) {
     const formattedDocuments = await Promise.all(
       documents.map(async (doc) => {
         // Get analysis count for this document
-        const { count: analysisCount } = await supabaseServer!
+        const { count: analysisCount } = await db
           .from('analyses')
           .select('*', { count: 'exact', head: true })
           .eq('document_id', doc.id)
           .eq('user_id', user.id)
 
         // Get query count for this document (queries that reference this document)
-        const { data: queries } = await supabaseServer!
+        const { data: queries } = await db
           .from('queries')
           .select('document_ids')
           .eq('user_id', user.id)
