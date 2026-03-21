@@ -150,7 +150,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="h-screen overflow-hidden bg-secondary/20 text-foreground font-sans flex flex-col">
+      <div className="min-h-screen bg-secondary/20 text-foreground font-sans flex flex-col">
 
         {/* Modern Header */}
         <header className="bg-background border-b border-border px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
@@ -198,10 +198,10 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 p-6 md:p-8 max-w-[1600px] mx-auto w-full space-y-8 flex flex-col">
+        <main className="p-6 md:p-8 max-w-[1600px] mx-auto w-full space-y-8">
 
           {/* Main Interface — No Chat tab here */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="bg-background rounded-2xl p-1.5 shadow-sm border border-border inline-flex w-fit">
               <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-1">
                 {[
@@ -222,8 +222,8 @@ export default function Dashboard() {
               </TabsList>
             </div>
 
-            <Card className="flex-1 shadow-sm border-border bg-card overflow-hidden flex flex-col">
-              <div className="p-6 h-full min-h-0 flex flex-col">
+            <Card className="shadow-sm border-border bg-card">
+              <div className="p-6">
                 <TabsContent value="upload" className="m-0 focus-visible:outline-none flex-1">
                   <DocumentUpload onUpload={handleDocumentUpload} />
                 </TabsContent>
