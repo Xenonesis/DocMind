@@ -4,7 +4,7 @@
 
 ### Intelligent Document Processing Platform
 
-Transform how you interact with documents through AI-powered semantic search, natural language queries, and intelligent analysis.
+AI-powered document processing with semantic search, natural language queries, and intelligent analysis.
 
 [Quick Start](#quick-start) • [Features](#features) • [Documentation](#documentation) • [API Reference](#api-documentation) • [Contributing](#contributing)
 
@@ -31,38 +31,35 @@ Transform how you interact with documents through AI-powered semantic search, na
 - [AI Providers](#ai-providers)
 - [Document Processing](#document-processing)
 - [Security](#security)
-- [Performance](#performance)
 - [Deployment](#deployment)
 - [Environment Variables](#environment-variables)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
-- [Support](#support)
 - [License](#license)
 
 ---
 
 ## Overview
 
-DocMind is a modern, intelligent document processing platform built with Next.js 15, TypeScript, and Tailwind CSS. It combines cutting-edge AI technology with intuitive design to help users unlock the intelligence hidden within their files.
+DocMind is a modern, intelligent document processing platform built with Next.js 16, TypeScript, and Tailwind CSS 4. It combines cutting-edge AI technology with intuitive design to help users unlock the intelligence hidden within their files.
 
 ### Key Capabilities
 
-- **Universal Document Support**: Securely upload PDFs, Word documents, text files, and images
-- **Semantic Querying**: Find exact answers within complex documents instantly using natural language
-- **AI-Powered Analysis**: Automatically extract insights, summarize content, and identify key entities
-- **Multi-Provider AI**: Support for Google Gemini, OpenAI, Anthropic Claude, Mistral, OpenRouter, Ollama, LM Studio, and custom OpenAI-compatible endpoints
-- **Enterprise Security**: Row-level security, encrypted data storage, and user data isolation
-- **Modern UX**: Responsive design, dark mode support, and accessibility-focused interface
+- **Universal Document Support**: PDF, Word, text, JSON, CSV, XML, and images
+- **AI-Powered Querying**: Natural language questions across your documents
+- **Multi-Provider AI**: Google Gemini, OpenAI, Anthropic Claude, Mistral, Groq, OpenRouter, Ollama, LM Studio, and custom endpoints
+- **Free Built-in Providers**: Groq and DocScan free tiers available without API keys
+- **Enterprise Security**: Row-level security, encrypted API keys, user data isolation
+- **Modern UX**: Clean professional design, dark mode, responsive layout
 
-### What's New in v1.0
+### Architecture
 
-- Real Supabase authentication with OAuth support (Google, GitHub)
-- Database-backed AI provider configuration
-- Encrypted API key storage
-- Free built-in AI provider (DocScan Free)
-- Improved document processing pipeline
-- Enhanced security with Row Level Security (RLS)
-- Modern, professional UI design system
+DocMind uses a hybrid architecture:
+- **Frontend**: Next.js 16 with App Router, React 19, TypeScript
+- **Backend**: Next.js API routes + Go serverless functions for heavy processing
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Storage**: Supabase Storage for document files
+- **AI**: Multiple provider support with automatic fallback
 
 ---
 
@@ -72,20 +69,20 @@ DocMind is a modern, intelligent document processing platform built with Next.js
 
 **Upload & Processing**
 - Drag-and-drop file upload interface
-- Support for multiple file formats: PDF, DOCX, TXT, JSON, CSV, XML, JPG, PNG
-- Automatic content extraction using specialized parsers
-- Real-time processing status with WebSocket updates
+- Support for PDF, DOCX, TXT, JSON, CSV, XML, JPG, PNG
+- Automatic content extraction with format-specific parsers
+- Real-time processing status tracking
 - Batch processing with queue management
-- File size validation and type checking
-- Metadata preservation and tagging
+- File size and type validation
+- User-specific storage folders in Supabase
 
 **Document Organization**
 - Category-based organization (Document, Text, Image, Data, Other)
 - Custom tags and metadata
-- Search and filter capabilities
-- Document status tracking (UPLOADING, PROCESSING, COMPLETED, ERROR)
-- Upload date and file size information
-- Analysis and query count tracking
+- Search and filter by status, type, name
+- Document status: UPLOADING, PROCESSING, COMPLETED, ERROR
+- Upload date and file size tracking
+- Analysis and query count per document
 
 ### AI-Powered Analysis
 
@@ -96,7 +93,7 @@ DocMind is a modern, intelligent document processing platform built with Next.js
 - Sentiment analysis
 - Document statistics (word count, character count, line count)
 - Content structure analysis
-- Sensitive data detection (PII, email addresses, phone numbers)
+- Sensitive data detection (PII, emails, phone numbers)
 
 **Rule-Based Analysis**
 - JSON structure validation
@@ -110,19 +107,19 @@ DocMind is a modern, intelligent document processing platform built with Next.js
 
 **Chat Interface**
 - Conversational AI interface
-- Context-aware responses
+- Context-aware responses with conversation history
 - Multi-document querying
 - Source attribution
-- Response streaming support
+- Response generation with document references
 - Query history tracking
 
 **Query Capabilities**
 - Natural language understanding
 - Intent recognition
-- Query expansion
 - Contextual answers
 - Cross-document analysis
-- Custom prompt engineering
+- Custom system prompts
+- Automatic fallback to free providers
 
 ### AI Provider Integration
 
@@ -131,28 +128,33 @@ DocMind is a modern, intelligent document processing platform built with Next.js
 - **OpenAI**: GPT-4, GPT-4 Turbo, GPT-3.5 Turbo
 - **Anthropic Claude**: Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku
 - **Mistral AI**: Mistral Large, Mistral Medium, Mistral Small
+- **Groq**: Llama 3.1 8B (ultra-fast, free tier)
 - **OpenRouter**: Access to 100+ AI models
 - **Ollama**: Local LLM deployment (Llama 2, Mistral, etc.)
 - **LM Studio**: Local AI inference
 - **Custom OpenAI-Compatible**: Any OpenAI-compatible API endpoint
 
+**Free Built-in Providers**
+- **DocScan Free (Glm-5)**: Free via Modal.direct API
+- **DocScan Groq (Llama 3.1 8B)**: Ultra-fast free inference
+
 **Provider Features**
-- Per-user provider configuration
-- Encrypted API key storage
+- Per-user provider configuration stored in database
+- XOR-encrypted API key storage
 - Model selection and customization
 - Temperature and max tokens configuration
 - Provider testing and validation
 - Automatic model listing fetch
-- Fallback provider support
+- Automatic fallback on upstream errors
 
 ### User Experience
 
 **Interface Design**
-- Clean, modern B2B SaaS aesthetic
-- Professional typography with Bricolage Grotesque and Space Mono
-- Soft color palette with proper contrast
-- Rounded corners and subtle shadows
-- Responsive layout for all screen sizes
+- Clean, professional B2B SaaS aesthetic
+- Bricolage Grotesque for headings, Space Mono for code
+- Soft color palette with proper contrast ratios
+- Rounded corners (0.5rem-0.75rem) and subtle shadows
+- Responsive layout for mobile, tablet, desktop
 - Dark mode with system preference detection
 
 **Accessibility**
@@ -170,35 +172,34 @@ DocMind is a modern, intelligent document processing platform built with Next.js
 ### Frontend
 
 **Core Framework**
-- **Next.js 15** - React framework with App Router
+- **Next.js 16** - React framework with App Router
   - Server-side rendering (SSR)
   - Static site generation (SSG)
   - API routes integration
-  - Image optimization
-  - Font optimization
+  - Image and font optimization
+  - Turbopack bundler
 
 - **TypeScript 5** - Type-safe development
   - Strict type checking
   - Enhanced IDE support
-  - Better code maintainability
+  - Path aliases (@/*)
   - Compile-time error detection
 
 **Styling & UI**
 - **Tailwind CSS 4** - Utility-first CSS framework
-  - Custom design system
+  - Custom design system with CSS variables
   - Responsive utilities
-  - Dark mode support
-  - CSS variables for theming
+  - Dark mode via class strategy
+  - Custom animations
 
-- **shadcn/ui** - Component library
-  - 50+ pre-built components
-  - Accessible by default
+- **shadcn/ui** - Component library (New York style)
+  - 51 pre-built accessible components
+  - Radix UI primitives
   - Customizable themes
   - TypeScript support
-  - New York style
 
 - **Framer Motion** - Animation library
-  - Smooth page transitions
+  - Page transitions
   - Gesture support
   - Layout animations
   - Performance optimized
@@ -210,7 +211,6 @@ DocMind is a modern, intelligent document processing platform built with Next.js
   - Intelligent caching
   - Background updates
   - Optimistic updates
-  - Error handling
 
 ### Backend & Data
 
@@ -220,40 +220,53 @@ DocMind is a modern, intelligent document processing platform built with Next.js
   - Row Level Security (RLS)
   - Built-in authentication
   - Storage buckets
-  - Edge functions support
+  - Edge functions
 
 **Authentication**
-- **NextAuth.js** - Authentication framework
+- **Supabase Auth** - Authentication system
   - Email/password authentication
   - OAuth providers (Google, GitHub)
   - JWT sessions
-  - Protected routes
-  - Session management
+  - PKCE flow
+  - Session persistence
 
-**AI Integration**
-- Custom AI service layer
-- Multiple provider support
+**API Layer**
+- Next.js API routes (TypeScript)
+- Go serverless functions for processing
+- JWT-based authentication
 - Encrypted API key storage
+
+### Document Processing
+
+**Text Extraction**
+- **pdf-parse** - PDF text extraction
+- **mammoth** - DOCX processing
+- Native text reading for TXT, JSON, CSV, XML
+- Sharp for image processing
+
+**AI Service**
+- Custom AI service layer
+- Multiple provider support with type safety
+- XOR encryption for API keys
 - Token usage tracking
-- Error handling and retry logic
+- Automatic fallback on errors
 
 ### Development Tools
 
 **Code Quality**
-- **ESLint** - Code linting
+- **ESLint 9** - Code linting
 - **TypeScript** - Type checking
 - **Prettier** - Code formatting
-- **Husky** - Git hooks
 
 **Build & Deploy**
 - **Turbopack** - Fast bundler (Next.js 16+)
 - **Vercel** - Deployment platform
-- **Docker** - Container support
+- **nodemon** - Development watcher
 
 **Monitoring**
-- **Vercel Analytics** - Performance tracking
-- **Web Vitals** - Core metrics
-- **Error logging** - Debugging support
+- Console logging with context
+- Error tracking in API routes
+- Vercel Analytics (optional)
 
 ---
 
@@ -263,10 +276,8 @@ Get DocMind running in 5 minutes.
 
 ### Prerequisites
 
-Ensure you have the following installed:
-
-- **Node.js** 18.0 or higher ([Download](https://nodejs.org/))
-- **npm** 9.0 or higher (comes with Node.js)
+- **Node.js** 18.0+ ([Download](https://nodejs.org/))
+- **npm** 9.0+ (comes with Node.js)
 - **Git** ([Download](https://git-scm.com/))
 
 ### Installation
@@ -293,14 +304,25 @@ cp .env.example .env.local
 Edit `.env.local` with your Supabase credentials:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+**Optional: Enable Free Providers**
+
+```env
+# Groq free tier (ultra-fast)
+GROQ_API_KEY=gsk_xxx
+
+# DocScan free tier (Modal.direct)
+DOCSCAN_FREE_API_KEY=your-key
+DOCSCAN_FREE_BASE_URL=https://api.us-west-2.modal.direct/v1
 ```
 
 **4. Set Up Database**
 
-Follow the [Database Setup](#database-setup) guide to create tables and configure authentication.
+Follow the [Database Setup](#database-setup) guide.
 
 **5. Start Development Server**
 
@@ -308,7 +330,7 @@ Follow the [Database Setup](#database-setup) guide to create tables and configur
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the application.
+Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
@@ -340,30 +362,37 @@ cd docmind
 **2. Install Dependencies**
 
 ```bash
-# Using npm
 npm install
-
-# Or using yarn
-yarn install
-
-# Or using pnpm
-pnpm install
 ```
 
 **3. Environment Configuration**
 
 ```bash
-# Copy environment template
 cp .env.example .env.local
+```
 
-# Edit with your values
-# Windows: notepad .env.local
-# macOS/Linux: nano .env.local
+Edit `.env.local`:
+
+```env
+# Required: Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+
+# Optional: Free AI Providers
+GROQ_API_KEY=gsk_xxx
+DOCSCAN_FREE_API_KEY=your-key
+DOCSCAN_FREE_BASE_URL=https://api.us-west-2-modal.direct/v1
+
+# Optional: Application Settings
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
+PORT=3000
 ```
 
 **4. Database Setup**
 
-See [Database Setup](#database-setup) section for detailed instructions.
+See [Database Setup](#database-setup) section.
 
 **5. Verify Installation**
 
@@ -387,7 +416,6 @@ npm run lint
 node --version
 
 # If below 18.0, upgrade Node.js
-# Download from https://nodejs.org/
 ```
 
 **Dependency Installation Fails**
@@ -406,9 +434,6 @@ npm install
 ```bash
 # Use custom port
 npm run dev -- --port 3001
-
-# Or set in .env.local
-PORT=3001
 ```
 
 ---
@@ -417,30 +442,28 @@ PORT=3001
 
 ### Environment Variables
 
-Create a `.env.local` file in the project root:
+Create a `.env.local` file:
 
 ```env
-# ===== Supabase Configuration =====
+# ===== Supabase Configuration (Required) =====
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
-# ===== Application Settings =====
+# ===== Free AI Providers (Optional) =====
+GROQ_API_KEY=gsk_xxx
+DOCSCAN_FREE_API_KEY=your-key-here
+DOCSCAN_FREE_BASE_URL=https://api.us-west-2.modal.direct/v1
+
+# ===== Application Settings (Optional) =====
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=DocMind
 NODE_ENV=development
 PORT=3000
 
-# ===== Upload Settings =====
+# ===== Upload Settings (Optional) =====
 MAX_FILE_SIZE=10485760
 MAX_FILES_PER_BATCH=10
-ALLOWED_FILE_TYPES=pdf,docx,txt,rtf,json,csv,xml,jpg,png
-
-# ===== Processing Settings =====
-BATCH_SIZE=5
-PROCESSING_TIMEOUT=30000
-CHUNK_SIZE=1000
-CHUNK_OVERLAP=200
 ```
 
 ### Supabase Setup
@@ -450,41 +473,37 @@ CHUNK_OVERLAP=200
 1. Go to [Supabase](https://supabase.com)
 2. Sign in or create account
 3. Click "New Project"
-4. Enter project details:
-   - Name: docmind-production
-   - Database password: (save securely)
-   - Region: Choose closest to users
-5. Click "Create new project"
+4. Enter project details
+5. Choose region closest to users
+6. Click "Create new project"
 
 **2. Get API Keys**
 
-1. In Supabase dashboard, go to Settings → API
-2. Copy these values:
+1. Settings → API
+2. Copy:
    - Project URL
    - anon/public key
    - service_role key (keep secret!)
 
 **3. Configure Authentication**
 
-1. Go to Settings → Authentication
-2. Set Site URL: `http://localhost:3000` (development)
+1. Settings → Authentication
+2. Set Site URL: `http://localhost:3000`
 3. Add Redirect URLs:
    - `http://localhost:3000/auth/callback`
-   - `https://yourdomain.com/auth/callback` (production)
+   - `https://yourdomain.com/auth/callback`
 
-**4. Enable OAuth Providers (Optional)**
+**4. Enable OAuth (Optional)**
 
 **Google OAuth:**
-1. Go to Google Cloud Console
-2. Create OAuth 2.0 credentials
-3. Add redirect URI: `https://your-project-id.supabase.co/auth/v1/callback`
-4. Copy Client ID and Secret to Supabase
+1. Google Cloud Console → OAuth 2.0
+2. Redirect URI: `https://your-project.supabase.co/auth/v1/callback`
+3. Copy credentials to Supabase
 
 **GitHub OAuth:**
-1. Go to GitHub Settings → Developer settings → OAuth Apps
-2. Create new OAuth App
-3. Set callback: `https://your-project-id.supabase.co/auth/v1/callback`
-4. Copy Client ID and Secret to Supabase
+1. GitHub Settings → OAuth Apps
+2. Callback: `https://your-project.supabase.co/auth/v1/callback`
+3. Copy credentials to Supabase
 
 ---
 
@@ -495,59 +514,76 @@ CHUNK_OVERLAP=200
 **Option 1: Supabase SQL Editor (Recommended)**
 
 1. Open Supabase Dashboard
-2. Navigate to SQL Editor
-3. Click "New query"
-4. Copy contents of `supabase-production-schema.sql`
-5. Paste and click "Run"
-6. Verify tables created in Table Editor
+2. SQL Editor → New query
+3. Copy `supabase-production-schema.sql`
+4. Paste and Run
+5. Verify tables in Table Editor
 
 **Option 2: Supabase CLI**
 
 ```bash
-# Install Supabase CLI
 npm install -g supabase
-
-# Login to Supabase
 supabase login
-
-# Link to your project
 supabase link --project-ref your-project-id
-
-# Push schema
 supabase db push
 ```
 
 ### Database Schema
 
-The schema creates these tables:
+**Tables Created:**
 
 **user_profiles**
-- Stores user information
-- Linked to auth.users
-- Auto-created on signup
+```sql
+- id (UUID, PK, references auth.users)
+- email (TEXT)
+- name (TEXT)
+- avatar_url (TEXT)
+- created_at, updated_at
+```
 
 **ai_provider_settings**
-- User-specific AI provider configuration
-- Encrypted API key storage
-- Provider activation status
+```sql
+- id (UUID, PK)
+- user_id (UUID, FK)
+- provider_name (TEXT)
+- api_key (TEXT, encrypted)
+- model_name (TEXT)
+- base_url (TEXT)
+- is_active (BOOLEAN)
+- created_at, updated_at
+```
 
 **documents**
-- Document metadata
-- Content storage
-- Processing status
-- Category and tags
+```sql
+- id (UUID, PK)
+- user_id (UUID, FK)
+- name, type, size (TEXT)
+- status (TEXT: UPLOADING|PROCESSING|COMPLETED|ERROR)
+- content (TEXT)
+- metadata (TEXT, JSON)
+- upload_date, processed_at
+- category, tags (TEXT)
+```
 
 **analyses**
-- AI-generated analysis results
-- Rule-based analysis
-- Token usage tracking
-- Provider information
+```sql
+- id (UUID, PK)
+- document_id, user_id (UUID, FK)
+- analysis_type (TEXT)
+- result (JSONB)
+- ai_provider, ai_model (TEXT)
+- tokens_used, processing_time_ms
+```
 
 **queries**
-- User query history
-- AI responses
-- Document references
-- Usage statistics
+```sql
+- id (UUID, PK)
+- user_id (UUID, FK)
+- document_ids (JSONB)
+- query_text, response (TEXT)
+- ai_provider, ai_model (TEXT)
+- tokens_used, processing_time_ms
+```
 
 ### Row Level Security (RLS)
 
@@ -557,37 +593,39 @@ All tables have RLS enabled:
 -- Users can only access their own data
 CREATE POLICY "Users can manage own documents" ON documents
     FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own analyses" ON analyses
+    FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own queries" ON queries
+    FOR ALL USING (auth.uid() = user_id);
 ```
 
 ### Indexes
 
-Performance indexes are created automatically:
-
 ```sql
--- Document lookup by user
 CREATE INDEX idx_documents_user_id ON documents(user_id);
-
--- Status filtering
 CREATE INDEX idx_documents_status ON documents(status);
-
--- Date-based queries
 CREATE INDEX idx_documents_created_at ON documents(created_at);
+CREATE INDEX idx_analyses_user_id ON analyses(user_id);
+CREATE INDEX idx_analyses_document_id ON analyses(document_id);
+CREATE INDEX idx_queries_user_id ON queries(user_id);
+CREATE INDEX idx_queries_timestamp ON queries(timestamp);
 ```
 
 ### Storage Configuration
 
 **1. Create Storage Bucket**
 
-1. Go to Storage in Supabase dashboard
-2. Click "New bucket"
-3. Name: `documents`
-4. Public: Yes (for direct access)
-5. Click "Create bucket"
+1. Storage → New bucket
+2. Name: `documents`
+3. Public: Yes
+4. Create bucket
 
 **2. Configure Storage Policies**
 
 ```sql
--- Allow authenticated users to upload
+-- Allow users to upload to their folder
 CREATE POLICY "Users can upload files" ON storage.objects
 FOR INSERT WITH CHECK (
   bucket_id = 'documents' AND
@@ -615,13 +653,12 @@ FOR DELETE USING (
 
 ### Authentication System
 
-DocMind uses Supabase Authentication with Next.js integration.
+DocMind uses Supabase Authentication with custom JWT handling.
 
 **Supported Methods:**
 - Email/Password
 - Google OAuth
 - GitHub OAuth
-- Magic Link (optional)
 
 ### Authentication Flow
 
@@ -664,8 +701,6 @@ await loginWithProvider('google')
 
 ### Protected Routes
 
-Routes are protected using Higher-Order Component:
-
 ```typescript
 // src/components/protected-route.tsx
 export function ProtectedRoute({ children }) {
@@ -682,7 +717,7 @@ export function ProtectedRoute({ children }) {
 
 **Auto-refresh:**
 - Sessions auto-refresh before expiry
-- Refresh token rotation enabled
+- Refresh token rotation
 - PKCE flow for security
 
 **Session Persistence:**
@@ -711,25 +746,24 @@ interface AuthContextType {
 }
 ```
 
-### Authentication Hooks
+### Server-Side Authentication
 
-**useAuth Hook:**
+API routes use JWT token verification:
 
 ```typescript
-import { useAuth } from '@/lib/auth-context'
+// src/lib/auth-server.ts
+export async function getAuthenticatedUser(request: NextRequest) {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) return null
 
-function MyComponent() {
-  const { user, logout, isAuthenticated } = useAuth()
+  const token = authHeader.substring(7)
+  const payload = decodeJwtPayload(token)
 
-  return (
-    <div>
-      {user ? (
-        <Button onClick={logout}>Log out</Button>
-      ) : (
-        <Button onClick={() => router.push('/login')}>Log in</Button>
-      )}
-    </div>
-  )
+  return {
+    id: payload.sub,
+    email: payload.email || '',
+    name: payload.user_metadata?.name || 'User'
+  }
 }
 ```
 
@@ -741,60 +775,54 @@ function MyComponent() {
 
 **1. Create Account**
 
-1. Navigate to [http://localhost:3000](http://localhost:3000)
+1. Navigate to http://localhost:3000
 2. Click "Get Started" or "Sign Up"
-3. Enter email, password, and name
+3. Enter email, password, name
 4. Click "Create Account"
-5. Verify email (if enabled)
-6. Redirected to dashboard
+5. Redirected to dashboard
 
 **2. Configure AI Provider**
 
 1. Go to Settings tab
-2. Select AI provider (Google, OpenAI, etc.)
-3. Enter API key
+2. Select AI provider
+3. Enter API key (or use free provider)
 4. Select model
 5. Click "Test Connection"
-6. Save configuration
+6. Save
 
 **3. Upload Documents**
 
 1. Go to Upload tab
-2. Drag and drop files or click to browse
-3. Select files (PDF, DOCX, TXT, etc.)
-4. Upload starts automatically
-5. Monitor progress in real-time
-6. Documents appear in Documents tab
+2. Drag and drop files
+3. Upload starts automatically
+4. Monitor progress
+5. Documents appear in Documents tab
 
 **4. Query Documents**
 
 1. Go to Chat tab
-2. Select documents to query (optional)
+2. Select documents (optional)
 3. Type natural language question
-4. Press Enter or click Send
-5. View AI-generated response
-6. Continue conversation
+4. Press Enter
+5. View AI response with sources
 
 ### Document Upload
 
 **Supported Formats:**
 
-| Format | Extension | Processing |
-|--------|-----------|------------|
-| PDF | .pdf | Text extraction with pdf-parse |
-| Word | .doc, .docx | Text extraction with mammoth |
+| Format | Extension | Processing Method |
+|--------|-----------|-------------------|
+| PDF | .pdf | pdf-parse |
+| Word | .doc, .docx | mammoth |
 | Plain Text | .txt | Direct read |
-| Rich Text | .rtf | Text extraction |
 | JSON | .json | Parse and format |
 | CSV | .csv | Parse and analyze |
 | XML | .xml | Parse and extract |
-| Images | .jpg, .jpeg, .png | Metadata only (OCR optional) |
+| Images | .jpg, .png | Metadata only |
 
 **Upload Process:**
 
 ```typescript
-// Component: src/components/document-upload.tsx
-
 async function handleUpload(file: File) {
   const formData = new FormData()
   formData.append('file', file)
@@ -810,9 +838,8 @@ async function handleUpload(file: File) {
 ```
 
 **File Size Limits:**
-
 - Default: 10 MB per file
-- Configurable via `MAX_FILE_SIZE`
+- Configurable via MAX_FILE_SIZE
 - Batch limit: 10 files
 
 ### Natural Language Querying
@@ -827,82 +854,62 @@ async function handleUpload(file: File) {
 "Extract all action items from the meeting notes"
 ```
 
-**Query Interface:**
+**Query with Context:**
 
 ```typescript
-// Component: src/components/chat-interface.tsx
-
 async function submitQuery(query: string, documentIds: string[]) {
   const response = await fetch('/api/query', {
     method: 'POST',
     body: JSON.stringify({
       query,
       documentIds,
-      provider: selectedProvider
+      provider: selectedProvider,
+      history: conversationHistory
     })
   })
 
   const result = await response.json()
-  // Display response in chat
+  // Display response with sources
 }
 ```
 
 ### AI Provider Configuration
 
-**Available Providers:**
+**Configure via UI:**
 
-| Provider | Type | Models | Best For |
-|----------|------|--------|----------|
-| Google Gemini | Cloud | Gemini 1.5 Pro, Flash | Long context, multimodal |
-| OpenAI | Cloud | GPT-4, GPT-3.5 | General purpose |
-| Anthropic | Cloud | Claude 3.5, Opus | Safety, reasoning |
-| Mistral | Cloud | Mistral Large | European data |
-| OpenRouter | Cloud | 100+ models | Model variety |
-| Ollama | Local | Any Ollama model | Privacy, offline |
-| LM Studio | Local | Any GGUF model | Local inference |
-| Custom | API | Any OpenAI-compatible | Self-hosted |
+1. Settings → AI Providers
+2. Add new provider
+3. Enter details:
+   - Provider name
+   - API key (encrypted)
+   - Model name
+   - Base URL (optional)
+   - Activate
 
-**Configure Provider:**
+**Free Providers:**
 
-```typescript
-// Component: src/components/settings/ai-api-settings.tsx
-
-async function saveProvider(provider: AIProvider) {
-  await fetch('/api/settings/providers', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: provider.name,
-      type: provider.type,
-      api_key: provider.apiKey,
-      model_name: provider.model,
-      base_url: provider.baseUrl,
-      is_active: true
-    })
-  })
-}
-```
+No configuration needed if environment variables set:
+- Groq: Set `GROQ_API_KEY`
+- DocScan: Set `DOCSCAN_FREE_API_KEY`
 
 ### Document Analysis
 
 **Automatic Analysis:**
 
-When a document is uploaded:
-
-1. Content is extracted
-2. Word/character count calculated
+On upload:
+1. Content extracted
+2. Word/character count
 3. File type identified
-4. Sensitive data patterns scanned
+4. Sensitive data scanned
 5. Rule-based analysis generated
 6. Results stored in `analyses` table
 
 **Analysis Types:**
-
-- **INSIGHT**: Document statistics, content analysis
-- **OPPORTUNITY**: Action items, TODOs detected
-- **COMPLIANCE**: Sensitive data detection
-- **SUMMARY**: AI-generated summary
-- **ENTITIES**: Named entity extraction
-- **SENTIMENT**: Tone analysis
+- INSIGHT: Statistics, content analysis
+- OPPORTUNITY: Action items, TODOs
+- COMPLIANCE: Sensitive data detection
+- SUMMARY: AI-generated summary
+- ENTITIES: Named entity extraction
 
 ---
 
@@ -917,188 +924,170 @@ docmind/
 │   ├── static/                        # Static assets
 │   └── types/                         # TypeScript types
 │
-├── 📁 api/                            # Go API endpoints (serverless)
+├── 📁 .gocache/                       # Go build cache
+│
+├── 📁 api/                            # Go serverless functions
 │   ├── 📁 analyze-document/
-│   │   └── main.go                    # Document analysis handler
+│   │   └── index.go                   # Document analysis
 │   ├── 📁 health/
-│   │   └── main.go                    # Health check endpoint
+│   │   └── index.go                   # Health check
 │   ├── 📁 process-document/
-│   │   └── main.go                    # Document processing
+│   │   └── index.go                   # Document processing
 │   └── 📁 search-basic/
-│       └── main.go                    # Basic search endpoint
+│       └── index.go                   # Basic search
 │
 ├── 📁 internal/                       # Internal Go packages
-│   └── processor/
-│       └── processor.go               # Document processing logic
 │
-├── 📁 public/                         # Static public assets
-│   ├── 📁 uploads/                    # Uploaded files (dev only)
-│   │   └── 📁 documents/              # Organized by user ID
-│   ├── favicon.ico                    # Browser favicon
-│   └── logo.png                       # Application logo
+├── 📁 pkg/
+│   └── 📁 docscanapi/
+│       ├── supabase.go                # Supabase client
+│       └── types.go                   # Type definitions
+│
+├── 📁 public/                         # Static assets
+│   ├── 📁 uploads/                    # Uploaded files (dev)
+│   │   └── 📁 documents/              # User-specific folders
+│   ├── favicon.ico
+│   └── logo.png
 │
 ├── 📁 src/                            # Main source code
 │   │
 │   ├── 📁 app/                        # Next.js App Router
 │   │   ├── 📁 api/                    # API routes
+│   │   │   ├── 📁 analysis/
+│   │   │   ├── 📁 auth/
+│   │   │   │   └── [...nextauth]/
+│   │   │   ├── 📁 debug/
 │   │   │   ├── 📁 documents/
-│   │   │   │   ├── route.ts           # GET /api/documents
 │   │   │   │   └── upload/
-│   │   │   │       └── route.ts       # POST /api/documents/upload
-│   │   │   ├── 📁 query/
-│   │   │   │   └── route.ts           # POST /api/query
-│   │   │   ├── 📁 settings/
-│   │   │   │   └── route.ts           # GET/POST /api/settings
 │   │   │   ├── 📁 free-provider/
-│   │   │   │   └── route.ts           # GET /api/free-provider
-│   │   │   └── 📁 auth/
-│   │   │       └── [...nextauth]/
-│   │   │           └── route.ts       # NextAuth handler
+│   │   │   ├── 📁 health/
+│   │   │   ├── 📁 models/
+│   │   │   ├── 📁 process-document-fallback/
+│   │   │   ├── 📁 query/
+│   │   │   ├── 📁 search/
+│   │   │   ├── 📁 settings/
+│   │   │   └── 📁 test-connection/
 │   │   │
 │   │   ├── 📁 auth/
 │   │   │   └── callback/
-│   │   │       └── route.ts           # OAuth callback handler
 │   │   │
 │   │   ├── 📁 dashboard/
-│   │   │   └── page.tsx               # Main dashboard page
+│   │   │   └── page.tsx               # Main dashboard
 │   │   │
 │   │   ├── 📁 preview/
 │   │   │   └── [id]/
-│   │   │       └── page.tsx           # Document preview page
 │   │   │
 │   │   ├── 📁 settings/
-│   │   │   └── page.tsx               # Settings page (legacy)
 │   │   │
 │   │   ├── globals.css                # Global styles
-│   │   ├── icon.png                   # App icon
+│   │   ├── icon.png
 │   │   ├── layout.tsx                 # Root layout
 │   │   └── page.tsx                   # Landing page
 │   │
-│   ├── 📁 components/                 # React components
+│   ├── 📁 components/
+│   │   ├── 📁 auth/
+│   │   │   ├── login-modal.tsx
+│   │   │   └── signup-modal.tsx
 │   │   │
-│   │   ├── 📁 auth/                   # Authentication components
-│   │   │   ├── login-modal.tsx        # Login modal dialog
-│   │   │   └── signup-modal.tsx       # Signup modal dialog
+│   │   ├── 📁 features/
+│   │   │   ├── api-usage-tracker.tsx
+│   │   │   └── smart-document-analyzer.tsx
 │   │   │
-│   │   ├── 📁 features/               # Feature components
-│   │   │   ├── api-usage-tracker.tsx  # API usage tracking
-│   │   │   └── smart-document-analyzer.tsx  # Smart analysis
+│   │   ├── 📁 settings/
+│   │   │   └── ai-api-settings.tsx
 │   │   │
-│   │   ├── 📁 settings/               # Settings components
-│   │   │   └── ai-api-settings.tsx    # AI provider settings UI
+│   │   ├── 📁 ui/                     # 51 shadcn/ui components
+│   │   │   ├── accordion.tsx
+│   │   │   ├── alert-dialog.tsx
+│   │   │   ├── alert.tsx
+│   │   │   ├── avatar.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── checkbox.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   ├── dropdown-menu.tsx
+│   │   │   ├── form.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── popover.tsx
+│   │   │   ├── progress.tsx
+│   │   │   ├── select.tsx
+│   │   │   ├── separator.tsx
+│   │   │   ├── sheet.tsx
+│   │   │   ├── skeleton.tsx
+│   │   │   ├── slider.tsx
+│   │   │   ├── sonner.tsx
+│   │   │   ├── switch.tsx
+│   │   │   ├── table.tsx
+│   │   │   ├── tabs.tsx
+│   │   │   ├── textarea.tsx
+│   │   │   ├── theme-toggle.tsx
+│   │   │   ├── toast.tsx
+│   │   │   ├── toaster.tsx
+│   │   │   ├── tooltip.tsx
+│   │   │   └── ... (51 total)
 │   │   │
-│   │   ├── 📁 ui/                     # shadcn/ui components
-│   │   │   ├── accordion.tsx          # Accordion component
-│   │   │   ├── alert-dialog.tsx       # Alert dialog
-│   │   │   ├── alert.tsx              # Alert component
-│   │   │   ├── aspect-ratio.tsx       # Aspect ratio
-│   │   │   ├── avatar.tsx             # Avatar component
-│   │   │   ├── badge.tsx              # Badge component
-│   │   │   ├── breadcrumb.tsx         # Breadcrumb nav
-│   │   │   ├── button.tsx             # Button component
-│   │   │   ├── calendar.tsx           # Calendar picker
-│   │   │   ├── card.tsx               # Card component
-│   │   │   ├── carousel.tsx           # Carousel slider
-│   │   │   ├── chart.tsx              # Chart components
-│   │   │   ├── checkbox.tsx           # Checkbox component
-│   │   │   ├── collapsible.tsx        # Collapsible panel
-│   │   │   ├── command.tsx            # Command palette
-│   │   │   ├── connection-status.tsx  # Connection indicator
-│   │   │   ├── context-menu.tsx       # Context menu
-│   │   │   ├── dialog.tsx             # Dialog modal
-│   │   │   ├── drawer.tsx             # Drawer component
-│   │   │   ├── dropdown-menu.tsx      # Dropdown menu
-│   │   │   ├── form.tsx               # Form components
-│   │   │   ├── hover-card.tsx         # Hover card
-│   │   │   ├── input-otp.tsx          # OTP input
-│   │   │   ├── input.tsx              # Input field
-│   │   │   ├── label.tsx              # Label component
-│   │   │   ├── menubar.tsx            # Menu bar
-│   │   │   ├── navigation-menu.tsx    # Navigation menu
-│   │   │   ├── pagination.tsx         # Pagination
-│   │   │   ├── popover.tsx            # Popover
-│   │   │   ├── progress.tsx           # Progress bar
-│   │   │   ├── radio-group.tsx        # Radio group
-│   │   │   ├── resizable.tsx          # Resizable panels
-│   │   │   ├── scroll-area.tsx        # Scroll area
-│   │   │   ├── select.tsx             # Select dropdown
-│   │   │   ├── separator.tsx          # Separator line
-│   │   │   ├── sheet.tsx              # Sheet modal
-│   │   │   ├── sidebar.tsx            # Sidebar nav
-│   │   │   ├── skeleton.tsx           # Loading skeleton
-│   │   │   ├── slider.tsx             # Slider component
-│   │   │   ├── sonner.tsx             # Toast notifications
-│   │   │   ├── switch.tsx             # Toggle switch
-│   │   │   ├── table.tsx              # Table component
-│   │   │   ├── tabs.tsx               # Tabs component
-│   │   │   ├── textarea.tsx           # Text area
-│   │   │   ├── theme-switch.tsx       # Theme switcher
-│   │   │   ├── theme-toggle.tsx       # Theme toggle
-│   │   │   ├── toast.tsx              # Toast component
-│   │   │   ├── toaster.tsx            # Toast container
-│   │   │   ├── toggle-group.tsx       # Toggle group
-│   │   │   ├── toggle.tsx             # Toggle button
-│   │   │   └── tooltip.tsx            # Tooltip component
-│   │   │
-│   │   ├── analysis-results.tsx       # Analysis results display
-│   │   ├── chat-interface.tsx         # Chat query interface
-│   │   ├── document-list.tsx          # Document list view
-│   │   ├── document-preview.tsx       # Document preview
-│   │   ├── document-upload.tsx        # Upload interface
-│   │   ├── landing-page.tsx           # Landing page
-│   │   ├── protected-route.tsx        # Route protection
-│   │   └── theme-provider.tsx         # Theme context provider
+│   │   ├── analysis-results.tsx
+│   │   ├── chat-interface.tsx
+│   │   ├── document-list.tsx
+│   │   ├── document-preview.tsx
+│   │   ├── document-upload.tsx
+│   │   ├── landing-page.tsx
+│   │   ├── protected-route.tsx
+│   │   ├── query-interface.tsx
+│   │   └── theme-provider.tsx
 │   │
-│   ├── 📁 hooks/                      # Custom React hooks
-│   │   ├── use-mobile.ts              # Mobile detection hook
+│   ├── 📁 hooks/
+│   │   ├── use-mobile.ts              # Mobile detection
 │   │   ├── use-socket.ts              # WebSocket hook
-│   │   └── use-toast.ts               # Toast notification hook
+│   │   └── use-toast.ts               # Toast notifications
 │   │
-│   └── 📁 lib/                        # Utilities and config
+│   └── 📁 lib/
 │       ├── ai-service.ts              # AI service layer
 │       ├── api-client.ts              # API client utilities
 │       ├── auth-context.tsx           # Auth context provider
 │       ├── auth-server.ts             # Server-side auth
-│       ├── crypto-utils.ts            # Encryption utilities
+│       ├── crypto-utils.ts            # XOR encryption
 │       ├── db.ts                      # Database client
-│       ├── document-processing.ts     # Document processing logic
-│       ├── socket-types.ts            # Socket type definitions
-│       ├── supabase-types.ts          # Supabase type definitions
+│       ├── document-processing.ts     # Document processing
+│       ├── socket-types.ts            # Socket types
+│       ├── supabase-types.ts          # Supabase types
 │       ├── supabase-utils.ts          # Supabase utilities
 │       ├── supabase.ts                # Supabase client
 │       └── utils.ts                   # General utilities
 │
-├── 📁 supabase/                       # Supabase configuration
-│   ├── 📁 migrations/                 # Database migrations
-│   ├── config.toml                    # Supabase config
-│   └── .gitignore                     # Supabase gitignore
+├── 📁 supabase/
+│   ├── 📁 migrations/
+│   ├── config.toml
+│   └── .gitignore
 │
-├── 📁 .vscode/                        # VS Code settings
-│   ├── extensions.json                # Recommended extensions
-│   ├── settings.json                  # Workspace settings
-│   └── tasks.json                     # Build tasks
+├── 📁 .vscode/
+│   ├── extensions.json
+│   ├── settings.json
+│   └── tasks.json
 │
-├── .dockerignore                      # Docker ignore rules
-├── .env.example                       # Environment template
-├── .gitignore                         # Git ignore rules
-├── add-base-url-column.sql            # SQL migration
-├── AUTHENTICATION_SETUP.md            # Auth setup guide
+├── .dockerignore
+├── .env.example
+├── .gitignore
+├── add-base-url-column.sql
+├── AUTHENTICATION_SETUP.md
 ├── components.json                    # shadcn/ui config
-├── DEPLOY_SQL.md                      # SQL deployment guide
-├── eslint.config.mjs                  # ESLint configuration
-├── final-cleanup.sql                  # Cleanup script
-├── frontenddesign.md                  # Frontend design system
-├── go.mod                             # Go module definition
-├── IMPROVEMENTS_SUMMARY.md            # Improvements log
-├── next.config.ts                     # Next.js configuration
-├── package.json                       # Node dependencies
-├── package-lock.json                  # Dependency lock
-├── postcss.config.mjs                 # PostCSS config
-├── replace.py                         # Python utility script
-├── supabase-production-schema.sql     # Production schema
-├── tailwind.config.ts                 # Tailwind configuration
-├── tsconfig.json                      # TypeScript config
-└── vercel.json                        # Vercel deployment config
+├── DEPLOY_SQL.md
+├── eslint.config.mjs
+├── final-cleanup.sql
+├── frontenddesign.md
+├── go.mod
+├── IMPROVEMENTS_SUMMARY.md
+├── next.config.ts
+├── package.json
+├── package-lock.json
+├── postcss.config.mjs
+├── replace.py
+├── supabase-production-schema.sql
+├── tailwind.config.ts
+├── tsconfig.json
+└── vercel.json
 ```
 
 ---
@@ -1114,13 +1103,10 @@ Production: https://yourdomain.com/api
 
 ### Authentication
 
-All API routes (except health check) require authentication. Include the session cookie or Authorization header:
+All API routes require JWT authentication via Authorization header:
 
-```typescript
-// Using authenticated client
-import { authenticatedRequest } from '@/lib/api-client'
-
-const data = await authenticatedRequest('/api/documents')
+```
+Authorization: Bearer <jwt_token>
 ```
 
 ### Endpoints
@@ -1133,25 +1119,23 @@ Retrieve all documents for authenticated user.
 
 ```typescript
 // Request
-GET /api/documents
+GET /api/documents?status=COMPLETED&type=pdf&search=report
 
 // Response 200
-{
-  "documents": [
-    {
-      "id": "uuid",
-      "name": "report.pdf",
-      "type": "application/pdf",
-      "size": "1.2 MB",
-      "status": "COMPLETED",
-      "uploadDate": "2024-01-15T10:30:00Z",
-      "category": "Document",
-      "tags": ["finance", "2024"],
-      "analysisCount": 3,
-      "queryCount": 5
-    }
-  ]
-}
+[
+  {
+    "id": "uuid",
+    "name": "report.pdf",
+    "type": "application/pdf",
+    "size": "1.2 MB",
+    "status": "COMPLETED",
+    "uploadDate": "2024-01-15T10:30:00Z",
+    "category": "Document",
+    "tags": ["finance", "2024"],
+    "analysisCount": 3,
+    "queryCount": 5
+  }
+]
 ```
 
 **POST /api/documents/upload**
@@ -1169,25 +1153,14 @@ Body: FormData {
 
 // Response 200
 {
-  "document": {
-    "id": "uuid",
-    "name": "report.pdf",
-    "status": "PROCESSING"
-  }
-}
-```
-
-**DELETE /api/documents/:id**
-
-Delete a document.
-
-```typescript
-// Request
-DELETE /api/documents/:id
-
-// Response 200
-{
-  "success": true
+  "id": "uuid",
+  "name": "report.pdf",
+  "type": "application/pdf",
+  "size": "1.2 MB",
+  "status": "PROCESSING",
+  "uploadDate": "2024-01-15T10:30:00Z",
+  "downloadURL": "https://...",
+  "storageRef": "users/email/documents/uuid/file.pdf"
 }
 ```
 
@@ -1205,21 +1178,50 @@ Content-Type: application/json
 Body: {
   "query": "What are the main findings?",
   "documentIds": ["uuid1", "uuid2"],
-  "provider": "google-gemini"
+  "provider": "google-gemini",
+  "history": [
+    { "role": "user", "content": "Previous question" },
+    { "role": "assistant", "content": "Previous answer" }
+  ]
 }
 
 // Response 200
 {
-  "response": "The main findings include...",
-  "sources": [
-    {
-      "documentId": "uuid1",
-      "excerpt": "..."
-    }
-  ],
-  "tokensUsed": 150,
-  "model": "gemini-1.5-pro"
+  "id": "query-uuid",
+  "query": "What are the main findings?",
+  "status": "COMPLETED",
+  "response": {
+    "answer": "The main findings include...",
+    "relevantDocuments": ["report.pdf", "analysis.docx"]
+  },
+  "timestamp": "2024-01-15T10:30:00Z",
+  "provider": "Google Gemini",
+  "usage": {
+    "totalTokens": 150
+  }
 }
+```
+
+**GET /api/query**
+
+Get query history.
+
+```typescript
+// Request
+GET /api/query?limit=10&offset=0
+
+// Response 200
+[
+  {
+    "id": "uuid",
+    "query": "What are the main findings?",
+    "response": { "answer": "..." },
+    "timestamp": "2024-01-15T10:30:00Z",
+    "provider": "Google Gemini",
+    "model": "gemini-1.5-pro",
+    "tokensUsed": 150
+  }
+]
 ```
 
 #### Settings
@@ -1233,43 +1235,50 @@ Get user's AI provider settings.
 GET /api/settings
 
 // Response 200
-{
-  "providers": [
-    {
-      "id": "uuid",
-      "provider": "GOOGLE_AI",
-      "modelName": "gemini-1.5-pro",
-      "isActive": true,
-      "isConfigured": true
-    }
-  ]
-}
+[
+  {
+    "id": "uuid",
+    "provider": "GOOGLE_AI",
+    "apiKey": "AIza...xyz",
+    "model": "gemini-1.5-pro",
+    "isActive": true,
+    "baseUrl": "https://...",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+]
 ```
 
-**POST /api/settings/providers**
+**POST /api/settings**
 
 Save AI provider configuration.
 
 ```typescript
 // Request
-POST /api/settings/providers
+POST /api/settings
 Content-Type: application/json
 
 Body: {
-  "provider_name": "Google AI",
-  "api_key": "your-api-key",
-  "model_name": "gemini-1.5-pro",
-  "base_url": "https://generativelanguage.googleapis.com/v1beta",
-  "is_active": true
+  "providers": [
+    {
+      "provider": "GOOGLE_AI",
+      "apiKey": "your-api-key",
+      "model": "gemini-1.5-pro",
+      "isActive": true,
+      "baseUrl": "https://..."
+    }
+  ]
 }
 
 // Response 200
 {
   "success": true,
-  "provider": {
-    "id": "uuid",
-    "name": "Google AI"
-  }
+  "results": [
+    {
+      "id": "uuid",
+      "provider": "GOOGLE_AI",
+      ...
+    }
+  ]
 }
 ```
 
@@ -1277,20 +1286,28 @@ Body: {
 
 **GET /api/free-provider**
 
-Check if free built-in provider is available.
+Check available free providers.
 
 ```typescript
 // Request
 GET /api/free-provider
 
 // Response 200
-{
-  "available": true,
-  "provider": {
-    "id": "docscan-free-builtin",
-    "name": "DocScan Free ✨"
+[
+  {
+    "id": "docscan-free-groq",
+    "name": "DocScan llama-3.1-8b-instant from groq (free)",
+    "type": "groq",
+    "baseUrl": "https://api.groq.com/openai/v1",
+    "model": "llama-3.1-8b-instant",
+    "models": ["llama-3.1-8b-instant", "llama3-70b-8192"],
+    "isActive": false,
+    "isConfigured": true,
+    "description": "Ultra-fast inference powered by Groq",
+    "maxTokens": 4096,
+    "temperature": 0.7
   }
-}
+]
 ```
 
 #### Health Check
@@ -1305,8 +1322,45 @@ GET /api/health
 
 // Response 200
 {
-  "status": "healthy",
-  "timestamp": "2024-01-15T10:30:00Z"
+  "status": "ok",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "runtime": "go",
+  "environment": {
+    "supabaseUrlConfigured": true,
+    "supabaseAnonConfigured": true,
+    "supabaseServiceConfigured": true
+  },
+  "capabilities": [
+    "process-document",
+    "analyze-document",
+    "search-basic",
+    "health"
+  ]
+}
+```
+
+#### Test Connection
+
+**POST /api/test-connection**
+
+Test AI provider connection.
+
+```typescript
+// Request
+POST /api/test-connection
+Content-Type: application/json
+
+Body: {
+  "provider": "GOOGLE_AI",
+  "apiKey": "test-key",
+  "model": "gemini-1.5-pro",
+  "baseUrl": "https://..."
+}
+
+// Response 200
+{
+  "success": true,
+  "message": "Connection successful"
 }
 ```
 
@@ -1315,32 +1369,28 @@ GET /api/health
 ```typescript
 // 400 Bad Request
 {
-  "error": "Invalid request",
-  "message": "Missing required field: file"
+  "error": "Query is required"
 }
 
 // 401 Unauthorized
 {
-  "error": "Unauthorized",
-  "message": "Authentication required"
+  "error": "Authentication required"
 }
 
 // 403 Forbidden
 {
-  "error": "Forbidden",
-  "message": "You don't have permission to access this resource"
+  "error": "No AI provider configured"
 }
 
 // 404 Not Found
 {
-  "error": "Not Found",
-  "message": "Document not found"
+  "error": "Document not found"
 }
 
 // 500 Internal Server Error
 {
-  "error": "Internal Server Error",
-  "message": "An unexpected error occurred"
+  "error": "Failed to process query",
+  "details": "Specific error message"
 }
 ```
 
@@ -1350,67 +1400,67 @@ GET /api/health
 
 ### UI Components (shadcn/ui)
 
-All UI components are built with [shadcn/ui](https://ui.shadcn.com) using Radix UI primitives.
+51 accessible components built with Radix UI:
 
-**Layout Components:**
-- `Card` - Container with header, content, footer
+**Layout:**
+- `Card` - Container with header, content
 - `Separator` - Visual divider
-- `Spacer` - Spacing element
-- `Grid` - Responsive grid layout
+- `ScrollArea` - Custom scrollbars
+- `Resizable` - Resizable panels
 
-**Form Components:**
-- `Button` - Interactive button with variants
-- `Input` - Text input field
-- `Textarea` - Multi-line text input
-- `Checkbox` - Checkbox input
-- `RadioGroup` - Radio button group
+**Forms:**
+- `Button` - Variants: default, destructive, outline, ghost, link
+- `Input` - Text input with validation
+- `Textarea` - Multi-line input
+- `Checkbox` - Checkbox with label
+- `RadioGroup` - Radio buttons
 - `Switch` - Toggle switch
 - `Select` - Dropdown selector
 - `Slider` - Range slider
-- `InputOTP` - OTP input field
+- `InputOTP` - OTP input
 
-**Navigation Components:**
+**Navigation:**
 - `NavigationMenu` - Main navigation
 - `Breadcrumb` - Breadcrumb trail
 - `Tabs` - Tabbed interface
-- `Sidebar` - Side navigation panel
+- `Sidebar` - Side navigation
 
-**Overlay Components:**
+**Overlays:**
 - `Dialog` - Modal dialog
-- `AlertDialog` - Confirmation dialog
+- `AlertDialog` - Confirmation
 - `Sheet` - Slide-out panel
-- `Drawer` - Drawer panel
-- `Popover` - Popover menu
-- `DropdownMenu` - Dropdown menu
+- `Drawer` - Drawer
+- `Popover` - Popover
+- `DropdownMenu` - Dropdown
 - `ContextMenu` - Right-click menu
 - `HoverCard` - Hover preview
 
 **Data Display:**
 - `Table` - Data table
-- `Chart` - Data visualization
-- `Badge` - Status badge
+- `Chart` - Recharts-based charts
+- `Badge` - Status badges
 - `Avatar` - User avatar
 - `Progress` - Progress bar
 - `Skeleton` - Loading placeholder
 
 **Feedback:**
-- `Toast` - Toast notification
+- `Toast` - Toast notifications
 - `Toaster` - Toast container
 - `Sonner` - Alternative toast
-- `Alert` - Alert message
+- `Alert` - Alert messages
 
 ### Feature Components
 
 **DocumentUpload** (`src/components/document-upload.tsx`)
 
-Drag-and-drop file upload interface.
+Drag-and-drop upload interface.
 
 ```typescript
 interface Props {
   onUpload: (documents: Document[]) => void
 }
 
-function DocumentUpload({ onUpload }: Props) {
+function DocumentUpload({ onUpload }) {
   // Handles file selection
   // Validates file type and size
   // Uploads to /api/documents/upload
@@ -1429,55 +1479,52 @@ interface Props {
   selectedProvider?: string
 }
 
-function ChatInterface({ documents, selectedProvider }: Props) {
+function ChatInterface({ documents, selectedProvider }) {
   // Displays chat history
   // Handles query input
   // Submits to /api/query
-  // Streams response
-  // Shows sources
+  // Shows response with sources
 }
 ```
 
 **DocumentList** (`src/components/document-list.tsx`)
 
-Document list with filtering and sorting.
+Document list with filtering.
 
 ```typescript
 interface Props {
   documents: Document[]
 }
 
-function DocumentList({ documents }: Props) {
+function DocumentList({ documents }) {
   // Displays document cards
   // Shows status badges
   // Provides search/filter
   // Allows selection
-  // Shows analysis count
 }
 ```
 
 **AnalysisResults** (`src/components/analysis-results.tsx`)
 
-Display document analysis results.
+Display analysis results.
 
 ```typescript
 function AnalysisResults() {
   // Fetches analyses from database
   // Displays insights, opportunities, compliance
   // Shows confidence scores
-  // Provides export options
 }
 ```
 
 **AiApiSettings** (`src/components/settings/ai-api-settings.tsx`)
 
-AI provider configuration UI.
+AI provider configuration.
 
 ```typescript
 function AiApiSettings() {
   // Lists available providers
   // Form for API key input
-  // Model selection dropdown
+  // Model selection
   // Test connection button
   // Save/load settings
 }
@@ -1502,11 +1549,7 @@ function LandingPage() {
 Route protection wrapper.
 
 ```typescript
-interface Props {
-  children: ReactNode
-}
-
-function ProtectedRoute({ children }: Props) {
+function ProtectedRoute({ children }) {
   const { user, isLoading } = useAuth()
 
   if (isLoading) return <LoadingSpinner />
@@ -1533,7 +1576,7 @@ function MyComponent() {
     isAuthenticated,   // Boolean
     login,             // (email, password) => Promise<void>
     signup,            // (email, password, name) => Promise<void>
-    loginWithProvider, // (provider) => Promise<void>
+    loginWithProvider, // ('google' | 'github') => Promise<void>
     logout,            // () => Promise<void>
     isLoading          // Boolean
   } = useAuth()
@@ -1609,6 +1652,9 @@ import { AIService } from '@/lib/ai-service'
 
 const aiService = AIService.getInstance()
 
+// Load providers from database
+await aiService.loadProvidersFromDatabase(userId)
+
 // Generate completion
 const response = await aiService.generateCompletion({
   provider: googleProvider,
@@ -1621,6 +1667,17 @@ const response = await aiService.generateCompletion({
 console.log(response.content)
 console.log(response.usage.totalTokens)
 ```
+
+**Supported Provider Types:**
+- google
+- mistral
+- lm-studio
+- ollama
+- open-router
+- openai
+- anthropic
+- groq
+- openai-compatible
 
 ### API Client
 
@@ -1637,19 +1694,14 @@ const result = await authenticatedRequest('/api/query', {
   method: 'POST',
   body: JSON.stringify({ query: "What's in this doc?" })
 })
-
-// With custom headers
-const data = await authenticatedRequest('/api/documents', {
-  headers: { 'X-Custom-Header': 'value' }
-})
 ```
 
 ### Crypto Utils
 
-API key encryption.
+XOR encryption for API keys.
 
 ```typescript
-import { encryptApiKey, decryptApiKey } from '@/lib/crypto-utils'
+import { encryptApiKey, decryptApiKey, maskApiKey } from '@/lib/crypto-utils'
 
 // Encrypt before storing
 const encrypted = encryptApiKey('sk-1234567890')
@@ -1657,11 +1709,11 @@ const encrypted = encryptApiKey('sk-1234567890')
 // Decrypt for use
 const decrypted = decryptApiKey(encrypted)
 
-// Validate API key format
-const isValid = isValidApiKey('sk-1234567890', 'openai')
-
 // Mask for display
 const masked = maskApiKey('sk-1234567890') // 'sk-12...7890'
+
+// Validate format
+const isValid = isValidApiKey('sk-1234567890', 'openai')
 ```
 
 ### Document Processing
@@ -1673,7 +1725,8 @@ import {
   extractFileContent,
   generateAnalysisFromContent,
   getFileCategory,
-  formatFileSize
+  formatFileSize,
+  getProcessingStrategy
 } from '@/lib/document-processing'
 
 // Extract content
@@ -1694,7 +1747,7 @@ const formatted = formatFileSize(1048576) // '1 MB'
 Database operations.
 
 ```typescript
-import { supabase, supabaseServer } from '@/lib/supabase'
+import { supabase, supabaseServer, createServerClientForToken } from '@/lib/supabase'
 
 // Client-side query
 const { data } = await supabase
@@ -1702,10 +1755,25 @@ const { data } = await supabase
   .select('*')
   .eq('user_id', userId)
 
-// Server-side with service role
-const { data } = await supabaseServer
+// Server-side with token
+const db = createServerClientForToken(token)
+const { data } = await db
   .from('ai_provider_settings')
   .select('*')
+```
+
+### Auth Server
+
+Server-side authentication.
+
+```typescript
+import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
+
+// Get user from JWT
+const user = await getAuthenticatedUser(request)
+
+// Ensure profile exists
+await ensureUserProfile(user, db)
 ```
 
 ---
@@ -1717,62 +1785,71 @@ const { data } = await supabaseServer
 **Google Gemini**
 
 1. Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. In DocMind Settings, select "Google AI"
-3. Enter API key
-4. Select model: `gemini-1.5-pro`, `gemini-1.5-flash`, or `gemini-pro`
-5. Base URL: `https://generativelanguage.googleapis.com/v1beta`
-6. Click "Test Connection"
-7. Save
+2. Settings → Add Provider
+3. Provider: GOOGLE_AI
+4. Enter API key
+5. Model: gemini-1.5-pro
+6. Base URL: https://generativelanguage.googleapis.com/v1beta
+7. Test and Save
 
 **OpenAI**
 
 1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Select "OpenAI" provider
-3. Enter API key (starts with `sk-`)
-4. Select model: `gpt-4-turbo-preview`, `gpt-4`, `gpt-3.5-turbo`
-5. Base URL: `https://api.openai.com/v1`
-6. Test and save
+2. Settings → Add Provider
+3. Provider: OPENAI
+4. Enter API key (sk-...)
+5. Model: gpt-4-turbo-preview
+6. Base URL: https://api.openai.com/v1
+7. Test and Save
 
 **Anthropic Claude**
 
 1. Get API key from [Anthropic Console](https://console.anthropic.com/)
-2. Select "Anthropic" provider
-3. Enter API key
-4. Select model: `claude-3-5-sonnet-latest`, `claude-3-opus-latest`
-5. Base URL: `https://api.anthropic.com/v1`
-6. Test and save
+2. Settings → Add Provider
+3. Provider: ANTHROPIC
+4. Enter API key
+5. Model: claude-3-5-sonnet-latest
+6. Base URL: https://api.anthropic.com/v1
+7. Test and Save
+
+**Groq (Free)**
+
+1. Get API key from [Groq Console](https://console.groq.com/)
+2. Set in .env.local: `GROQ_API_KEY=gsk_xxx`
+3. Automatically available in /api/free-provider
+4. Select from provider dropdown
 
 **Ollama (Local)**
 
 1. Install [Ollama](https://ollama.ai)
 2. Pull model: `ollama pull llama2`
-3. Select "Ollama" provider
-4. No API key needed
-5. Model: `llama2`, `mistral`, etc.
-6. Base URL: `http://localhost:11434/api`
-7. Test and save
+3. Settings → Add Provider
+4. Provider: OLLAMA
+5. No API key needed
+6. Model: llama2
+7. Base URL: http://localhost:11434/api
 
 **LM Studio (Local)**
 
 1. Install [LM Studio](https://lmstudio.ai)
 2. Download and load model
 3. Start local server
-4. Select "LM Studio" provider
-5. No API key needed
-6. Model: Your loaded model
-7. Base URL: `http://localhost:1234/v1`
-8. Test and save
+4. Settings → Add Provider
+5. Provider: LM_STUDIO
+6. No API key needed
+7. Base URL: http://localhost:1234/v1
 
 ### Provider Comparison
 
-| Provider | Speed | Quality | Cost | Privacy |
-|----------|-------|---------|------|---------|
-| Google Gemini | Fast | High | $$ | Medium |
-| OpenAI GPT-4 | Medium | Very High | $$$ | Medium |
-| Claude 3 | Medium | Very High | $$$ | High |
-| Mistral | Fast | High | $$ | High |
-| Ollama | Slow | Medium | Free | Very High |
-| LM Studio | Medium | High | Free | Very High |
+| Provider | Speed | Quality | Cost | Privacy | Best For |
+|----------|-------|---------|------|---------|----------|
+| Groq | Very Fast | Good | Free | Medium | Quick queries |
+| Google Gemini | Fast | High | $$ | Medium | Long context |
+| OpenAI GPT-4 | Medium | Very High | $$$ | Medium | General purpose |
+| Claude 3 | Medium | Very High | $$$ | High | Safety, reasoning |
+| Mistral | Fast | High | $$ | High | European data |
+| Ollama | Slow | Medium | Free | Very High | Privacy, offline |
+| LM Studio | Medium | High | Free | Very High | Local inference |
 
 ### Model Configuration
 
@@ -1797,47 +1874,15 @@ const { data } = await supabaseServer
 
 ### Supported Formats
 
-**PDF Documents**
-- Text extraction using `pdf-parse`
-- Preserves text structure
-- Handles multi-page documents
-- OCR not included (can be added)
-
-**Word Documents**
-- DOCX support via `mammoth`
-- Extracts plain text
-- Preserves basic formatting
-- Legacy DOC support limited
-
-**Text Files**
-- Direct UTF-8 reading
-- No processing needed
-- Fastest to process
-- Full text available
-
-**JSON Files**
-- Parsed and validated
-- Pretty-printed output
-- Structure analysis
-- Syntax error detection
-
-**CSV Files**
-- Column detection
-- Row counting
-- Header identification
-- Data type inference
-
-**XML Files**
-- XML parsing
-- Text content extraction
-- Structure preservation
-- Validation optional
-
-**Images**
-- Metadata extraction
-- File info only
-- OCR not enabled by default
-- Can be extended with Tesseract
+| Format | Extension | Library | Notes |
+|--------|-----------|---------|-------|
+| PDF | .pdf | pdf-parse | Text extraction |
+| Word | .doc, .docx | mammoth | Text extraction |
+| Plain Text | .txt | Native | Direct read |
+| JSON | .json | Native | Parse and format |
+| CSV | .csv | Native | Parse and analyze |
+| XML | .xml | Native | Parse and extract |
+| Images | .jpg, .png | sharp | Metadata only |
 
 ### Processing Pipeline
 
@@ -1847,17 +1892,17 @@ User selects file
 ↓
 Validation (type, size)
 ↓
-Upload to /api/documents/upload
+POST /api/documents/upload
 ↓
 Create document record
 ↓
-Store in Supabase Storage
+Upload to Supabase Storage
+↓
+Status: PROCESSING
 ```
 
 **2. Processing**
 ```
-Document status: PROCESSING
-↓
 Download from storage
 ↓
 Extract content (format-specific)
@@ -1877,7 +1922,7 @@ Word/character count
 ↓
 File type identification
 ↓
-Pattern detection (TODOs, emails, etc.)
+Pattern detection (TODOs, emails)
 ↓
 Sensitive data scan
 ↓
@@ -1886,13 +1931,13 @@ Store in analyses table
 
 ### Processing Strategies
 
-**Node.js Strategy (Default)**
-- Pure JavaScript/TypeScript
-- No external dependencies
-- Works in serverless environments
-- Supports all formats
+**Node.js (Default)**
+- Pure TypeScript
+- No external runtime
+- Serverless compatible
+- All formats supported
 
-**Go Strategy (Optional)**
+**Go (Optional)**
 - Faster processing
 - Better for large files
 - Requires Go runtime
@@ -1901,22 +1946,16 @@ Store in analyses table
 ### Error Handling
 
 **Upload Errors:**
-- File too large
-- Invalid file type
-- Network error
-- Storage error
+- File too large → 400 Bad Request
+- Invalid file type → 400 Bad Request
+- Network error → 500 Internal Server Error
+- Storage error → 500 Internal Server Error
 
 **Processing Errors:**
-- Corrupt file
-- Unsupported format
-- Extraction failure
-- Timeout
-
-**Analysis Errors:**
-- Empty content
-- Invalid encoding
-- Pattern match error
-- Database error
+- Corrupt file → Status: ERROR
+- Unsupported format → Status: ERROR
+- Extraction failure → Status: ERROR
+- Timeout → Status: ERROR
 
 ---
 
@@ -1931,7 +1970,7 @@ Store in analyses table
 - PKCE flow for OAuth
 
 **Password Security**
-- bcrypt hashing
+- bcrypt hashing (Supabase)
 - Minimum length requirement
 - Strength validation
 - Rate limiting on login
@@ -1939,10 +1978,10 @@ Store in analyses table
 ### Data Security
 
 **Encryption**
-- API keys encrypted at rest
-- AES-256 encryption
+- API keys encrypted with XOR
 - Keys never exposed to client
 - Encrypted database storage
+- HTTPS enforcement
 
 **Row Level Security**
 - All tables have RLS policies
@@ -1960,15 +1999,9 @@ Store in analyses table
 
 **Authentication Required**
 - All API routes protected
+- JWT token verification
 - Session validation
-- Token verification
 - CORS configuration
-
-**Rate Limiting**
-- Request throttling
-- Per-user limits
-- Configurable thresholds
-- Automatic blocking
 
 **Input Validation**
 - File type checking
@@ -1990,12 +2023,6 @@ Store in analyses table
 - Method restrictions
 - Header controls
 
-**Content Security Policy**
-- Script sources
-- Style sources
-- Image sources
-- Connection sources
-
 ### Compliance
 
 **GDPR**
@@ -2009,81 +2036,6 @@ Store in analyses table
 - Local processing option
 - User data ownership
 - Transparent policies
-
----
-
-## Performance
-
-### Benchmarks
-
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Page Load | < 2s | 1.2s |
-| Document Processing | < 30s | 15s avg |
-| Query Response | < 5s | 2.3s avg |
-| Search Results | < 500ms | 200ms |
-| Upload Speed | 10 MB/s | 15 MB/s |
-
-### Optimization Techniques
-
-**Frontend**
-- Code splitting
-- Lazy loading
-- Image optimization
-- Font optimization
-- CSS purging
-- Bundle analysis
-
-**Backend**
-- Database indexing
-- Query optimization
-- Connection pooling
-- Caching strategy
-- Async processing
-- Batch operations
-
-**Network**
-- CDN for static assets
-- Compression (gzip, brotli)
-- HTTP/2 support
-- Keep-alive connections
-- Request batching
-
-### Caching Strategy
-
-**Client-Side**
-- TanStack Query cache
-- LocalStorage for preferences
-- SessionStorage for temp data
-- Service Worker for offline
-
-**Server-Side**
-- Database query cache
-- API response cache
-- Static asset cache
-- Edge function cache
-
-### Monitoring
-
-**Performance Metrics**
-- Core Web Vitals
-- Time to First Byte
-- First Contentful Paint
-- Time to Interactive
-- Cumulative Layout Shift
-
-**Error Tracking**
-- Client-side errors
-- Server-side errors
-- API failures
-- Database errors
-
-**Usage Analytics**
-- Active users
-- Document count
-- Query volume
-- API usage
-- Storage usage
 
 ---
 
@@ -2102,16 +2054,9 @@ git push origin main
 **2. Deploy to Vercel**
 
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-# Login
 vercel login
-
-# Deploy
 vercel
-
-# Production deployment
 vercel --prod
 ```
 
@@ -2119,14 +2064,14 @@ vercel --prod
 
 In Vercel dashboard:
 - Settings → Environment Variables
-- Add all variables from `.env.example`
+- Add all required variables
 - Set for Production and Preview
 
 **4. Configure Domain**
 
 - Project Settings → Domains
 - Add custom domain
-- Configure DNS records
+- Configure DNS
 - Enable HTTPS
 
 ### Docker Deployment
@@ -2165,14 +2110,8 @@ CMD ["node", "server.js"]
 **Build and Run:**
 
 ```bash
-# Build image
 docker build -t docmind .
-
-# Run container
 docker run -p 3000:3000 -e NEXT_PUBLIC_SUPABASE_URL=... docmind
-
-# Or with docker-compose
-docker-compose up -d
 ```
 
 ### Self-Hosting
@@ -2204,12 +2143,9 @@ docker-compose up -d
 - [ ] HTTPS enabled
 - [ ] Custom domain configured
 - [ ] Error monitoring set up
-- [ ] Performance monitoring enabled
 - [ ] Backups configured
 - [ ] Rate limiting enabled
 - [ ] CORS configured
-- [ ] CSP headers set
-- [ ] Logging configured
 
 ---
 
@@ -2227,6 +2163,11 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### Optional Variables
 
 ```env
+# Free AI Providers
+GROQ_API_KEY=gsk_xxx
+DOCSCAN_FREE_API_KEY=your-key
+DOCSCAN_FREE_BASE_URL=https://api.us-west-2.modal.direct/v1
+
 # Application
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=DocMind
@@ -2236,22 +2177,6 @@ PORT=3000
 # Upload Settings
 MAX_FILE_SIZE=10485760
 MAX_FILES_PER_BATCH=10
-ALLOWED_FILE_TYPES=pdf,docx,txt,rtf,json,csv,xml,jpg,png
-
-# Processing
-BATCH_SIZE=5
-PROCESSING_TIMEOUT=30000
-CHUNK_SIZE=1000
-CHUNK_OVERLAP=200
-
-# Security
-JWT_SECRET=your-super-secret-jwt-key-min-32-chars
-ENCRYPTION_KEY=your-32-char-encryption-key-here
-RATE_LIMIT_MAX=100
-RATE_LIMIT_WINDOW=900000
-
-# AI (User-configured via UI, not env)
-# Users configure their own API keys in Settings
 ```
 
 ### Variable Descriptions
@@ -2261,27 +2186,16 @@ RATE_LIMIT_WINDOW=900000
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Required |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public API key | Required |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key | Required |
-| `NEXT_PUBLIC_APP_URL` | App base URL | localhost:3000 |
+| `GROQ_API_KEY` | Groq API key (free tier) | Optional |
+| `DOCSCAN_FREE_API_KEY` | DocScan API key | Optional |
 | `PORT` | Development port | 3000 |
-| `MAX_FILE_SIZE` | Max upload size (bytes) | 10485760 |
-| `BATCH_SIZE` | Processing batch size | 5 |
-| `JWT_SECRET` | JWT signing key | Auto-generated |
-| `ENCRYPTION_KEY` | API key encryption | Auto-generated |
 
 ### Environment Files
 
-**.env.example** - Template with placeholder values
-**.env.local** - Local development (gitignored)
-**.env.development** - Development environment
-**.env.production** - Production environment
-**.env.test** - Test environment
-
-### Loading Order
-
-1. `.env.local`
-2. `.env.development` / `.env.production`
-3. `.env`
-4. System environment variables
+- `.env.example` - Template
+- `.env.local` - Local development (gitignored)
+- `.env.development` - Development
+- `.env.production` - Production
 
 ---
 
@@ -2298,29 +2212,29 @@ Solution:
 2. Verify redirect URLs configured
 3. Check browser console for errors
 4. Ensure auth schema deployed
-5. Clear browser cache and cookies
+5. Clear browser cache
 
 **Documents Not Processing**
 
-Problem: Documents stuck in PROCESSING status
+Problem: Documents stuck in PROCESSING
 
 Solution:
-1. Check Supabase storage bucket exists
-2. Verify storage policies configured
+1. Check Supabase storage bucket
+2. Verify storage policies
 3. Check file size within limits
-4. Review server logs for errors
+4. Review server logs
 5. Ensure processing endpoint accessible
 
 **AI Provider Not Responding**
 
-Problem: Queries return errors or timeout
+Problem: Queries return errors
 
 Solution:
 1. Verify API key is valid
-2. Check provider status (status pages)
+2. Check provider status
 3. Test connection in Settings
 4. Verify model name is correct
-5. Check rate limits not exceeded
+5. Check rate limits
 6. For local providers, ensure running
 
 **Upload Fails**
@@ -2333,19 +2247,6 @@ Solution:
 3. Check network connection
 4. Review browser console errors
 5. Ensure storage bucket configured
-6. Check RLS policies allow insert
-
-**Database Errors**
-
-Problem: Queries fail with database error
-
-Solution:
-1. Verify schema deployed correctly
-2. Check RLS policies in place
-3. Ensure user authenticated
-4. Review Supabase dashboard logs
-5. Check table permissions
-6. Verify indexes created
 
 **Build Errors**
 
@@ -2356,30 +2257,15 @@ Solution:
 2. Check TypeScript errors: `tsc --noEmit`
 3. Clear `.next` folder
 4. Reinstall dependencies
-5. Check Node version compatibility
-6. Review build logs for specifics
+5. Check Node version
 
 ### Debug Mode
 
 Enable debug logging:
 
 ```env
-# .env.local
 DEBUG=true
 LOG_LEVEL=debug
-```
-
-Check logs:
-
-```bash
-# Development
-npm run dev
-
-# View Next.js logs
-tail -f .next/server/app.log
-
-# Supabase logs
-# Dashboard → Logs → Query API
 ```
 
 ### Support Resources
@@ -2395,8 +2281,6 @@ tail -f .next/server/app.log
 ## Contributing
 
 ### How to Contribute
-
-We welcome contributions! Here's how you can help:
 
 **Report Bugs**
 1. Search existing issues
@@ -2436,7 +2320,6 @@ npm install
 
 ```bash
 cp .env.example .env.local
-# Edit with your values
 ```
 
 **4. Start Development**
@@ -2480,97 +2363,11 @@ chore: update dependencies
 2. Make changes
 3. Add/update tests
 4. Run linter: `npm run lint`
-5. Run type check: `npm run type-check`
+5. Run type check
 6. Update documentation
 7. Submit PR
 8. Address review comments
 9. Merge after approval
-
-### Testing
-
-**Run Tests**
-
-```bash
-# Unit tests
-npm test
-
-# Integration tests
-npm run test:integration
-
-# E2E tests
-npm run test:e2e
-```
-
-**Write Tests**
-
-```typescript
-// Example test
-import { render, screen } from '@testing-library/react'
-import { Button } from '@/components/ui/button'
-
-describe('Button', () => {
-  it('renders correctly', () => {
-    render(<Button>Click me</Button>)
-    expect(screen.getByText('Click me')).toBeInTheDocument()
-  })
-})
-```
-
----
-
-## Support
-
-### Getting Help
-
-**Documentation**
-- This README file
-- Inline code comments
-- Component documentation
-- API documentation
-
-**Community**
-- GitHub Issues for bugs
-- GitHub Discussions for questions
-- Discord server (coming soon)
-- Twitter updates
-
-**Direct Support**
-- Email: support@docmind.app
-- Contact form on website
-- Priority support for enterprise
-
-### Resources
-
-**Guides**
-- Getting Started Guide
-- Authentication Setup Guide
-- AI Provider Configuration
-- Deployment Guide
-- Security Best Practices
-
-**Tutorials**
-- Upload Your First Document
-- Query Documents with AI
-- Configure Multiple Providers
-- Set Up OAuth Authentication
-- Deploy to Production
-
-**FAQs**
-
-**Q: Is my data secure?**
-A: Yes, all data is encrypted and isolated per user with Row Level Security.
-
-**Q: Can I use my own AI models?**
-A: Yes, support for custom OpenAI-compatible endpoints.
-
-**Q: Does it work offline?**
-A: With local providers (Ollama, LM Studio), yes.
-
-**Q: What's the cost?**
-A: Self-hosted is free. You pay for your own AI API usage.
-
-**Q: Can I customize the UI?**
-A: Yes, it's open source. Modify as needed.
 
 ---
 
@@ -2613,6 +2410,7 @@ Built with amazing open source tools:
 - [Framer Motion](https://www.framer.com/motion/) - Animations
 - [TanStack Query](https://tanstack.com/query) - Data fetching
 - [Lucide](https://lucide.dev/) - Icons
+- [Groq](https://groq.com/) - Ultra-fast inference
 
 ---
 
