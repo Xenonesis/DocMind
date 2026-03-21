@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Upload, 
   Search, 
@@ -16,7 +17,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { DocumentUpload } from '@/components/document-upload'
-import { QueryInterface } from '@/components/query-interface'
+import { ChatInterface } from '@/components/chat-interface'
 import { DocumentList } from '@/components/document-list'
 import { AnalysisResults } from '@/components/analysis-results'
 import { AiApiSettings } from '@/components/settings/ai-api-settings'
@@ -39,12 +40,13 @@ interface Document {
 
 export default function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([])
-  const [activeTab, setActiveTab] = useState('documents')
+  const [activeTab, setActiveTab] = useState('query')
   const [query, setQuery] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
   const [selectedProvider, setSelectedProvider] = useState<string | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
+  const [configuredProviders, setConfiguredProviders] = useState<{id: string, name: string}[]>([])
   const { user, logout, isAuthenticated } = useAuth()
 
   useEffect(() => {
@@ -65,8 +67,61 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDocuments()
+    
+    // Fetch configured providers
+    const fetchProviders = async () => {
+      try {
+        const { authenticatedRequest } = await import('@/lib/api-client')
+        const [data, freeProviderRes] = await Promise.allSettled([
+          authenticatedRequest('/api/settings'),
+          fetch('/api/free-provider').then(r => r.ok ? r.json() : null)
+        ])
+        
+        const provs: {id: string, name: string}[] = []
+        
+        if (freeProviderRes.status === 'fulfilled' && freeProviderRes.value) {
+          provs.push({
+            id: 'docscan-free-builtin',
+            name: 'DocScan Free ✨'
+          })
+        }
+        
+        let activeId: string | undefined = undefined
+        
+        if (data.status === 'fulfilled' && Array.isArray(data.value)) {
+          data.value.forEach(p => {
+            if (p.apiKey || ['LM_STUDIO', 'OLLAMA'].includes(p.provider)) {
+              const id = p.id || p.provider
+              if (p.isActive) activeId = id
+              provs.push({
+                id,
+                name: p.provider === 'GOOGLE_AI' ? 'Google Gemini'
+                : p.provider === 'OPENAI' ? 'OpenAI'
+                : p.provider === 'ANTHROPIC' ? 'Anthropic Claude'
+                : p.provider === 'MISTRAL' ? 'Mistral AI'
+                : p.provider === 'OPENROUTER' ? 'OpenRouter'
+                : p.provider === 'OPENAI_COMPATIBLE' ? 'Custom API'
+                : p.provider === 'OLLAMA' ? 'Ollama'
+                : p.provider === 'LM_STUDIO' ? 'LM Studio'
+                : p.provider
+              })
+            }
+          })
+        }
+        setConfiguredProviders(provs)
+        
+        if (activeId && provs.some(p => p.id === activeId)) {
+          setSelectedProvider(activeId)
+        } else if (provs.length > 0) {
+          setSelectedProvider(provs[0].id)
+        }
+      } catch (error) {
+        console.error('Error fetching providers:', error)
+      }
+    }
+    fetchProviders()
   }, [])
-
+  
   const handleDocumentUpload = (newDocuments: Document[]) => {
     fetchDocuments()
     setActiveTab('documents')
@@ -134,6 +189,18 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-4 w-full md:w-auto">
+            {configuredProviders.length > 0 && (
+              <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                <SelectTrigger className="w-[180px] h-9 bg-background/50 border-border text-xs rounded-full shadow-sm">
+                  <SelectValue placeholder="Select Model" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {configuredProviders.map(p => (
+                    <SelectItem key={p.id} value={p.id} className="text-xs py-2">{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <ThemeToggle />
             <Button 
               variant="outline"
@@ -198,9 +265,9 @@ export default function Dashboard() {
             <div className="bg-background rounded-2xl p-1.5 shadow-sm border border-border inline-flex w-fit">
               <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-1">
                 {[
+                  { id: 'query', icon: MessageSquare, label: 'Chat' },
                   { id: 'upload', icon: Upload, label: 'Upload' },
                   { id: 'documents', icon: FileText, label: 'Documents' },
-                  { id: 'query', icon: MessageSquare, label: 'Query' },
                   { id: 'results', icon: BarChart3, label: 'Analysis' },
                   { id: 'settings', icon: Settings, label: 'Settings' }
                 ].map((tab) => (
@@ -249,18 +316,8 @@ export default function Dashboard() {
                   )}
                 </TabsContent>
 
-                <TabsContent value="query" className="m-0 focus-visible:outline-none flex-1">
-                  <QueryInterface 
-                    query={query}
-                    setQuery={setQuery}
-                    isProcessing={isProcessing}
-                    documents={documents}
-                    onSubmit={({ query: q, documentIds, provider }) => {
-                      setSelectedDocumentIds(documentIds)
-                      setSelectedProvider(provider)
-                      handleQuerySubmit({ query: q, documentIds, provider })
-                    }}
-                  />
+                <TabsContent value="query" className="m-0 focus-visible:outline-none flex-1 overflow-hidden flex flex-col">
+                  <ChatInterface documents={documents} selectedProvider={selectedProvider} />
                 </TabsContent>
 
                 <TabsContent value="results" className="m-0 focus-visible:outline-none flex-1">

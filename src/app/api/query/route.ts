@@ -5,7 +5,7 @@ import { AIService } from '@/lib/ai-service'
 
 export async function POST(request: NextRequest) {
   try {
-    const { query, documentIds, provider } = await request.json()
+    const { query, documentIds, provider, history } = await request.json()
     
     if (!query || !query.trim()) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
@@ -57,15 +57,32 @@ export async function POST(request: NextRequest) {
       
       // Allow client to choose provider by id; fallback to active
       const allProviders = aiService.getProviders()
-      const activeProvider = (provider
+      let activeProvider = (provider
         ? allProviders.find(p => p.id === provider) || allProviders.find(p => p.name === provider)
         : aiService.getActiveProvider())
 
       if (!activeProvider) {
-        return NextResponse.json({ 
-          error: 'No AI provider configured. Please configure a real AI provider in Settings.' 
-        }, { status: 400 })
+        const freeApiKey = process.env.DOCSCAN_FREE_API_KEY
+        if (freeApiKey) {
+          activeProvider = {
+            id: 'docscan-free-builtin',
+            name: 'DocScan Free ✨',
+            type: 'openai-compatible',
+            baseUrl: process.env.DOCSCAN_FREE_BASE_URL || 'https://api.us-west-2.modal.direct/v1',
+            apiKey: freeApiKey,
+            model: 'zai-org/GLM-5-FP8',
+            maxTokens: 4096,
+            temperature: 0.7
+          } as any
+        } else {
+          return NextResponse.json({ 
+            error: 'No AI provider configured. Please configure a real AI provider in Settings.' 
+          }, { status: 400 })
+        }
       }
+
+      // TypeScript assertion to avoid 'possibly undefined' lints
+      const providerConfig = activeProvider!
       
       // Get relevant documents for context
       let documentsQuery = db
@@ -97,48 +114,41 @@ export async function POST(request: NextRequest) {
       }))
 
       // Create AI prompt
-      const systemPrompt = `You are an expert document analysis assistant with deep knowledge of contracts, claims, policies, and compliance requirements. Analyze the following query and provide insights based on the provided document context.
+      const systemPrompt = `You are an expert document analysis assistant. Answer the user's question clearly and concisely based on the provided document context. If asked for summaries, key points, comparisons, or analysis — provide them helpfully. Always mention which document you're referencing. If the answer is not found in the documents, say so clearly.`
 
-      Provide your response in the following JSON format:
-      {
-        "answer": "Direct answer to the query",
-        "insights": ["insight 1", "insight 2", ...],
-        "patterns": ["pattern 1", "pattern 2", ...],
-        "confidence": 85,
-        "relevantDocuments": ["doc1.pdf", "doc2.pdf", ...]
-      }`
+      const historyText = Array.isArray(history) && history.length > 0
+        ? `\n\nConversation history (for context):\n${history.map((m: any) => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`).join('\n')}\n`
+        : ''
 
       const userPrompt = `
         Query: ${query}
-
+${historyText}
         Document Context:
         ${context.map((doc, index) => `
         Document ${index + 1}: ${doc.name}
         Category: ${doc.category}
-        Content: ${doc.content}
+        Content: ${doc.content.slice(0, 4000)}
         `).join('\n')}
 
-        Please provide a comprehensive analysis of the query based on the document context.
+        Please provide a comprehensive but concise answer. Respond in plain text (no JSON), referencing the documents by name where relevant.
       `
 
       const completion = await aiService.generateCompletion({
-        provider: activeProvider,
+        provider: providerConfig,
         prompt: userPrompt,
         systemPrompt,
-        temperature: activeProvider.temperature || 0.3,
-        maxTokens: activeProvider.maxTokens || 1000
+        temperature: providerConfig.temperature || 0.3,
+        maxTokens: providerConfig.maxTokens || 1000
       })
 
-      let aiResponse
+      let aiResponse: any
+      const rawContent = completion.content
       try {
-        aiResponse = JSON.parse(completion.content)
-      } catch (parseError) {
-        // If AI response is not valid JSON, create a structured response
+        aiResponse = JSON.parse(rawContent)
+      } catch {
+        // Plain text response — wrap it
         aiResponse = {
-          answer: completion.content,
-          insights: [],
-          patterns: [],
-          confidence: 75,
+          answer: rawContent,
           relevantDocuments: (documents || []).map(doc => doc.name)
         }
       }
@@ -148,8 +158,8 @@ export async function POST(request: NextRequest) {
         .from('queries')
         .update({
           response: JSON.stringify(aiResponse),
-          ai_provider: activeProvider.name,
-          ai_model: activeProvider.model || 'unknown',
+          ai_provider: providerConfig.name,
+          ai_model: providerConfig.model || 'unknown',
           tokens_used: completion.usage?.totalTokens || 0,
           processing_time_ms: Date.now() - new Date(queryRecord.created_at).getTime()
         })
@@ -165,7 +175,7 @@ export async function POST(request: NextRequest) {
         status: 'COMPLETED',
         response: aiResponse,
         timestamp: queryRecord.timestamp,
-        provider: activeProvider.name,
+        provider: providerConfig.name,
         usage: completion.usage
       })
 
