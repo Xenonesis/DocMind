@@ -288,7 +288,7 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
 
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50 shrink-0">
@@ -369,7 +369,7 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
       </AnimatePresence>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-5 pr-1 scroll-smooth">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-2 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/60 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full py-12 text-center">
             <div className="w-16 h-16 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center mb-5">

@@ -7,8 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Image from 'next/image'
 import { 
-  Upload, 
-  Search, 
+  Upload,
   FileText, 
   Brain, 
   MessageSquare,
@@ -185,7 +184,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-secondary/20 text-foreground font-sans flex flex-col">
+      <div className="h-screen overflow-hidden bg-secondary/20 text-foreground font-sans flex flex-col">
         
         {/* Modern Header */}
         <header className="bg-background border-b border-border px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
@@ -226,55 +225,11 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <main className="flex-1 p-6 md:p-8 max-w-[1600px] mx-auto w-full space-y-8 flex flex-col">
+        <main className="flex-1 min-h-0 p-6 md:p-8 max-w-[1600px] mx-auto w-full space-y-8 flex flex-col">
           
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="shadow-sm border-border bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="bg-primary/10 p-3 rounded-xl text-primary">
-                  <Upload className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Uploads</p>
-                  <p className="text-3xl font-bold">{documents.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm border-border bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="bg-primary/10 p-3 rounded-xl text-primary">
-                  <Brain className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Indexed Docs</p>
-                  <p className="text-3xl font-bold">{documents.filter(d => d.status === 'COMPLETED').length}</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm border-border bg-card">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="bg-green-500/10 p-3 rounded-xl text-green-600 dark:text-green-400">
-                  <Search className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">System Status</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                    </span>
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400">Online</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Main Interface */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col space-y-6">
             <div className="bg-background rounded-2xl p-1.5 shadow-sm border border-border inline-flex w-fit">
               <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-1">
                 {[
@@ -297,7 +252,7 @@ export default function Dashboard() {
             </div>
 
             <Card className="flex-1 shadow-sm border-border bg-card overflow-hidden flex flex-col">
-              <div className="p-6 h-full flex flex-col">
+              <div className="p-6 h-full min-h-0 flex flex-col">
                 <TabsContent value="upload" className="m-0 focus-visible:outline-none flex-1">
                   <DocumentUpload onUpload={handleDocumentUpload} />
                 </TabsContent>
