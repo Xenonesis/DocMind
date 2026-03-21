@@ -131,7 +131,6 @@ export default function DocumentPreviewPage() {
           url: window.location.href
         })
       } catch (err) {
-        // Share failed
       }
     }
   }
@@ -343,11 +342,9 @@ export default function DocumentPreviewPage() {
     <TooltipProvider>
       <div className="min-h-screen bg-secondary/20 text-foreground font-sans">
         <div ref={containerRef} className="flex flex-col h-screen max-w-[1600px] mx-auto">
-          {/* Responsive Header */}
           <div className="bg-background border-b border-border sticky top-0 z-50">
             <div className="px-4 py-4 md:px-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {/* Left Section */}
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                   <Button 
                     variant="ghost" 
@@ -394,7 +391,6 @@ export default function DocumentPreviewPage() {
                   )}
                 </div>
 
-                {/* Right Section */}
                 {document && (
                   <div className="flex items-center gap-2 shrink-0 bg-secondary/30 p-1.5 rounded-full border border-border/50">
                     <Badge variant="outline" className="rounded-full px-3 py-1 font-medium bg-background text-foreground border-border/50 hidden sm:flex">
@@ -444,11 +440,9 @@ export default function DocumentPreviewPage() {
             </div>
           </div>
 
-          {/* Toolbar */}
           <div className="bg-background border-b border-border px-4 py-2 sticky top-[73px] sm:top-[73px] z-40">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 overflow-x-auto flex-1">
-                {/* Zoom Controls */}
                 <div className="flex items-center gap-1.5 bg-secondary/30 p-1 rounded-full border border-border/50">
                   <Button 
                     variant="ghost" 
@@ -490,7 +484,6 @@ export default function DocumentPreviewPage() {
                   </Button>
                 </div>
 
-                {/* Page Navigation */}
                 {pages && pages > 1 && (
                   <div className="flex items-center gap-2 bg-secondary/30 p-1 rounded-full border border-border/50 ml-2">
                     <Button 
@@ -519,7 +512,6 @@ export default function DocumentPreviewPage() {
                   </div>
                 )}
 
-                {/* Image Rotation */}
                 {previewContent?.contentType === 'image' && (
                   <Button 
                     variant="outline" 
@@ -532,7 +524,6 @@ export default function DocumentPreviewPage() {
                 )}
               </div>
 
-              {/* Document Stats */}
               {previewContent?.metadata && (
                 <div className="hidden lg:flex items-center gap-4 text-xs font-medium text-muted-foreground shrink-0 bg-secondary/30 px-4 py-1.5 rounded-full border border-border/50">
                   {previewContent.metadata.wordCount && (
@@ -552,7 +543,6 @@ export default function DocumentPreviewPage() {
             </div>
           </div>
 
-          {/* Content Area */}
           <div className="flex-1 overflow-hidden p-4 lg:p-8 bg-muted/30">
             {renderPreviewContent()}
           </div>

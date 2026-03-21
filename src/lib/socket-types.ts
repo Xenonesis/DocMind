@@ -1,4 +1,3 @@
-// Socket event types for real-time updates
 
 export interface DocumentUpdate {
   id: string

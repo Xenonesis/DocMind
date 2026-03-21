@@ -3,6 +3,19 @@ import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
 import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 import { AIService } from '@/lib/ai-service'
 
+function parseJsonSafely(value: unknown, fallback: any) {
+  if (value === null || value === undefined) return fallback
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value)
+    } catch {
+      return fallback
+    }
+  }
+  if (typeof value === 'object') return value
+  return fallback
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { query, documentIds, provider, history } = await request.json()
@@ -11,7 +24,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
     }
 
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -26,10 +38,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Ensure user profile exists
     await ensureUserProfile(user, db)
 
-    // Create query record in database
     const { data: queryRecord, error: createError } = await db
       .from('queries')
       .insert({
@@ -48,21 +58,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create query record' }, { status: 500 })
     }
 
-    // Process the query using configured AI provider
     try {
       const aiService = AIService.getInstance()
       
-      // Load providers from database for server-side usage
       await aiService.loadProvidersFromDatabase(user.id)
       
-      // Allow client to choose provider by id; fallback to active
       const allProviders = aiService.getProviders()
       let activeProvider = (provider
         ? allProviders.find(p => p.id === provider) || allProviders.find(p => p.name === provider)
         : aiService.getActiveProvider())
 
       if (!activeProvider) {
-        // Try free providers from env as fallback
         if (provider === 'docscan-free-groq' && process.env.GROQ_API_KEY) {
           activeProvider = {
             id: 'docscan-free-groq',
@@ -92,10 +98,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // TypeScript assertion to avoid 'possibly undefined' lints
       const providerConfig = activeProvider!
       
-      // Get relevant documents for context
       let documentsQuery = db
         .from('documents')
         .select('*')
@@ -104,7 +108,6 @@ export async function POST(request: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(10)
 
-      // Filter by specific document IDs if provided
       if (documentIds && documentIds.length > 0) {
         documentsQuery = documentsQuery.in('id', documentIds)
       }
@@ -116,15 +119,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
       }
 
-      // Prepare context from documents
       const context = (documents || []).map(doc => ({
         name: doc.name,
         content: doc.content || '',
         category: doc.category || '',
-        metadata: doc.metadata ? JSON.parse(doc.metadata) : {}
+        metadata: parseJsonSafely(doc.metadata, {})
       }))
 
-      // Create AI prompt
       const systemPrompt = `You are an expert document analysis assistant. Answer the user's question clearly and concisely based on the provided document context. If asked for summaries, key points, comparisons, or analysis — provide them helpfully. Always mention which document you're referencing. If the answer is not found in the documents, say so clearly.`
 
       const historyText = Array.isArray(history) && history.length > 0
@@ -157,14 +158,12 @@ ${historyText}
       try {
         aiResponse = JSON.parse(rawContent)
       } catch {
-        // Plain text response — wrap it
         aiResponse = {
           answer: rawContent,
           relevantDocuments: (documents || []).map(doc => doc.name)
         }
       }
 
-      // Update query record with results
       const { error: updateError } = await db
         .from('queries')
         .update({
@@ -196,7 +195,6 @@ ${historyText}
       const message = typeof aiError?.message === 'string' ? aiError.message : 'AI processing failed'
       const isConfigError = /api key not configured|no ai provider configured|unsupported provider/i.test(message)
 
-      // Update query record with error
       await db
         .from('queries')
         .update({
@@ -222,7 +220,6 @@ ${historyText}
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -241,7 +238,6 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Get user's queries
     const { data: queries, error } = await db
       .from('queries')
       .select('*')
@@ -257,10 +253,10 @@ export async function GET(request: NextRequest) {
     const formattedQueries = (queries || []).map(query => ({
       id: query.id,
       query: query.query_text,
-      status: 'COMPLETED', // Assuming completed if stored
-      response: query.response ? JSON.parse(query.response) : null,
+      status: 'COMPLETED', 
+      response: parseJsonSafely(query.response, null),
       timestamp: query.timestamp,
-      documentIds: query.document_ids ? JSON.parse(query.document_ids) : [],
+      documentIds: parseJsonSafely(query.document_ids, []),
       provider: query.ai_provider,
       model: query.ai_model,
       tokensUsed: query.tokens_used,

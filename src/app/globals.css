@@ -41,9 +41,8 @@
 :root {
   --radius: 0.75rem;
   
-  /* MINIMAL LIGHT THEME */
-  --background: oklch(0.99 0 0); /* Pure white/off-white */
-  --foreground: oklch(0.15 0 0);  /* Dark gray, softer than pure black */
+  --background: oklch(0.99 0 0); 
+  --foreground: oklch(0.15 0 0);  
   
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0 0);
@@ -51,7 +50,6 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0 0);
   
-  /* Primary: Professional deep slate/blueish */
   --primary: oklch(0.2 0.02 240); 
   --primary-foreground: oklch(0.98 0 0); 
   
@@ -67,14 +65,13 @@
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.92 0 0); /* Soft light borders */
+  --border: oklch(0.92 0 0); 
   --input: oklch(0.92 0 0);
   --ring: oklch(0.2 0.02 240);
 }
 
 .dark {
-  /* MINIMAL DARK THEME */
-  --background: oklch(0.12 0.01 240); /* Very dark slate, elegant */
+  --background: oklch(0.12 0.01 240); 
   --foreground: oklch(0.95 0 0); 
   
   --card: oklch(0.15 0.01 240);
@@ -119,7 +116,6 @@
   }
 }
 
-/* Fallback utilities to gracefully replace brutalist classes before components are updated */
 @utility brutal-shadow {
   box-shadow: 0 4px 14px 0 rgba(0,0,0,0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;

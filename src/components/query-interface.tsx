@@ -256,7 +256,6 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                 }}
               />
               
-              {/* Controls inside textarea bottom */}
               <div className="flex items-center justify-between p-3 bg-secondary/20 border-t border-border/50">
                 <div className="flex items-center gap-2">
                   <Button
@@ -282,7 +281,6 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
               </div>
             </div>
             
-            {/* Mention Dropdown */}
             {showMentionList && (
               <div className="absolute left-4 bottom-16 mb-2 w-80 z-20 border border-border bg-card rounded-xl shadow-lg overflow-hidden">
                 <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -309,7 +307,6 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
           </div>
 
           <div className="flex flex-col gap-5">
-            {/* Selected Documents */}
             {selectedDocumentIds.length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Targeting:</p>
@@ -334,7 +331,6 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
               </div>
             )}
 
-            {/* Provider Selection */}
             <div className="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="p-2 rounded-lg bg-secondary/50 text-muted-foreground">

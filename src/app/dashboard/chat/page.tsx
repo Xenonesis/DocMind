@@ -113,11 +113,10 @@ export default function ChatPage() {
     <ProtectedRoute>
       <div className="h-screen overflow-hidden bg-secondary/20 text-foreground font-sans flex flex-col">
 
-        {/* Header */}
         <header className="bg-background border-b border-border px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-sm shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
-              <Image src="/logo.png" alt="DocMind Logo" fill className="object-cover" priority />
+              <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">Chat</h1>
@@ -158,11 +157,14 @@ export default function ChatPage() {
           </div>
         </header>
 
-        {/* Chat Area */}
         <main className="flex-1 min-h-0 p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col">
           <div className="flex-1 min-h-0 bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
             <div className="p-6 h-full min-h-0 flex flex-col">
-              <ChatInterface documents={documents} selectedProvider={selectedProvider} />
+              <ChatInterface
+                documents={documents}
+                selectedProvider={selectedProvider}
+                onDocumentsChanged={fetchDocuments}
+              />
             </div>
           </div>
         </main>

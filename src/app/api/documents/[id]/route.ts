@@ -19,7 +19,6 @@ export async function GET(
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Get document from Supabase database
     const { data: document, error } = await db
       .from('documents')
       .select('*')
@@ -30,7 +29,6 @@ export async function GET(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    // Return the document data
     return NextResponse.json({
       id: document.id,
       name: document.name,
@@ -66,7 +64,6 @@ export async function DELETE(
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
     const db = createServerClientForToken(token) || supabaseServer
 
-    // Delete document from Supabase
     const { error } = await db!.from('documents').delete().eq('id', documentId)
 
     if (error) {
@@ -99,7 +96,6 @@ export async function PUT(
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
     const db = createServerClientForToken(token) || supabaseServer
 
-    // Update document in database
     const { data: updatedDocument, error } = await db!
       .from('documents')
       .update(updates)

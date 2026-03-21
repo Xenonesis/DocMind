@@ -67,7 +67,6 @@ export function ConnectionStatus({ provider, onTestComplete, autoTest = false }:
     setProgress(0)
     setResult(null)
 
-    // Simulate progress
     const progressInterval = setInterval(() => {
       setProgress(prev => Math.min(prev + 10, 90))
     }, 200)

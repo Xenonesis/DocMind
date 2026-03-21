@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * Returns the built-in free DocScan provider configs.
- * API keys are injected from server-side env so they are never exposed in client bundles.
- */
 export async function GET() {
   const apiKey = process.env.DOCSCAN_FREE_API_KEY
   const baseUrl = process.env.DOCSCAN_FREE_BASE_URL || 'https://api.us-west-2.modal.direct/v1'
@@ -19,8 +15,7 @@ export async function GET() {
     try {
       const res = await fetch(`${groqBaseUrl}/models`, {
         headers: { Authorization: `Bearer ${groqApiKey}` },
-        // Add timeout or other fetch options if necessary
-        next: { revalidate: 3600 } // Cache for 1 hour
+        next: { revalidate: 3600 } 
       });
       if (res.ok) {
         const data = await res.json();
@@ -55,7 +50,6 @@ export async function GET() {
   }
 
   if (groqApiKey) {
-    // Attempt to pick a good default text model
     const defaultGroqModel = groqModels.includes('llama-3.1-8b-instant') 
       ? 'llama-3.1-8b-instant' 
       : (groqModels.find(m => m.includes('llama') && !m.includes('guard')) || groqModels[0]);
@@ -79,7 +73,6 @@ export async function GET() {
   }
 
   if (providers.length === 0) {
-    // If neither is configured, let's at least return an empty array to prevent client error
     return NextResponse.json([])
   }
 

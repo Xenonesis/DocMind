@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type')
     const search = searchParams.get('search')
 
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -26,7 +25,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Get user's documents from Supabase (without the problematic joins for now)
     let { data: documents, error } = await db
       .from('documents')
       .select('*')
@@ -42,7 +40,6 @@ export async function GET(request: NextRequest) {
 
     documents = documents || []
 
-    // Apply filters
     if (status && status !== 'all') {
       documents = documents.filter(doc => doc.status === status)
     }
@@ -59,17 +56,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get counts separately for each document
     const formattedDocuments = await Promise.all(
       documents.map(async (doc) => {
-        // Get analysis count for this document
         const { count: analysisCount } = await db
           .from('analyses')
           .select('*', { count: 'exact', head: true })
           .eq('document_id', doc.id)
           .eq('user_id', user.id)
 
-        // Get query count for this document (queries that reference this document)
         const { data: queries } = await db
           .from('queries')
           .select('document_ids')

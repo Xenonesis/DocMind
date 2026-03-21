@@ -5,7 +5,6 @@ import { encryptApiKey, decryptApiKey, maskApiKey } from '@/lib/crypto-utils'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -20,7 +19,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Verify user exists by checking if we can query their data
     try {
       const { data: testQuery, error: testError } = await db
         .from('user_profiles')
@@ -28,7 +26,6 @@ export async function GET(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      // If the user doesn't exist, their session is invalid
       if (testError && testError.code === 'PGRST116') {
         console.error(`User ${user.id} not found in database:`, testError)
         return NextResponse.json({ 
@@ -36,7 +33,6 @@ export async function GET(request: NextRequest) {
         }, { status: 401 })
       }
 
-      // If there's any other error with the test query, log it but continue
       if (testError) {
         console.warn('User verification query had an error, but continuing:', testError)
       }
@@ -44,7 +40,6 @@ export async function GET(request: NextRequest) {
       console.warn('User verification failed, but continuing:', verificationError)
     }
 
-    // Ensure user profile exists
     try {
       await ensureUserProfile(user, db)
     } catch (profileError: any) {
@@ -57,7 +52,6 @@ export async function GET(request: NextRequest) {
       throw profileError
     }
 
-    // Get user's AI provider settings
     const { data: settings, error } = await db
       .from('ai_provider_settings')
       .select('*')
@@ -72,7 +66,7 @@ export async function GET(request: NextRequest) {
     const formattedSettings = (settings || []).map(setting => ({
       id: setting.id,
       provider: setting.provider_name,
-      apiKey: setting.api_key ? decryptApiKey(setting.api_key) : '', // Return actual API key, no masking
+      apiKey: setting.api_key ? decryptApiKey(setting.api_key) : '', 
       model: setting.model_name,
       isActive: setting.is_active,
       baseUrl: setting.base_url || '',
@@ -92,7 +86,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -108,7 +101,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Ensure user profile exists (best-effort)
     try { await ensureUserProfile(user, db) } catch {}
 
     const { providers } = body
@@ -139,11 +131,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Enhanced upsert function with proper encryption
 async function upsertProviderSetting(db: any, userId: string, item: any) {
   const { provider, apiKey, model, isActive, config, baseUrl } = item
 
-  // Check for existing setting
   const { data: existingSetting, error: fetchError } = await db
     .from('ai_provider_settings')
     .select('*')
@@ -158,10 +148,8 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
 
   let result
   if (existingSetting) {
-    // Always update API key if provided
     let apiKeyUpdate = existingSetting.api_key
     if (apiKey !== undefined && apiKey !== '') {
-      // Encrypt the new API key
       apiKeyUpdate = encryptApiKey(apiKey)
     }
 
@@ -186,7 +174,6 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
     }
     result = updatedSetting
   } else {
-    // Encrypt API key for new settings
     const encryptedApiKey = apiKey ? encryptApiKey(apiKey) : ''
 
     const insertData = {

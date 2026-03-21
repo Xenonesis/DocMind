@@ -13,7 +13,6 @@ export async function GET(
     const awaitedParams = await params
     documentId = awaitedParams.id
 
-    // Get authenticated user and instantiate DB client
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
     const db = createServerClientForToken(token) || supabaseServer
@@ -27,19 +26,17 @@ export async function GET(
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Get document from database securely
     const { data: document, error: docError } = await db
       .from('documents')
       .select('*')
       .eq('id', documentId)
-      .eq('user_id', user.id) // Enforce ownership
+      .eq('user_id', user.id) 
       .single()
 
     if (docError || !document) {
       return NextResponse.json({ error: 'Document not found or access denied' }, { status: 404 })
     }
 
-    // Parse metadata to get storage information
     let metadata: any = {}
     try {
       metadata = JSON.parse(document.metadata || '{}')
@@ -50,9 +47,8 @@ export async function GET(
     const storageRef = metadata.storageRef || `users/${user.email.replace(/[^a-zA-Z0-9@.-]/g, '_')}/documents/${documentId}/${document.name}`
     const ext = path.extname(document.name).toLowerCase()
 
-    // For images, generate a secure temporary signed URL
     if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
-      const { data } = await db.storage.from('documents').createSignedUrl(storageRef, 3600) // 1 hour
+      const { data } = await db.storage.from('documents').createSignedUrl(storageRef, 3600) 
       if (!data) return NextResponse.json({ error: 'Could not generate signed URL' }, { status: 500 })
       return NextResponse.json({
         content: data.signedUrl,
@@ -61,9 +57,8 @@ export async function GET(
       })
     }
 
-    // For PDFs, generate a secure temporary signed URL
     if (ext === '.pdf') {
-      const { data } = await db.storage.from('documents').createSignedUrl(storageRef, 3600) // 1 hour
+      const { data } = await db.storage.from('documents').createSignedUrl(storageRef, 3600) 
       if (!data) return NextResponse.json({ error: 'Could not generate signed URL' }, { status: 500 })
       return NextResponse.json({
         content: data.signedUrl,
@@ -72,7 +67,6 @@ export async function GET(
       })
     }
 
-    // For text-based documents, we must download the buffer to parse it
     const { data: fileBlob, error: downloadError } = await db
       .storage
       .from('documents')
@@ -103,7 +97,7 @@ export async function GET(
           if (!fileBuffer) throw new Error('File buffer is null')
           const textContent = fileBuffer.toString('utf-8')
           previewContent = {
-            content: textContent.substring(0, 10000), // Limit to first 10k characters
+            content: textContent.substring(0, 10000), 
             contentType: 'text',
             metadata: {
               characters: textContent.length,
@@ -171,11 +165,9 @@ export async function GET(
           break
 
         default:
-          // Try to read as text for unknown extensions
           if (!fileBuffer) throw new Error('File buffer is null')
           try {
             const textContent = fileBuffer.toString('utf-8')
-            // Check if it's likely text (contains mostly printable characters)
             const printableRatio = (textContent.match(/[\x20-\x7E\s]/g) || []).length / textContent.length
             if (printableRatio > 0.8) {
               previewContent = {
@@ -187,7 +179,6 @@ export async function GET(
               }
             }
           } catch (error) {
-            // Keep default unsupported
           }
           break
       }

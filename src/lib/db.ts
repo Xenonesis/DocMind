@@ -1,4 +1,3 @@
-// Supabase-backed database exports
 export * from './supabase-types'
 export {
   userService,

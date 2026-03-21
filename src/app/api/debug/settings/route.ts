@@ -5,7 +5,6 @@ import { decryptApiKey } from '@/lib/crypto-utils'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -16,7 +15,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Get raw AI provider settings from Supabase
     const { data: settings, error } = await supabaseServer
       .from('ai_provider_settings')
       .select('*')
@@ -28,7 +26,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
     }
 
-    // Debug information
     const debugInfo = {
       userId: user.id,
       userEmail: user.email,

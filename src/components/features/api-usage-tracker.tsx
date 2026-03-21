@@ -48,10 +48,8 @@ export function ApiUsageTracker() {
   const loadUsageStats = async () => {
     setLoading(true)
     try {
-      // Simulate API call - replace with real implementation
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Mock data - replace with real API call
       const mockStats: UsageStats = {
         totalRequests: 156,
         totalTokens: 45230,
@@ -128,7 +126,6 @@ export function ApiUsageTracker() {
 
   return (
     <div className="space-y-6 sm:space-y-8 p-6 sm:p-8">
-      {/* Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
           {(['24h', '7d', '30d'] as const).map((range) => (
@@ -156,7 +153,6 @@ export function ApiUsageTracker() {
         </Button>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -243,7 +239,6 @@ export function ApiUsageTracker() {
         </motion.div>
       </div>
 
-      {/* Provider Breakdown */}
       <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden relative group">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
         <CardHeader className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700/50 relative z-10">
@@ -285,7 +280,6 @@ export function ApiUsageTracker() {
         </CardContent>
       </Card>
 
-      {/* Daily Usage Chart */}
       <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden relative group">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
         <CardHeader className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-700/50 relative z-10">
@@ -332,7 +326,6 @@ export function ApiUsageTracker() {
         </CardContent>
       </Card>
 
-      {/* Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 rounded-3xl overflow-hidden relative group">
           <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />

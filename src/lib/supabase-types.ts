@@ -1,4 +1,3 @@
-// Supabase collection types
 
 export interface User {
   id: string
@@ -45,7 +44,7 @@ export interface Document {
   processedAt?: Date
   category?: string
   tags?: string
-  progress?: number // For upload progress tracking
+  progress?: number 
   createdAt: Date
   updatedAt: Date
 }

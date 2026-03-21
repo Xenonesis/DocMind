@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
     const documentId = searchParams.get('documentId')
     const limit = parseInt(searchParams.get('limit') || '50')
 
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -20,11 +19,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Build query for user's analyses
     let query = supabaseServer
       .from('analyses')
       .select(`
-        *,
         documents:document_id (
           id,
           name,
@@ -36,7 +33,6 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    // Apply filters
     if (type && type !== 'all') {
       query = query.eq('analysis_type', type)
     }
@@ -52,7 +48,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch analyses' }, { status: 500 })
     }
 
-    // Format analyses for response
     const formattedAnalyses = (analyses || []).map(analysis => ({
       id: analysis.id,
       type: analysis.analysis_type,
@@ -73,7 +68,6 @@ export async function GET(request: NextRequest) {
       } : null
     }))
 
-    // Get summary statistics
     const stats = await getAnalysisStats(user.id)
 
     return NextResponse.json({
@@ -99,7 +93,6 @@ async function getAnalysisStats(userId: string) {
       }
     }
 
-    // Get all analyses for this user
     const { data: allAnalyses, error } = await supabaseServer
       .from('analyses')
       .select('*')
@@ -111,21 +104,18 @@ async function getAnalysisStats(userId: string) {
     
     const totalAnalyses = allAnalyses.length
     
-    // Calculate type statistics
     const byType: Record<string, number> = {}
     allAnalyses.forEach(analysis => {
       const type = analysis.analysis_type || 'unknown'
       byType[type] = (byType[type] || 0) + 1
     })
     
-    // Calculate severity statistics
     const bySeverity: Record<string, number> = {}
     allAnalyses.forEach(analysis => {
       const severity = analysis.result?.severity || 'LOW'
       bySeverity[severity] = (bySeverity[severity] || 0) + 1
     })
     
-    // Calculate average confidence
     const confidenceValues = allAnalyses
       .map(analysis => analysis.result?.confidence || 0)
       .filter(confidence => confidence > 0)
@@ -133,7 +123,6 @@ async function getAnalysisStats(userId: string) {
       ? Math.round(confidenceValues.reduce((sum, conf) => sum + conf, 0) / confidenceValues.length)
       : 0
     
-    // Calculate recent analyses (last 7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     const recentCount = allAnalyses.filter(analysis => 
       analysis.created_at >= sevenDaysAgo

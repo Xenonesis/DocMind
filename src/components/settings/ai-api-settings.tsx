@@ -58,7 +58,6 @@ interface AIProvider {
   topP?: number
   description: string
   iconType: 'brain' | 'zap' | 'server' | 'shield' | 'globe'
-  // Track if user edited the API key so we know to send it to the server
   dirtyApiKey?: boolean
 }
 
@@ -71,7 +70,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'gemini-2.5-flash',
     isActive: true,
     isConfigured: false,
-    models: [], // fetched live on demand
+    models: [], 
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -86,7 +85,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'mistral-large-latest',
     isActive: false,
     isConfigured: false,
-    models: [], // fetched live on demand
+    models: [], 
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -101,7 +100,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'gpt-4o-mini',
     isActive: false,
     isConfigured: false,
-    models: [], // fetched live on demand
+    models: [], 
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -116,7 +115,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'claude-3-5-sonnet-latest',
     isActive: false,
     isConfigured: false,
-    models: ['claude-opus-4-0', 'claude-sonnet-4-0', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest'], // Anthropic has no public models endpoint
+    models: ['claude-opus-4-0', 'claude-sonnet-4-0', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest'], 
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -131,7 +130,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'local-model',
     isActive: false,
     isConfigured: false,
-    models: [], // fetched live from LM Studio
+    models: [], 
     maxTokens: 4096,
     temperature: 0.7,
     topP: 0.9,
@@ -146,7 +145,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'llama2',
     isActive: false,
     isConfigured: false,
-    models: [], // fetched live from Ollama
+    models: [], 
     maxTokens: 4096,
     temperature: 0.7,
     topP: 0.9,
@@ -161,7 +160,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'anthropic/claude-3.5-sonnet',
     isActive: false,
     isConfigured: false,
-    models: [], // fetched live from OpenRouter
+    models: [], 
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -187,7 +186,7 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     name: 'DocScan Glm-5 (free)',
     type: 'openai-compatible',
     baseUrl: 'https://api.us-west-2.modal.direct/v1',
-    apiKey: '', // injected from server at runtime
+    apiKey: '', 
     model: 'zai-org/GLM-5-FP8',
     isActive: false,
     isConfigured: false,
@@ -213,7 +212,6 @@ export function AiApiSettings() {
   useEffect(() => {
     setMounted(true)
     
-    // Remove test filtering - show all configured providers
 
     const load = async () => {
       try {
@@ -225,7 +223,6 @@ export function AiApiSettings() {
         const settingsData = data.status === 'fulfilled' ? data.value : []
         const freeConfig = freeProviderRes.status === 'fulfilled' ? freeProviderRes.value : null
         
-        // Map backend records to UI provider model
         let mapped: AIProvider[] = settingsData.map((s: any, index: number) => {
           const mappedType = (() => {
             const raw = (s.provider || 'custom').toString().toUpperCase()
@@ -265,10 +262,8 @@ export function AiApiSettings() {
           }
         })
 
-        // Inject DocScan Free providers from server config
         if (freeConfig) {
           const configs = Array.isArray(freeConfig) ? freeConfig : [freeConfig];
-          // reverse so that the first one in the array becomes the first element due to unshifting
           for (const config of [...configs].reverse()) {
             const existingIndex = mapped.findIndex(m => m.baseUrl === config.baseUrl && m.type === config.type);
             if (existingIndex >= 0) {
@@ -278,10 +273,10 @@ export function AiApiSettings() {
               mapped[existingIndex] = {
                 ...mapped[existingIndex],
                 id: config.id,
-                apiKey: config.apiKey, // Ensure latest env key is used
+                apiKey: config.apiKey, 
                 isConfigured: true,
-                model: isModelValid ? savedModel : config.model, // Reset discarded models
-                models: config.models.length > 0 ? config.models : mapped[existingIndex].models, // Keep dynamic models from backend if present
+                model: isModelValid ? savedModel : config.model, 
+                models: config.models.length > 0 ? config.models : mapped[existingIndex].models, 
               };
             } else {
               mapped = [{
@@ -292,14 +287,12 @@ export function AiApiSettings() {
           }
         }
 
-        // Always merge in default providers so all options are visible
         const existingTypes = new Set(mapped.map(m => m.type))
         const missingDefaults = defaultProviders
           .filter(d => !existingTypes.has(d.type))
           .map((d, idx) => ({ ...d, id: `provider-missing-${idx}` }))
         mapped = [...mapped, ...missingDefaults]
 
-        // If no providers exist at all, start with defaults
         if (mapped.length === 0) {
           mapped = defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` }))
         }
@@ -309,13 +302,11 @@ export function AiApiSettings() {
         const firstId = active?.id || mapped[0]?.id || ''
         setSelectedProviderId(firstId)
 
-        // Background auto-test and model fetch for all configured providers
         Promise.all(mapped.map(async (p) => {
           if (!p.apiKey && !['ollama', 'lm-studio'].includes(p.type) && !p.id.startsWith('docscan-free')) return;
           try {
             const { authenticatedRequest } = await import('@/lib/api-client')
             
-            // Mark as testing
             setProviders(prev => prev.map(pp => pp.id === p.id ? { ...pp, testStatus: 'pending' } : pp))
             
             const [testResult, modelsResult] = await Promise.allSettled([
@@ -337,7 +328,6 @@ export function AiApiSettings() {
           } catch(e) {}
         }))
         
-        // Show success message if providers were loaded
         if (settingsData.length > 0) {
           toast({
             title: 'Settings loaded',
@@ -346,7 +336,6 @@ export function AiApiSettings() {
         }
       } catch (error) {
         console.warn('Failed to load settings from server:', error)
-        // Fallback to defaults if server fetch fails
         setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
         
         toast({
@@ -361,7 +350,6 @@ export function AiApiSettings() {
 
   const saveProviders = async (newProviders: AIProvider[]) => {
     setProviders(newProviders)
-    // Only save providers that have been configured (have API keys or are local providers)
     const providersToSave = newProviders.filter(p => 
       p.isConfigured || p.dirtyApiKey || ['ollama', 'lm-studio'].includes(p.type)
     )
@@ -381,7 +369,6 @@ export function AiApiSettings() {
           default: return p.type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
         }
       })(),
-      // Always send apiKey for providers we're saving
       apiKey: p.apiKey ?? '',
       baseUrl: p.baseUrl,
       model: p.model,
@@ -397,7 +384,6 @@ export function AiApiSettings() {
       method: 'POST',
       body: JSON.stringify({ providers: payload })
     })
-    // Refresh from server to get the updated data
     const refreshed = await authenticatedRequest('/api/settings')
     setProviders((refreshed as any[]).map((s: any, index: number) => {
       const mappedType = (() => {
@@ -420,11 +406,9 @@ export function AiApiSettings() {
         name: pName,
         type: mappedType as AIProvider['type'],
         baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-        // Use the actual API key as returned from server (or override if it's a known free provider)
         apiKey: s.apiKey || '',
         model: s.model || (defaults?.models?.[0] ?? ''),
         isActive: !!s.isActive,
-        // Provider is configured if it has an API key
         isConfigured: !!(s.apiKey && s.apiKey.length > 0),
         lastTested: undefined,
         testStatus: undefined,
@@ -496,7 +480,6 @@ export function AiApiSettings() {
           description: `${provider.name} is working correctly. Auto-saved.`,
         })
 
-        // Find the index of the provider to update it in the latest state
         setProviders(prev => {
           const updated = prev.map(p => p.id === provider.id ? {
             ...p,
@@ -507,7 +490,6 @@ export function AiApiSettings() {
             isConfigured: true
           } : p);
           
-          // Auto-save silently in background
           const providersToSave = updated.filter(p => 
             p.isConfigured || p.dirtyApiKey || ['ollama', 'lm-studio'].includes(p.type)
           );
@@ -587,14 +569,12 @@ export function AiApiSettings() {
   }
 
   const getDisplayedApiKey = (provider: AIProvider) => {
-    // Return the actual API key as entered by user
     return provider.apiKey || ''
   }
 
   const saveSettings = async () => {
     setSaving(true)
     try {
-      // Update active provider logic - only one can be active at a time
       const activeProvider = providers.find(p => p.isActive && p.isConfigured)
       const newProviders = providers.map(p => ({
         ...p,
@@ -602,7 +582,6 @@ export function AiApiSettings() {
       }))
       await saveProviders(newProviders)
       
-      // Show success message
       toast({
         title: 'Settings updated',
         description: 'Your AI provider settings have been updated successfully.',
@@ -629,7 +608,6 @@ export function AiApiSettings() {
       })
       
       if (response && response.models && response.models.length > 0) {
-        // Only override if new models found
         updateProvider(provider.id, { models: response.models })
         toast({
           title: 'Models fetched successfully',
@@ -689,7 +667,6 @@ export function AiApiSettings() {
     }
   }
 
-  // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
     return <div className="space-y-6 flex items-center justify-center p-12 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-3"/> Loading settings...</div>
   }
@@ -922,7 +899,6 @@ export function AiApiSettings() {
                     </Alert>
                   )}
 
-                  {/* Removed manual option & test connection buttons */}
                 </CardContent>
               </Card>
             </motion.div>

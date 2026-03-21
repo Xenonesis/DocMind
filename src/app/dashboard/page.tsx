@@ -46,7 +46,6 @@ export default function Dashboard() {
   const { user, logout, isAuthenticated } = useAuth()
 
   useEffect(() => {
-    // Auth context handles redirect
   }, [isAuthenticated, user])
 
   const fetchDocuments = async () => {
@@ -152,11 +151,10 @@ export default function Dashboard() {
     <ProtectedRoute>
       <div className="min-h-screen bg-secondary/20 text-foreground font-sans flex flex-col">
 
-        {/* Modern Header */}
         <header className="bg-background border-b border-border px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-sm shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
-              <Image src="/logo.png" alt="DocMind Logo" fill className="object-cover" priority />
+              <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
@@ -179,7 +177,6 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             )}
-            {/* Chat Page Link */}
             <Link href="/dashboard/chat">
               <Button className="rounded-full px-5 shadow-sm gap-2">
                 <MessageSquare className="w-4 h-4" />
@@ -200,7 +197,6 @@ export default function Dashboard() {
 
         <main className="p-6 md:p-8 max-w-[1600px] mx-auto w-full space-y-8">
 
-          {/* Main Interface — No Chat tab here */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="bg-background rounded-2xl p-1.5 shadow-sm border border-border inline-flex w-fit">
               <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-1">

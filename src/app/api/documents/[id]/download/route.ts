@@ -23,19 +23,17 @@ export async function GET(
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    // Get document from database
     const { data: document, error: docError } = await db
       .from('documents')
       .select('*')
       .eq('id', documentId)
-      .eq('user_id', user.id) // Enforce ownership
+      .eq('user_id', user.id) 
       .single()
 
     if (docError || !document) {
       return NextResponse.json({ error: 'Document not found or access denied' }, { status: 404 })
     }
 
-    // Parse metadata to get storage information
     let metadata: any = {}
     try {
       metadata = JSON.parse(document.metadata || '{}')
@@ -57,7 +55,6 @@ export async function GET(
     
     const fileBuffer = Buffer.from(await fileBlob.arrayBuffer())
     
-    // Determine content type
     const fileExtension = path.extname(document.name).toLowerCase()
     let contentType = 'application/octet-stream'
     
@@ -75,7 +72,6 @@ export async function GET(
       case '.csv': contentType = 'text/csv'; break
     }
 
-    // Return file with appropriate headers
     return new NextResponse(fileBuffer, {
       headers: {
         'Content-Type': contentType,

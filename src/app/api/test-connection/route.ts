@@ -4,7 +4,6 @@ import { AIService } from '@/lib/ai-service'
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
@@ -21,11 +20,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Create AI service instance
     const aiService = AIService.getInstance()
 
     try {
-      // Test the connection with a simple prompt
       const testResult = await aiService.generateCompletion({
         provider: {
           ...provider,
@@ -38,7 +35,6 @@ export async function POST(request: NextRequest) {
         temperature: 0.1
       })
 
-      // Check if we got a valid response
       if (testResult && testResult.content) {
         return NextResponse.json({
           success: true,
@@ -59,7 +55,6 @@ export async function POST(request: NextRequest) {
     } catch (aiError: any) {
       console.error('AI Service error during connection test:', aiError)
       
-      // Parse common error types
       let errorMessage = 'Connection test failed'
       let errorDetails = aiError.message || 'Unknown error'
       

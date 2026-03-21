@@ -34,11 +34,10 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-foreground flex flex-col">
-      {/* Modern, clean header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border px-6 py-4 flex justify-between items-center transition-all">
         <div className="flex items-center gap-3">
           <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm border border-primary/20 bg-background/50 flex items-center justify-center">
-            <Image src="/logo.png" alt="DocMind Logo" fill className="object-cover" priority />
+            <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
           </div>
           <span className="text-xl font-bold tracking-tight">DocMind</span>
         </div>
@@ -62,7 +61,6 @@ export function LandingPage() {
         </div>
       </header>
 
-      {/* Main Hero */}
       <main className="pt-32 pb-24 px-6 max-w-7xl mx-auto flex flex-col gap-24 flex-grow">
         <section className="flex flex-col items-center text-center gap-8 mt-12">
           <motion.div
@@ -121,7 +119,6 @@ export function LandingPage() {
           </motion.div>
         </section>
 
-        {/* Minimal Features Grid Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-16">
           {[
             { icon: FileText, title: 'Universal Support', desc: 'Securely upload PDFs, Word documents, text files, and images.' },
@@ -151,7 +148,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="relative w-5 h-5 rounded overflow-hidden shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
-              <Image src="/logo.png" alt="DocMind Logo" fill className="object-cover" />
+              <Image src="/logo.png" alt="DocMind Logo" fill sizes="48px" className="object-cover" />
             </div>
             <span className="font-medium text-foreground">DocMind</span>
           </div>

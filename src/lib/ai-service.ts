@@ -1,6 +1,5 @@
 import { encryptApiKey, decryptApiKey, isValidApiKey, maskApiKey, sanitizeError } from './crypto-utils'
 
-// Minimal provider type used by the AI service
 export interface AIProvider {
   id?: string
   name: string
@@ -52,8 +51,6 @@ export class AIService {
   }
 
   private async loadProviders() {
-    // Providers are now loaded from database via API calls
-    // No localStorage usage
   }
 
   getActiveProvider(): AIProvider | null {
@@ -62,7 +59,6 @@ export class AIService {
 
   async loadProvidersFromDatabase(userId?: string) {
     try {
-      // Only load from database on server side
       if (typeof window !== 'undefined') {
         return
       }
@@ -71,14 +67,12 @@ export class AIService {
         return
       }
 
-      // Import Supabase client
       const { supabaseServer } = await import('./supabase')
       
       if (!supabaseServer) {
         return
       }
 
-      // Get AI provider settings from Supabase
       const { data: settings, error } = await supabaseServer
         .from('ai_provider_settings')
         .select('*')
@@ -94,49 +88,36 @@ export class AIService {
         return
       }
       
-      // Convert database settings to AIProvider format
       this.providers = settings.map(setting => {
-        // Normalize and map provider names from DB to internal provider types
         const rawName = (setting.provider_name || '').toString()
         const providerName = rawName.trim().toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-')
 
         const typeMapping: Record<string, AIProvider['type']> = {
-          // Google / Gemini
           'google': 'google',
           'google-ai': 'google',
           'googleai': 'google',
           'google-llm': 'google',
           'gemini': 'google',
-          // Mistral
           'mistral': 'mistral',
-          // LM Studio
           'lm-studio': 'lm-studio',
           'lmstudio': 'lm-studio',
-          // Ollama
           'ollama': 'ollama',
-          // OpenRouter
           'openrouter': 'open-router',
           'open-router': 'open-router',
           'openrouter.ai': 'open-router',
-          // OpenAI
           'openai': 'openai',
           'chatgpt': 'openai',
           'gpt': 'openai',
-          // Anthropic
           'anthropic': 'anthropic',
           'claude': 'anthropic',
-          // OpenAI Compatible
           'openai-compatible': 'openai-compatible',
-          // Groq
           'groq': 'groq',
-          // Fallback
           'custom': 'custom'
         }
 
         const mappedType: AIProvider['type'] =
           typeMapping[providerName] || typeMapping[providerName.replace(/\./g, '')] || 'custom'
         
-        // Set default base URLs based on provider type
         const defaultBaseUrls: Record<string, string> = {
           'google': 'https://generativelanguage.googleapis.com/v1beta',
           'mistral': 'https://api.mistral.ai/v1',
@@ -149,7 +130,6 @@ export class AIService {
           'groq': 'https://api.groq.com/openai/v1'
         }
         
-        // Decrypt the API key if it exists
         let decryptedApiKey = ''
         if (setting.api_key) {
           try {
@@ -187,12 +167,10 @@ export class AIService {
   async generateCompletion(config: AIServiceConfig): Promise<AIResponse> {
     const provider = config.provider
     
-    // Inject Groq API key from env if missing
     if (provider.type === 'groq' && !provider.apiKey && process.env.GROQ_API_KEY) {
       provider.apiKey = process.env.GROQ_API_KEY
     }
 
-    // Only require API key for cloud providers, not local ones
     if (!provider.apiKey && !['ollama', 'lm-studio'].includes(provider.type)) {
       throw new Error('API key not configured for provider')
     }
@@ -505,12 +483,10 @@ export class AIService {
 
   private async callAnthropic(config: AIServiceConfig): Promise<AIResponse> {
     const { provider, prompt, systemPrompt, temperature = 0.7, maxTokens = 8192 } = config
-    // Anthropic Messages API v1
     const url = `${provider.baseUrl}/messages`
 
     const messages: any[] = []
     if (systemPrompt) {
-      // Anthropic uses a top-level system field rather than a system role message
     }
 
     messages.push({ role: 'user', content: prompt })
@@ -574,12 +550,10 @@ export class AIService {
   async fetchModels(provider: AIProvider): Promise<string[]> {
     if (!provider.baseUrl) return provider.models || []
 
-    // Inject Groq API key from env if missing
     if (provider.type === 'groq' && !provider.apiKey && process.env.GROQ_API_KEY) {
       provider.apiKey = process.env.GROQ_API_KEY
     }
 
-    // Helper: fetch with an abort timeout (ms)
     const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 5000) => {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -602,7 +576,6 @@ export class AIService {
           return data.models?.map((m: any) => m.name) || []
         }
       } catch {
-        // Ollama not running locally — silent fallback
       }
     } else if (provider.type === 'lm-studio') {
       try {
@@ -615,7 +588,6 @@ export class AIService {
           return data.data?.map((m: any) => m.id) || []
         }
       } catch {
-        // LM Studio not running locally — silent fallback
       }
     } else if (provider.type === 'open-router') {
       try {
@@ -631,7 +603,6 @@ export class AIService {
           return data.data?.map((m: any) => m.id) || []
         }
       } catch {
-        // silent fallback
       }
     } else if (provider.type === 'google') {
       try {
@@ -641,7 +612,6 @@ export class AIService {
           return data.models?.map((m: any) => m.name.replace('models/', '')) || []
         }
       } catch {
-        // silent fallback
       }
     } else if (['openai', 'mistral', 'openai-compatible', 'groq'].includes(provider.type)) {
       try {
@@ -660,18 +630,15 @@ export class AIService {
           return data.data?.map((m: any) => m.id) || []
         }
       } catch {
-        // silent fallback
       }
     } else if (provider.type === 'anthropic') {
       return ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest', 'claude-3-sonnet-20240229']
     }
 
-    // Default fallback if fetch fails or is unsupported
     return provider.models || []
   }
 
   updateProviders(providers: AIProvider[]) {
-    // Update in-memory providers only - persistence is handled by the API
     this.providers = providers
   }
 }

@@ -1,12 +1,6 @@
-/**
- * Simple encryption utilities for API keys
- * Note: This is basic obfuscation, not true encryption. For production use,
- * consider using proper encryption libraries or backend secure storage.
- */
 
-const ENCRYPTION_KEY = 'documind-ai-2024-secure-key' // In production, this should be from environment variables
+const ENCRYPTION_KEY = 'documind-ai-2024-secure-key' 
 
-// Simple XOR-based "encryption" for basic obfuscation
 function xorEncrypt(text: string, key: string): string {
   let result: string[] = []
   for (let i = 0; i < text.length; i++) {
@@ -18,7 +12,6 @@ function xorEncrypt(text: string, key: string): string {
 
 function xorDecrypt(encryptedText: string, key: string): string {
   let result = ''
-  // Parse hex pairs back to numbers
   for (let i = 0; i < encryptedText.length; i += 2) {
     const hexPair = encryptedText.substr(i, 2)
     const charCode = parseInt(hexPair, 16)
@@ -64,18 +57,11 @@ export function maskApiKey(apiKey: string): string {
 export function isValidApiKey(apiKey: string, providerType: string): boolean {
   if (!apiKey || apiKey.length < 10) return false
 
-  // Basic validation patterns for different providers
   const patterns: Record<string, (key: string) => boolean> = {
-    // Google API keys can have various formats:
-    // - AIza... (most common, typically 39 chars but can vary)
-    // - Other formats for different Google services (20+ chars, but not starting with AIza)
-    // Be more permissive for Google keys to accommodate different formats
     google: (key: string) => {
-      // AIza keys - be more flexible with length (35-45 chars is common)
       if (key.startsWith('AIza')) {
         return key.length >= 35 && key.length <= 45 && /^AIza[0-9A-Za-z\-_]+$/.test(key)
       }
-      // Other Google keys must be at least 20 characters and not start with AIza
       return key.length >= 20 && /^[A-Za-z0-9\-_]+$/.test(key)
     },
     mistral: (key: string) => /^[a-zA-Z0-9]{32}$/.test(key),
@@ -83,7 +69,7 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
     openai: (key: string) => /^sk-[a-zA-Z0-9]{20,}$/.test(key),
     anthropic: (key: string) => /^sk-ant-[a-zA-Z0-9]{20,}$/.test(key),
     'lm-studio': (key: string) => /^[a-zA-Z0-9\-_]{10,}$/.test(key),
-    ollama: (key: string) => /^[a-zA-Z0-9\-_]{1,}$/.test(key) // Ollama might not require API keys
+    ollama: (key: string) => /^[a-zA-Z0-9\-_]{1,}$/.test(key) 
   }
 
   const pattern = patterns[providerType as keyof typeof patterns]
@@ -91,7 +77,6 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
     return pattern(apiKey)
   }
 
-  // Generic validation for unknown providers
   return apiKey.length >= 10 && /^[a-zA-Z0-9\-_]+$/.test(apiKey)
 }
 

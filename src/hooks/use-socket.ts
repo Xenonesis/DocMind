@@ -56,7 +56,6 @@ export function useSocket(options: UseSocketOptions = {}) {
     if (typeof window === 'undefined') return
     if (!socketsEnabled) return
 
-    // Initialize socket connection
     const baseUrl = process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin
     const socket = io(baseUrl, {
       path: '/api/socketio',
@@ -65,11 +64,9 @@ export function useSocket(options: UseSocketOptions = {}) {
 
     socketRef.current = socket
 
-    // Connection events
     socket.on('connect', () => {
       setState(prev => ({ ...prev, isConnected: true }))
 
-      // Join rooms if specified
       if (documentId) {
         socket.emit('join-document-room', documentId)
       }
@@ -83,15 +80,13 @@ export function useSocket(options: UseSocketOptions = {}) {
       setState(prev => ({ ...prev, isConnected: false }))
     })
 
-    // Document updates
     socket.on('document-update', (update: DocumentUpdate) => {
       setState(prev => ({
         ...prev,
-        documentUpdates: [update, ...prev.documentUpdates].slice(0, 50) // Keep last 50
+        documentUpdates: [update, ...prev.documentUpdates].slice(0, 50) 
       }))
     })
 
-    // Query updates
     socket.on('query-update', (update: QueryUpdate) => {
       setState(prev => ({
         ...prev,
@@ -99,7 +94,6 @@ export function useSocket(options: UseSocketOptions = {}) {
       }))
     })
 
-    // Analysis updates
     socket.on('analysis-update', (update: AnalysisUpdate) => {
       setState(prev => ({
         ...prev,
@@ -107,7 +101,6 @@ export function useSocket(options: UseSocketOptions = {}) {
       }))
     })
 
-    // Progress updates
     socket.on('progress-update', (update: {
       type: 'document' | 'query' | 'analysis'
       id: string
@@ -121,7 +114,6 @@ export function useSocket(options: UseSocketOptions = {}) {
       }))
     })
 
-    // System notifications
     socket.on('system-notification', (notification: {
       type: 'info' | 'warning' | 'error' | 'success'
       title: string
@@ -134,29 +126,22 @@ export function useSocket(options: UseSocketOptions = {}) {
       }))
     })
 
-    // Connection confirmation
     socket.on('connected', (data: { socketId: string; timestamp: string; message: string }) => {
-      // Connection confirmed
     })
 
-    // Welcome message
     socket.on('message', (msg: { text: string; senderId: string; timestamp: string }) => {
-      // Message received
     })
 
-    // Auto-connect if enabled
     if (autoConnect) {
       socket.connect()
     }
 
-    // Cleanup
     return () => {
       socket.disconnect()
       socketRef.current = null
     }
   }, [autoConnect, documentId, shouldJoinUpdates, socketsEnabled])
 
-  // Actions
   const joinDocumentRoom = (docId: string) => {
     if (socketRef.current) {
       socketRef.current.emit('join-document-room', docId)

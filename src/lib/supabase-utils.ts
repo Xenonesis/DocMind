@@ -7,7 +7,6 @@ import {
   Query as QueryType
 } from './supabase-types'
 
-// Table names
 export const TABLES = {
   USERS: 'users',
   AI_PROVIDER_SETTINGS: 'ai_provider_settings',
@@ -71,15 +70,12 @@ function reviveDates<T>(obj: any): any {
         if (!isNaN(d.getTime())) {
           out[key] = d
         } else {
-          // If invalid date, set to current date
           out[key] = new Date()
         }
       } catch (e) {
-        // If date parsing fails, set to current date
         out[key] = new Date()
       }
     } else if (key in out && (out[key] === '{}' || typeof out[key] === 'object')) {
-      // Handle malformed timestamps
       out[key] = new Date()
     }
   }
@@ -144,7 +140,6 @@ export class SupabaseService<T extends { id: string }> {
     let qb = supabaseServer!.from(this.tableName).select('*')
     const column = toSnakeCaseKey(field)
 
-    // Basic operator mapping
     switch (operator) {
       case '==':
         qb = qb.eq(column, value)
@@ -153,19 +148,14 @@ export class SupabaseService<T extends { id: string }> {
         qb = qb.neq(column, value)
         break
       case 'array-contains':
-        // For JSONB arrays, use the contains operator
-        // For the queries table, documentIds is likely stored as JSONB
         if (this.tableName === 'queries' && column === 'document_ids') {
-          // Try JSONB contains first, fallback to text search if it fails
           try {
             qb = qb.contains(column, [value])
           } catch (error) {
-            // If JSONB fails, try text-based search as fallback
             console.warn('JSONB contains failed, falling back to text search:', error)
             qb = qb.filter(column, 'like', `%"${value}"%`)
           }
         } else {
-          // For other cases, use text search in JSON string
           qb = qb.filter(column, 'like', `%"${value}"%`)
         }
         break
@@ -175,10 +165,8 @@ export class SupabaseService<T extends { id: string }> {
 
     const { data, error } = await qb
     if (error) {
-      // If we get the JSONB operator error, try a different approach
       if (error.code === '42883' && operator === 'array-contains') {
         console.warn('JSONB operator error, retrying with text search approach')
-        // Retry with a different query approach
         qb = supabaseServer!.from(this.tableName).select('*')
         qb = qb.filter(column, 'like', `%"${value}"%`)
         const retryResult = await qb
@@ -191,14 +179,12 @@ export class SupabaseService<T extends { id: string }> {
   }
 }
 
-// Service instances
 export const userService = new SupabaseService<User>(TABLES.USERS)
 export const aiProviderService = new SupabaseService<AiProviderSetting>(TABLES.AI_PROVIDER_SETTINGS)
 export const documentService = new SupabaseService<Document>(TABLES.DOCUMENTS)
 export const analysisService = new SupabaseService<Analysis>(TABLES.ANALYSES)
 export const queryService = new SupabaseService<QueryType>(TABLES.QUERIES)
 
-// Specialized methods
 export const getUserByEmail = async (email: string): Promise<User | null> => {
   const rows = await userService.getWhere('email', '==', email)
   return rows[0] || null

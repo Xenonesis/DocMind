@@ -14,7 +14,6 @@ function decodeJwtPayload(token: string): any | null {
     const parts = token.split('.')
     if (parts.length < 2) return null
     const payload = parts[1]
-    // base64url -> base64 padding
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(payload.length / 4) * 4, '=')
     const json = Buffer.from(normalized, 'base64').toString('utf8')
     return JSON.parse(json)
@@ -23,13 +22,7 @@ function decodeJwtPayload(token: string): any | null {
   }
 }
 
-/**
- * Get authenticated user from request headers
- * Returns null if not authenticated.
- * Tries local JWT decode first (no network); falls back to Supabase auth.getUser.
- */
 export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
-  // Get the session token from the request headers
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -37,7 +30,6 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
 
   const token = authHeader.substring(7)
 
-  // Try local decode (fast, no network). RLS will still validate token on DB calls.
   const payload = decodeJwtPayload(token)
   if (payload?.sub) {
     const email: string = payload.email || payload.user_metadata?.email || ''
@@ -50,7 +42,6 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
     }
   }
 
-  // Fallback: call Supabase (may timeout if network unavailable)
   if (!supabaseServer) {
     return null
   }
@@ -71,10 +62,6 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
   }
 }
 
-/**
- * Require authentication for an API route
- * Returns the authenticated user or throws an error response
- */
 export async function requireAuth(request: NextRequest): Promise<AuthenticatedUser> {
   const user = await getAuthenticatedUser(request)
   
@@ -88,24 +75,19 @@ export async function requireAuth(request: NextRequest): Promise<AuthenticatedUs
   return user
 }
 
-/**
- * Create or get user profile in the database
- */
 export async function ensureUserProfile(user: AuthenticatedUser, dbClient?: any) {
   const db = dbClient || supabaseServer
   if (!db) {
     throw new Error('Supabase not configured')
   }
 
-  // Check if user profile exists
   const { data: existingProfile, error: fetchError } = await db
     .from('user_profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
-    // If it's a foreign key constraint error, the user doesn't exist in auth.users
+  if (fetchError && fetchError.code !== 'PGRST116') { 
     if (fetchError.code === '23503') {
       const error = new Error('User not found in authentication system')
       ;(error as any).code = '23503'
@@ -118,7 +100,6 @@ export async function ensureUserProfile(user: AuthenticatedUser, dbClient?: any)
     return existingProfile
   }
 
-  // Create user profile
   const { data: newProfile, error: createError } = await db
     .from('user_profiles')
     .insert({
@@ -131,7 +112,6 @@ export async function ensureUserProfile(user: AuthenticatedUser, dbClient?: any)
     .single()
 
   if (createError) {
-    // If it's a foreign key constraint error, the user doesn't exist in auth.users
     if (createError.code === '23503') {
       const error = new Error('User not found in authentication system')
       ;(error as any).code = '23503'

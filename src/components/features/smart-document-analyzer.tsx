@@ -47,7 +47,6 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
     setResults([])
 
     try {
-      // Simulate progressive analysis
       const steps = [
         'Extracting document content...',
         'Analyzing structure and patterns...',
@@ -61,7 +60,6 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
         setProgress((i + 1) * 20)
       }
 
-      // Mock analysis results - replace with real API call
       const mockResults: AnalysisResult[] = [
         {
           type: 'insight',

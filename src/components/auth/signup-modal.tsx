@@ -40,7 +40,6 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
     setIsLoading(true)
     setError('')
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       setIsLoading(false)
@@ -93,7 +92,6 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
           transition={{ duration: 0.3 }}
           className="space-y-6 p-6 pt-4"
         >
-          {/* Social Signup */}
           <div className="space-y-3">
             <Button
               variant="outline"
@@ -124,7 +122,6 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
             </div>
           </div>
 
-          {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="name">Full Name</Label>

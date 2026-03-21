@@ -69,7 +69,6 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
           transition={{ duration: 0.3 }}
           className="space-y-6 p-6 pt-4"
         >
-          {/* Social Login */}
           <div className="space-y-3">
             <Button
               variant="outline"
@@ -100,7 +99,6 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
             </div>
           </div>
 
-          {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>

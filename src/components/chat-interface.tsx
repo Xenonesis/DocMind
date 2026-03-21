@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { useToast } from '@/hooks/use-toast'
 import {
   Send,
   Bot,
@@ -49,6 +50,19 @@ interface ChatMessage {
 interface ChatInterfaceProps {
   documents: Document[]
   selectedProvider?: string
+  onDocumentsChanged?: () => Promise<void> | void
+}
+
+type UploadResponse = {
+  id: string
+  name: string
+  type: string
+  size: string
+  status: 'PROCESSING'
+  uploadDate: string
+  downloadURL: string
+  storageRef: string
+  processingStrategy: 'go' | 'node'
 }
 
 const SUGGESTED_PROMPTS = [
@@ -77,7 +91,6 @@ function MessageBubble({
       transition={{ duration: 0.25 }}
       className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end`}
     >
-      {/* Avatar */}
       <div
         className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm
           ${isUser
@@ -90,7 +103,6 @@ function MessageBubble({
         {isUser ? <User className="w-4 h-4" /> : isError ? <AlertCircle className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
       </div>
 
-      {/* Bubble */}
       <div className={`group max-w-[80%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
         <div
           className={`px-4 py-3.5 rounded-2xl text-sm leading-relaxed overflow-hidden
@@ -110,7 +122,6 @@ function MessageBubble({
           )}
         </div>
 
-        {/* Meta row */}
         <div className={`flex items-center gap-2 px-1 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
           <span className="text-[10px] text-muted-foreground/60">
             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -177,15 +188,18 @@ function TypingIndicator() {
   )
 }
 
-export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProps) {
+export function ChatInterface({ documents, selectedProvider, onDocumentsChanged }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false)
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
   const [showDocPicker, setShowDocPicker] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
   const completedDocs = documents.filter(d => d.status === 'COMPLETED')
 
   const scrollToBottom = useCallback(() => {
@@ -285,12 +299,84 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
     setMessages([])
   }
 
+  const openUploadPicker = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setIsUploadingFiles(true)
+
+    try {
+      const { authenticatedFetch } = await import('@/lib/api-client')
+      const uploadedDocIds: string[] = []
+
+      for (const file of Array.from(files)) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await authenticatedFetch('/api/documents/upload', {
+          method: 'POST',
+          body: formData,
+          headers: {}
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(errorText || `Failed to upload ${file.name}`)
+        }
+
+        const result = await response.json() as UploadResponse
+        uploadedDocIds.push(result.id)
+
+        const processorEndpoint = result.processingStrategy === 'node'
+          ? '/api/process-document-fallback'
+          : '/api/process-document'
+
+        authenticatedFetch(processorEndpoint, {
+          method: 'POST',
+          body: JSON.stringify({ documentId: result.id })
+        }).then(async (processorResponse) => {
+          if (!processorResponse.ok) {
+            const errorText = await processorResponse.text()
+            throw new Error(errorText || `Processing failed for ${result.name}`)
+          }
+        }).catch((processingError) => {
+          console.error('Document processing error:', processingError)
+        })
+      }
+
+      await onDocumentsChanged?.()
+      if (uploadedDocIds.length > 0) {
+        setSelectedDocIds(prev => Array.from(new Set([...prev, ...uploadedDocIds])))
+        setShowDocPicker(true)
+      }
+
+      toast({
+        title: 'Upload started',
+        description: `${uploadedDocIds.length} document${uploadedDocIds.length === 1 ? '' : 's'} uploaded and queued for processing.`
+      })
+    } catch (uploadError: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: uploadError?.message || 'Unable to upload document(s). Please try again.'
+      })
+    } finally {
+      setIsUploadingFiles(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   const isEmpty = messages.length === 0
 
   return (
     <div className="flex flex-col h-full min-h-0">
 
-      {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -321,7 +407,6 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
         </div>
       </div>
 
-      {/* Document picker */}
       <AnimatePresence>
         {showDocPicker && (
           <motion.div
@@ -368,7 +453,6 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
         )}
       </AnimatePresence>
 
-      {/* Messages area */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-5 pr-2 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border/60 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-border">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full py-12 text-center">
@@ -382,7 +466,6 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
               {completedDocs.length === 0 && ' Upload a document first to get started.'}
             </p>
 
-            {/* Suggested prompts */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
               {SUGGESTED_PROMPTS.map((p, i) => (
                 <button
@@ -408,7 +491,6 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
         )}
       </div>
 
-      {/* Input area */}
       <div className="mt-4 pt-4 border-t border-border/50 shrink-0">
         {selectedDocIds.length > 0 && (
           <div className="flex items-center gap-1.5 mb-2">
@@ -420,6 +502,14 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
         )}
         <div className="flex gap-3 items-end">
           <div className="relative flex-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.json,.xml,.csv"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
             <Textarea
               ref={textareaRef}
               value={input}
@@ -427,15 +517,24 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
               onKeyDown={handleKeyDown}
               placeholder={completedDocs.length === 0 ? 'Upload a document first to start chatting...' : 'Ask anything about your documents… (Enter to send)'}
               disabled={isStreaming || completedDocs.length === 0}
-              className="resize-none min-h-[56px] max-h-[200px] rounded-2xl bg-secondary/30 border-border/50 shadow-inner pr-14 py-4 text-sm leading-relaxed focus-visible:ring-1 focus-visible:ring-primary focus-visible:bg-background transition-all"
+              className="resize-none min-h-[56px] max-h-[200px] rounded-2xl bg-secondary/30 border-border/50 shadow-inner pl-14 pr-14 py-4 text-sm leading-relaxed focus-visible:ring-1 focus-visible:ring-primary focus-visible:bg-background transition-all"
               rows={1}
               style={{ height: 'auto' }}
               onInput={e => {
                 const t = e.currentTarget
                 t.style.height = 'auto'
                 t.style.height = Math.min(t.scrollHeight, 200) + 'px'
-              }}
+                }}
             />
+            <Button
+              onClick={openUploadPicker}
+              disabled={isUploadingFiles}
+              size="icon"
+              variant="ghost"
+              className="absolute left-2 bottom-2 h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary"
+            >
+              {isUploadingFiles ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+            </Button>
             <Button
               onClick={() => sendMessage()}
               disabled={!input.trim() || isStreaming || completedDocs.length === 0}
