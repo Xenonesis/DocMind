@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, FileText, Database, Shield, Zap } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -36,8 +37,8 @@ export function LandingPage() {
       {/* Modern, clean header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border px-6 py-4 flex justify-between items-center transition-all">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-sm">
-            D
+          <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm border border-primary/20 bg-background/50 flex items-center justify-center">
+            <Image src="/logo.png" alt="DocMind Logo" fill className="object-cover" priority />
           </div>
           <span className="text-xl font-bold tracking-tight">DocMind</span>
         </div>
@@ -149,8 +150,8 @@ export function LandingPage() {
       <footer className="border-t border-border bg-card/50 text-muted-foreground py-8 text-center text-sm">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded overflow-hidden bg-primary flex items-center justify-center text-primary-foreground font-bold text-[10px]">
-              D
+            <div className="relative w-5 h-5 rounded overflow-hidden shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
+              <Image src="/logo.png" alt="DocMind Logo" fill className="object-cover" />
             </div>
             <span className="font-medium text-foreground">DocMind</span>
           </div>

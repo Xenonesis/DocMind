@@ -1,290 +1,79 @@
 <div align="center">
 
-# 🧠 DocMind
+# DocMind
 ### Intelligent Document Processing Platform
 
-<p align="center">
-  <strong>Transform how you interact with documents through AI-powered semantic search, natural language queries, and intelligent analysis.</strong>
-</p>
+Transform how you interact with documents through AI-powered semantic search, natural language queries, and intelligent analysis.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js 15" />
-  <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Tailwind-4.0-38bdf8?style=for-the-badge&logo=tailwindcss" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/AI-Powered-ff6b6b?style=for-the-badge&logo=openai" alt="AI Powered" />
-</p>
-
-<p align="center">
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-features">Features</a> •
-  <a href="#-demo">Demo</a> •
-  <a href="#-documentation">Documentation</a> •
-  <a href="#-contributing">Contributing</a>
-</p>
-
----
+[Quick Start](#quick-start) • [Features](#features) • [Documentation](#documentation) • [API Reference](#api-documentation) • [Contributing](#contributing)
 
 </div>
 
-## 🎯 What is DocMind?
+---
+
+## Overview
 
 DocMind revolutionizes document management by combining cutting-edge AI with intuitive design. Upload your documents and instantly unlock their potential through semantic search, natural language queries, and intelligent analysis.
 
-### 🌟 Why Choose DocMind?
+### Why DocMind
 
-<table>
-<tr>
-<td width="50%">
-
-**🚀 Lightning Fast**
-- Instant document processing
-- Real-time search results
-- Optimized performance
-
-**🧠 AI-Powered Intelligence**
-- Semantic understanding
-- Natural language queries
-- Contextual insights
-
-</td>
-<td width="50%">
-
-**🔒 Secure & Private**
-- Local processing options
-- Enterprise-grade security
-- GDPR compliant
-
-**📱 Modern Experience**
-- Responsive design
-- Dark mode support
-- Accessibility focused
-
-</td>
-</tr>
-</table>
+| Capability | Benefits |
+|------------|----------|
+| **Lightning Fast** | Instant document processing, real-time search results, optimized performance |
+| **AI-Powered Intelligence** | Semantic understanding, natural language queries, contextual insights |
+| **Secure & Private** | Local processing options, enterprise-grade security, GDPR compliant |
+| **Modern Experience** | Responsive design, dark mode support, accessibility focused |
 
 ---
 
-## 📸 Screenshots
+## Features
 
-<div align="center">
+### Smart Document Processing
 
-### 🏠 Landing Page
-![Landing Page](https://via.placeholder.com/800x450/0f172a/ffffff?text=🏠+Modern+Landing+Page+with+Animations)
+**Advanced Upload System**
+- **Multi-format Support**: PDF documents with OCR, Microsoft Word (DOCX), Plain text files (TXT), Rich text format (RTF)
+- **Intelligent Processing**: Automatic text extraction, metadata preservation, content structure analysis, error handling & validation
+- **Real-time Features**: Live progress tracking, WebSocket status updates, batch processing queue, processing analytics
 
-### 📊 Dashboard Overview
-![Dashboard](https://via.placeholder.com/800x450/1e293b/ffffff?text=📊+Interactive+Dashboard+Interface)
+**Semantic Search Engine**
+- **AI-Powered Search**: Vector embeddings for semantic understanding, context-aware result ranking, multi-language support, fuzzy matching capabilities
+- **Query Intelligence**: Natural language processing, intent recognition, query expansion, auto-suggestions
+- **Result Enhancement**: Highlighted excerpts, relevance scoring, source attribution, export capabilities
 
-### 🔍 Search Interface
-![Search](https://via.placeholder.com/800x450/374151/ffffff?text=🔍+Semantic+Search+%26+Query+Interface)
+### AI-Powered Analysis
 
-### 📄 Document Management
-![Documents](https://via.placeholder.com/800x450/475569/ffffff?text=📄+Document+List+%26+Management)
+**Content Intelligence**
+- **Document Analysis**: Automatic summarization, key entity extraction, topic modeling, sentiment analysis
+- **Classification System**: Content categorization, tag generation, priority scoring, duplicate detection
+- **Insights Generation**: Trend identification, pattern recognition, relationship mapping, anomaly detection
 
-</div>
-
-## ✨ Features
-
-<div align="center">
-
-### 🎨 **Core Capabilities**
-
-</div>
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 📄 **Smart Document Processing**
-
-<details>
-<summary><strong>🔧 Advanced Upload System</strong></summary>
-
-- **Multi-format Support** 
-  - PDF documents with OCR
-  - Microsoft Word (DOCX)
-  - Plain text files (TXT)
-  - Rich text format (RTF)
-  - More formats coming soon
-
-- **Intelligent Processing**
-  - Automatic text extraction
-  - Metadata preservation
-  - Content structure analysis
-  - Error handling & validation
-
-- **Real-time Features**
-  - Live progress tracking
-  - WebSocket status updates
-  - Batch processing queue
-  - Processing analytics
-
-</details>
-
-<details>
-<summary><strong>🔍 Semantic Search Engine</strong></summary>
-
-- **AI-Powered Search**
-  - Vector embeddings for semantic understanding
-  - Context-aware result ranking
-  - Multi-language support
-  - Fuzzy matching capabilities
-
-- **Query Intelligence**
-  - Natural language processing
-  - Intent recognition
-  - Query expansion
-  - Auto-suggestions
-
-- **Result Enhancement**
-  - Highlighted excerpts
-  - Relevance scoring
-  - Source attribution
-  - Export capabilities
-
-</details>
-
-</td>
-<td width="50%" valign="top">
-
-### 🤖 **AI-Powered Analysis**
-
-<details>
-<summary><strong>📊 Content Intelligence</strong></summary>
-
-- **Document Analysis**
-  - Automatic summarization
-  - Key entity extraction
-  - Topic modeling
-  - Sentiment analysis
-
-- **Classification System**
-  - Content categorization
-  - Tag generation
-  - Priority scoring
-  - Duplicate detection
-
-- **Insights Generation**
-  - Trend identification
-  - Pattern recognition
-  - Relationship mapping
-  - Anomaly detection
-
-</details>
-
-<details>
-<summary><strong>📈 Analytics Dashboard</strong></summary>
-
-- **Usage Metrics**
-  - Document processing stats
-  - Query performance analytics
-  - User activity tracking
-  - System health monitoring
-
-- **Content Analytics**
-  - Document collection insights
-  - Search pattern analysis
-  - Popular content identification
-  - Usage trend visualization
-
-- **Performance Monitoring**
-  - Response time tracking
-  - Error rate monitoring
-  - Resource utilization
-  - Optimization recommendations
-
-</details>
-
-</td>
-</tr>
-</table>
+**Analytics Dashboard**
+- **Usage Metrics**: Document processing stats, query performance analytics, user activity tracking, system health monitoring
+- **Content Analytics**: Document collection insights, search pattern analysis, popular content identification, usage trend visualization
+- **Performance Monitoring**: Response time tracking, error rate monitoring, resource utilization, optimization recommendations
 
 ---
 
-## 🎮 Demo
+## Quick Start
 
-<div align="center">
+Get DocMind running in 3 minutes.
 
-### 🚀 **Try DocMind Live**
-
-<p>
-  <a href="#" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/🌐_Live_Demo-Try_Now-4CAF50?style=for-the-badge&logoColor=white" alt="Live Demo" />
-  </a>
-  <a href="#" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/📹_Video_Tour-Watch-FF5722?style=for-the-badge&logoColor=white" alt="Video Tour" />
-  </a>
-  <a href="#" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/📖_Interactive_Guide-Explore-2196F3?style=for-the-badge&logoColor=white" alt="Interactive Guide" />
-  </a>
-</p>
-
-### 🎯 **Quick Demo Steps**
-
-```mermaid
-graph LR
-    A[📤 Upload Document] --> B[🔄 AI Processing]
-    B --> C[🔍 Search & Query]
-    C --> D[📊 View Results]
-    D --> E[💾 Export Insights]
-```
-
-</div>
-
-## 🚀 Quick Start
-
-<div align="center">
-
-### ⚡ **Get DocMind Running in 3 Minutes**
-
-</div>
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 📋 **Prerequisites**
-
-<details>
-<summary><strong>🔧 System Requirements</strong></summary>
+### Prerequisites
 
 **Required:**
-- **Node.js** 18.0+ ([Download](https://nodejs.org/))
-- **npm** 9.0+ (comes with Node.js)
-- **Git** ([Download](https://git-scm.com/))
+- Node.js 18.0+ ([Download](https://nodejs.org/))
+- npm 9.0+ (comes with Node.js)
+- Git ([Download](https://git-scm.com/))
 
 **Recommended:**
-- **VS Code** with extensions:
-  - TypeScript and JavaScript Language Features
-  - Tailwind CSS IntelliSense
-  - ES7+ React/Redux/React-Native snippets
+- VS Code with extensions: TypeScript and JavaScript Language Features, Tailwind CSS IntelliSense, ES7+ React/Redux/React-Native snippets
 
 **Browser Support:**
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+- Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
 
-</details>
+### Installation
 
-<details>
-<summary><strong>🔑 API Keys (Optional)</strong></summary>
-
-For full AI functionality:
-- **OpenAI API Key** ([Get one here](https://platform.openai.com/api-keys))
-- **Anthropic API Key** (Alternative AI provider)
-- **Custom AI Endpoint** (For self-hosted models)
-
-</details>
-
-</td>
-<td width="50%" valign="top">
-
-### 🎯 **Installation Steps**
-
-<details>
-<summary><strong>📥 Step 1: Clone & Setup</strong></summary>
-
+**1. Clone and Setup**
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/docmind.git
@@ -297,10 +86,7 @@ npm install
 cp .env.example .env
 ```
 
-</details>
-
-<details>
-<summary><strong>⚙️ Step 2: Configuration</strong></summary>
+**2. Configuration**
 
 Edit `.env` file:
 ```bash
@@ -317,11 +103,7 @@ MAX_FILE_SIZE=10485760  # 10MB
 UPLOAD_DIR=./public/uploads
 ```
 
-</details>
-
-<details>
-<summary><strong>🚀 Step 3: Launch</strong></summary>
-
+**3. Launch**
 ```bash
 # Start development server
 npm run dev
@@ -330,41 +112,11 @@ npm run dev
 npm run dev -- --port 3001
 ```
 
-**🎉 Open [http://localhost:3000](http://localhost:3000)**
+Open [http://localhost:3000](http://localhost:3000)
 
-</details>
+### Production Deployment
 
-</td>
-</tr>
-</table>
-
----
-
-### 🔄 **Development Workflow**
-
-<div align="center">
-
-```mermaid
-graph TD
-    A[📥 Clone Repository] --> B[📦 Install Dependencies]
-    B --> C[⚙️ Configure Environment]
-    C --> D[🚀 Start Dev Server]
-    D --> E[🔧 Make Changes]
-    E --> F[🧪 Test Features]
-    F --> G[📤 Build & Deploy]
-    
-    style A fill:#e1f5fe
-    style D fill:#e8f5e8
-    style G fill:#fff3e0
-```
-
-</div>
-
-### 🏗️ **Production Deployment**
-
-<details>
-<summary><strong>🌐 Vercel (Recommended)</strong></summary>
-
+**Vercel (Recommended)**
 ```bash
 # Install Vercel CLI
 npm i -g vercel
@@ -377,11 +129,7 @@ vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/docmind)
 
-</details>
-
-<details>
-<summary><strong>🐳 Docker Deployment</strong></summary>
-
+**Docker Deployment**
 ```bash
 # Build Docker image
 docker build -t docmind .
@@ -390,11 +138,7 @@ docker build -t docmind .
 docker run -p 3000:3000 -e OPENAI_API_KEY=your_key docmind
 ```
 
-</details>
-
-<details>
-<summary><strong>🖥️ Manual Deployment</strong></summary>
-
+**Manual Deployment**
 ```bash
 # Build for production
 npm run build
@@ -407,354 +151,141 @@ npm install -g pm2
 pm2 start npm --name "docmind" -- start
 ```
 
-</details>
+---
 
-## 🏗️ Technology Stack
+## Technology Stack
 
-<div align="center">
+### Frontend Technologies
 
-### 🛠️ **Built with Modern Technologies**
+**Core Framework**
+- **Next.js 15** - App Router architecture, server-side rendering (SSR), static site generation (SSG), API routes integration
+- **TypeScript 5.0** - Type-safe development, enhanced IDE support, better code maintainability, compile-time error checking
 
-</div>
+**Styling & UI**
+- **Tailwind CSS 4** - Utility-first CSS framework, custom design system, responsive design utilities, dark mode support
+- **shadcn/ui** - High-quality components, accessible by default, customizable themes, TypeScript support
+- **Framer Motion** - Smooth animations, gesture support, layout animations, performance optimized
 
-<table>
-<tr>
-<td width="50%" valign="top">
+**User Experience**
+- Lucide React - 1000+ beautiful icons
+- Responsive Design - Mobile-first approach
+- Dark Mode - System preference detection
+- Accessibility - WCAG 2.1 AA compliant
+- Progressive Web App - Offline capabilities
 
-### 🎨 **Frontend Technologies**
+### Backend & Processing
 
-<details>
-<summary><strong>⚡ Core Framework</strong></summary>
+**Data Management**
+- **TanStack Query** - Intelligent caching, background updates, optimistic updates, error handling
+- **Axios** - HTTP client library, request/response interceptors, automatic JSON parsing, error handling
+- **Socket.io** - Real-time communication, WebSocket fallback, room management, event-driven architecture
 
-- **Next.js 15** ![Next.js](https://img.shields.io/badge/-Next.js-000000?style=flat-square&logo=next.js)
-  - App Router architecture
-  - Server-side rendering (SSR)
-  - Static site generation (SSG)
-  - API routes integration
+**Document Processing**
+- **PDF Processing**: PDF-Parse for text extraction, PDF.js for rendering, OCR capabilities, metadata extraction
+- **Office Documents**: Mammoth for DOCX processing, RTF support, formatting preservation, table extraction
+- **Text Processing**: Natural language processing, encoding detection, content sanitization, structure analysis
 
-- **TypeScript 5.0** ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-  - Type-safe development
-  - Enhanced IDE support
-  - Better code maintainability
-  - Compile-time error checking
+**AI Integration**
+- OpenAI GPT Models - Text analysis and generation
+- Anthropic Claude - Alternative AI provider
+- Vector Embeddings - Semantic search capabilities
+- Custom Models - Self-hosted AI support
 
-</details>
+### Development Tools
 
-<details>
-<summary><strong>🎨 Styling & UI</strong></summary>
-
-- **Tailwind CSS 4** ![Tailwind](https://img.shields.io/badge/-Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
-  - Utility-first CSS framework
-  - Custom design system
-  - Responsive design utilities
-  - Dark mode support
-
-- **shadcn/ui** ![shadcn](https://img.shields.io/badge/-shadcn/ui-000000?style=flat-square)
-  - High-quality components
-  - Accessible by default
-  - Customizable themes
-  - TypeScript support
-
-- **Framer Motion** ![Framer](https://img.shields.io/badge/-Framer_Motion-0055FF?style=flat-square&logo=framer)
-  - Smooth animations
-  - Gesture support
-  - Layout animations
-  - Performance optimized
-
-</details>
-
-<details>
-<summary><strong>📱 User Experience</strong></summary>
-
-- **Lucide React** - 1000+ beautiful icons
-- **Responsive Design** - Mobile-first approach
-- **Dark Mode** - System preference detection
-- **Accessibility** - WCAG 2.1 AA compliant
-- **Progressive Web App** - Offline capabilities
-
-</details>
-
-</td>
-<td width="50%" valign="top">
-
-### 🔧 **Backend & Processing**
-
-<details>
-<summary><strong>🌐 Data Management</strong></summary>
-
-- **TanStack Query** ![React Query](https://img.shields.io/badge/-React_Query-FF4154?style=flat-square&logo=react-query&logoColor=white)
-  - Intelligent caching
-  - Background updates
-  - Optimistic updates
-  - Error handling
-
-- **Axios** ![Axios](https://img.shields.io/badge/-Axios-5A29E4?style=flat-square&logo=axios)
-  - HTTP client library
-  - Request/response interceptors
-  - Automatic JSON parsing
-  - Error handling
-
-- **Socket.io** ![Socket.io](https://img.shields.io/badge/-Socket.io-010101?style=flat-square&logo=socket.io)
-  - Real-time communication
-  - WebSocket fallback
-  - Room management
-  - Event-driven architecture
-
-</details>
-
-<details>
-<summary><strong>📄 Document Processing</strong></summary>
-
-- **PDF Processing**
-  - PDF-Parse for text extraction
-  - PDF.js for rendering
-  - OCR capabilities
-  - Metadata extraction
-
-- **Office Documents**
-  - Mammoth for DOCX processing
-  - RTF support
-  - Formatting preservation
-  - Table extraction
-
-- **Text Processing**
-  - Natural language processing
-  - Encoding detection
-  - Content sanitization
-  - Structure analysis
-
-</details>
-
-<details>
-<summary><strong>🤖 AI Integration</strong></summary>
-
-- **OpenAI GPT Models** - Text analysis and generation
-- **Anthropic Claude** - Alternative AI provider
-- **Vector Embeddings** - Semantic search capabilities
-- **Custom Models** - Self-hosted AI support
-
-</details>
-
-</td>
-</tr>
-</table>
+| Category | Tools | Purpose |
+|----------|-------|---------|
+| Code Quality | ESLint, Prettier, Husky | Linting, formatting, git hooks |
+| Testing | Jest, React Testing Library | Unit and integration testing |
+| Build Tools | Webpack, SWC, Turbopack | Fast builds and bundling |
+| Type Checking | TypeScript, tsc | Static type analysis |
+| Analytics | Vercel Analytics, Web Vitals | Performance monitoring |
 
 ---
 
-### 🔧 **Development Tools**
-
-<div align="center">
-
-| Category | Tools | Purpose |
-|----------|--------|---------|
-| **📝 Code Quality** | ESLint, Prettier, Husky | Linting, formatting, git hooks |
-| **🧪 Testing** | Jest, React Testing Library | Unit and integration testing |
-| **📦 Build Tools** | Webpack, SWC, Turbopack | Fast builds and bundling |
-| **🔍 Type Checking** | TypeScript, tsc | Static type analysis |
-| **📊 Analytics** | Vercel Analytics, Web Vitals | Performance monitoring |
-
-</div>
-
-## 📁 Project Structure
-
-<div align="center">
-
-### 🗂️ **Well-Organized Codebase**
-
-</div>
-
-<details>
-<summary><strong>📂 Complete Directory Structure</strong></summary>
+## Project Structure
 
 ```
 docmind/
-├── 📁 src/                           # Source code
-│   ├── 📁 app/                       # Next.js App Router
-│   │   ├── 📁 api/                   # API endpoints
-│   │   │   ├── 📁 analysis/          # Document analysis
-│   │   │   ├── 📁 documents/         # Document management
-│   │   │   ├── 📁 query/             # Search queries
-│   │   │   ├── 📁 search/            # Search functionality
-│   │   │   └── 📁 settings/          # Configuration
-│   │   ├── 📁 auth/                  # Authentication
-│   │   ├── 📁 dashboard/             # Main dashboard
-│   │   ├── 📁 preview/               # Document preview
-│   │   ├── 📁 settings/              # Settings page
-│   │   ├── 🎨 globals.css            # Global styles
-│   │   ├── 📄 layout.tsx             # Root layout
-│   │   └── 🏠 page.tsx               # Landing page
-│   ├── 📁 components/                # React components
-│   │   ├── 📁 ui/                    # shadcn/ui components
-│   │   │   ├── 🔘 button.tsx         # Button component
-│   │   │   ├── 📋 card.tsx           # Card component
-│   │   │   ├── 📝 input.tsx          # Input component
+├── src/                           # Source code
+│   ├── app/                       # Next.js App Router
+│   │   ├── api/                   # API endpoints
+│   │   │   ├── analysis/          # Document analysis
+│   │   │   ├── documents/         # Document management
+│   │   │   ├── query/             # Search queries
+│   │   │   ├── search/            # Search functionality
+│   │   │   └── settings/          # Configuration
+│   │   ├── auth/                  # Authentication
+│   │   ├── dashboard/             # Main dashboard
+│   │   ├── preview/               # Document preview
+│   │   ├── settings/              # Settings page
+│   │   ├── globals.css            # Global styles
+│   │   ├── layout.tsx             # Root layout
+│   │   └── page.tsx               # Landing page
+│   ├── components/                # React components
+│   │   ├── ui/                    # shadcn/ui components
+│   │   │   ├── button.tsx         # Button component
+│   │   │   ├── card.tsx           # Card component
+│   │   │   ├── input.tsx          # Input component
 │   │   │   └── ... (30+ components)
-│   │   ├── 📁 auth/                  # Authentication
-│   │   │   ├── 🔐 login-modal.tsx    # Login modal
-│   │   │   └── 📝 signup-modal.tsx   # Signup modal
-│   │   ├── 📁 settings/              # Settings components
-│   │   ├── 📤 document-upload.tsx    # Upload interface
-│   │   ├── 🔍 query-interface.tsx    # Search interface
-│   │   ├── 📄 document-list.tsx      # Document listing
-│   │   ├── 📊 analysis-results.tsx   # Results display
-│   │   ├── 🏠 landing-page.tsx       # Landing page
-│   │   └── 🔒 protected-route.tsx    # Route protection
-│   ├── 📁 hooks/                     # Custom React hooks
-│   │   ├── 🔌 use-socket.ts          # WebSocket hook
-│   │   ├── 📱 use-mobile.ts          # Mobile detection
-│   │   └── 🍞 use-toast.ts           # Toast notifications
-│   └── 📁 lib/                       # Utilities & config
-│       ├── 🤖 ai-service.ts          # AI integration
-│       ├── 🌐 api-client.ts          # API client
-│       ├── 🔐 auth-context.tsx       # Auth context
-│       ├── 🔌 socket-types.ts        # Socket types
-│       ├── 🗄️ supabase.ts           # Database client
-│       └── 🛠️ utils.ts               # Helper functions
-├── 📁 public/                        # Static assets
-│   ├── 📁 uploads/                   # Document storage
-│   │   └── 📁 documents/             # Organized by ID
-│   ├── 🖼️ favicon.ico               # Favicon
-│   ├── 🎨 logo.svg                   # App logo
-│   └── 🤖 robots.txt                # SEO robots
-├── 📁 docs/                          # Documentation
-│   ├── 📖 API.md                     # API documentation
-│   ├── 🎨 DESIGN.md                  # Design system
-│   └── 🚀 DEPLOYMENT.md              # Deployment guide
-├── ⚙️ next.config.ts                 # Next.js config
-├── 🎨 tailwind.config.ts             # Tailwind config
-├── 📦 package.json                   # Dependencies
-└── 📝 README.md                      # This file
+│   │   ├── auth/                  # Authentication components
+│   │   │   ├── login-modal.tsx    # Login modal
+│   │   │   └── signup-modal.tsx   # Signup modal
+│   │   ├── settings/              # Settings components
+│   │   ├── document-upload.tsx    # Upload interface
+│   │   ├── query-interface.tsx    # Search interface
+│   │   ├── document-list.tsx      # Document listing
+│   │   ├── analysis-results.tsx   # Results display
+│   │   ├── landing-page.tsx       # Landing page
+│   │   └── protected-route.tsx    # Route protection
+│   ├── hooks/                     # Custom React hooks
+│   │   ├── use-socket.ts          # WebSocket hook
+│   │   ├── use-mobile.ts          # Mobile detection
+│   │   └── use-toast.ts           # Toast notifications
+│   └── lib/                       # Utilities & config
+│       ├── ai-service.ts          # AI integration
+│       ├── api-client.ts          # API client
+│       ├── auth-context.tsx       # Auth context
+│       ├── socket-types.ts        # Socket types
+│       ├── supabase.ts            # Database client
+│       └── utils.ts               # Helper functions
+├── public/                        # Static assets
+│   ├── uploads/                   # Document storage
+│   │   └── documents/             # Organized by ID
+│   ├── favicon.ico                # Favicon
+│   ├── logo.svg                   # App logo
+│   └── robots.txt                 # SEO robots
+├── docs/                          # Documentation
+│   ├── API.md                     # API documentation
+│   ├── DESIGN.md                  # Design system
+│   └── DEPLOYMENT.md              # Deployment guide
+├── next.config.ts                 # Next.js config
+├── tailwind.config.ts             # Tailwind config
+├── package.json                   # Dependencies
+└── README.md                      # This file
 ```
 
-</details>
+### Key Components
 
-### 🧩 **Key Components Overview**
+**UI Components**
+- **Document Upload**: Drag & drop interface, progress tracking, file validation, batch processing, error handling
+- **Query Interface**: Natural language input, query suggestions, real-time search, result filtering, history tracking
 
-<table>
-<tr>
-<td width="50%" valign="top">
+**Core Systems**
+- **AI Integration**: Multiple AI providers, semantic embeddings, content analysis, response streaming, error handling
+- **Authentication**: Secure login/signup, session management, protected routes, user context, OAuth support
 
-#### 🎨 **UI Components**
+---
 
-<details>
-<summary><strong>📤 Document Upload</strong></summary>
+## Usage Guide
 
-- **Features:**
-  - Drag & drop interface
-  - Progress tracking
-  - File validation
-  - Batch processing
-  - Error handling
+### Document Upload
 
-- **Files:**
-  - `document-upload.tsx`
-  - `use-upload.ts` (hook)
-  - Upload API routes
+1. **Access Upload**: Navigate to Dashboard, click "Upload Documents" tab, or use drag & drop anywhere
+2. **Select Files**: Supported formats include PDF documents, Microsoft Word (.docx), Plain text (.txt), Rich text (.rtf)
+3. **Monitor Progress**: Real-time processing status, error notifications, completion confirmations
 
-</details>
-
-<details>
-<summary><strong>🔍 Query Interface</strong></summary>
-
-- **Features:**
-  - Natural language input
-  - Query suggestions
-  - Real-time search
-  - Result filtering
-  - History tracking
-
-- **Files:**
-  - `query-interface.tsx`
-  - `use-search.ts` (hook)
-  - Search API routes
-
-</details>
-
-</td>
-<td width="50%" valign="top">
-
-#### 🔧 **Core Systems**
-
-<details>
-<summary><strong>🤖 AI Integration</strong></summary>
-
-- **Features:**
-  - Multiple AI providers
-  - Semantic embeddings
-  - Content analysis
-  - Response streaming
-  - Error handling
-
-- **Files:**
-  - `ai-service.ts`
-  - `ai-api-settings.tsx`
-  - Analysis API routes
-
-</details>
-
-<details>
-<summary><strong>🔐 Authentication</strong></summary>
-
-- **Features:**
-  - Secure login/signup
-  - Session management
-  - Protected routes
-  - User context
-  - OAuth support
-
-- **Files:**
-  - `auth-context.tsx`
-  - `protected-route.tsx`
-  - Auth modals
-
-</details>
-
-</td>
-</tr>
-</table>
-
-## 🎯 Usage Guide
-
-<div align="center">
-
-### 📚 **How to Use DocMind**
-
-</div>
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 📤 **Document Upload**
-
-<details>
-<summary><strong>🚀 Getting Started</strong></summary>
-
-**Step 1: Access Upload**
-- Navigate to Dashboard
-- Click "Upload Documents" tab
-- Or use drag & drop anywhere
-
-**Step 2: Select Files**
-```bash
-Supported formats:
-✅ PDF documents
-✅ Microsoft Word (.docx)
-✅ Plain text (.txt)
-✅ Rich text (.rtf)
-```
-
-**Step 3: Monitor Progress**
-- Real-time processing status
-- Error notifications
-- Completion confirmations
-
-</details>
-
-### 🔍 **Search & Query**
-
-<details>
-<summary><strong>💡 Search Tips</strong></summary>
+### Search & Query
 
 **Natural Language Queries:**
 - "What are the main findings about climate change?"
@@ -767,15 +298,7 @@ Supported formats:
 - Export results
 - Save searches
 
-</details>
-
-</td>
-<td width="50%" valign="top">
-
-### 📊 **Analysis Features**
-
-<details>
-<summary><strong>🤖 AI Analysis</strong></summary>
+### Analysis Features
 
 **Automatic Analysis:**
 - Document summarization
@@ -789,12 +312,7 @@ Supported formats:
 - Compare documents
 - Extract insights
 
-</details>
-
-### ⚙️ **Settings & Configuration**
-
-<details>
-<summary><strong>🔧 Customization</strong></summary>
+### Settings & Configuration
 
 **AI Configuration:**
 - Choose AI provider
@@ -808,40 +326,25 @@ Supported formats:
 - Quality settings
 - Performance tuning
 
-</details>
-
-</td>
-</tr>
-</table>
-
 ---
 
-## 📊 Performance & Metrics
+## Performance & Metrics
 
-<div align="center">
-
-### ⚡ **Built for Speed**
+### Built for Speed
 
 | Metric | Performance | Details |
 |--------|-------------|---------|
-| **🚀 Page Load** | < 2s | Optimized bundles & caching |
-| **📄 Document Processing** | < 30s | Parallel processing pipeline |
-| **🔍 Search Response** | < 500ms | Vector search optimization |
-| **📱 Mobile Performance** | 95+ | Lighthouse performance score |
-| **♿ Accessibility** | AA | WCAG 2.1 compliance |
+| Page Load | < 2s | Optimized bundles & caching |
+| Document Processing | < 30s | Parallel processing pipeline |
+| Search Response | < 500ms | Vector search optimization |
+| Mobile Performance | 95+ | Lighthouse performance score |
+| Accessibility | AA | WCAG 2.1 compliance |
 
-</div>
+---
 
-## 🔧 Configuration
+## Configuration
 
-<div align="center">
-
-### ⚙️ **Environment Setup**
-
-</div>
-
-<details>
-<summary><strong>🌍 Environment Variables</strong></summary>
+### Environment Variables
 
 ```bash
 # ===== CORE CONFIGURATION =====
@@ -885,14 +388,10 @@ RATE_LIMIT_MAX=100              # requests per window
 RATE_LIMIT_WINDOW=900000        # 15 minutes
 ```
 
-</details>
-
-<details>
-<summary><strong>🤖 AI Provider Configuration</strong></summary>
+### AI Provider Configuration
 
 **OpenAI Setup:**
 ```typescript
-// In settings panel or environment
 {
   provider: "openai",
   apiKey: "your_real_api_key_here",
@@ -905,7 +404,7 @@ RATE_LIMIT_WINDOW=900000        # 15 minutes
 **Anthropic Setup:**
 ```typescript
 {
-  provider: "anthropic", 
+  provider: "anthropic",
   apiKey: "your_real_anthropic_api_key_here",
   model: "claude-3-sonnet-20240229",
   maxTokens: 4096
@@ -921,114 +420,66 @@ RATE_LIMIT_WINDOW=900000        # 15 minutes
 }
 ```
 
-</details>
+---
+
+## Security & Privacy
+
+### Data Protection
+
+**Encryption & Storage**
+- End-to-end encryption with AES-256 for files
+- Encrypted database storage
+- Secure API communication
+- User-specific data separation
+- Role-based access control
+- Secure file handling
+
+**Privacy Compliance**
+- GDPR compliant
+- No data tracking
+- User data ownership
+
+### Authentication
+
+- Multi-factor authentication
+- OAuth integration (Google, GitHub)
+- JWT token management
+- Session security
+- Password policies
+
+### Security Features
+
+**File Validation**
+- Strict type checking
+- Size limitations
+- Malware scanning
+- Content sanitization
+
+**API Security**
+- Rate limiting
+- Request validation
+- CORS protection
+- Input sanitization
+
+**Infrastructure**
+- HTTPS enforcement
+- Security headers
+- CSP policies
+- Regular updates
+
+### Monitoring
+
+- Access logging
+- Error tracking
+- Performance monitoring
+- Security alerts
+- Audit trails
 
 ---
 
-## 🔒 Security & Privacy
+## API Documentation
 
-<div align="center">
-
-### 🛡️ **Enterprise-Grade Security**
-
-</div>
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 🔐 **Data Protection**
-
-<details>
-<summary><strong>🔒 Encryption & Storage</strong></summary>
-
-- **End-to-End Encryption**
-  - AES-256 encryption for files
-  - Encrypted database storage
-  - Secure API communication
-
-- **Data Isolation**
-  - User-specific data separation
-  - Role-based access control
-  - Secure file handling
-
-- **Privacy Compliance**
-  - GDPR compliant
-  - No data tracking
-  - User data ownership
-
-</details>
-
-### 🛡️ **Authentication**
-
-<details>
-<summary><strong>🔑 Secure Access</strong></summary>
-
-- **Multi-Factor Authentication**
-- **OAuth Integration** (Google, GitHub)
-- **JWT Token Management**
-- **Session Security**
-- **Password Policies**
-
-</details>
-
-</td>
-<td width="50%" valign="top">
-
-### 🚨 **Security Features**
-
-<details>
-<summary><strong>⚡ Protection Measures</strong></summary>
-
-- **File Validation**
-  - Strict type checking
-  - Size limitations
-  - Malware scanning
-  - Content sanitization
-
-- **API Security**
-  - Rate limiting
-  - Request validation
-  - CORS protection
-  - Input sanitization
-
-- **Infrastructure**
-  - HTTPS enforcement
-  - Security headers
-  - CSP policies
-  - Regular updates
-
-</details>
-
-### 📊 **Monitoring**
-
-<details>
-<summary><strong>🔍 Security Monitoring</strong></summary>
-
-- **Access Logging**
-- **Error Tracking**
-- **Performance Monitoring**
-- **Security Alerts**
-- **Audit Trails**
-
-</details>
-
-</td>
-</tr>
-</table>
-
----
-
-## 📚 API Documentation
-
-<div align="center">
-
-### 🌐 **RESTful API Endpoints**
-
-</div>
-
-<details>
-<summary><strong>📄 Document Management</strong></summary>
+### Document Management
 
 ```typescript
 // Upload document
@@ -1048,18 +499,15 @@ Response: { id, title, content, metadata, status }
 DELETE /api/documents/[id]
 ```
 
-</details>
-
-<details>
-<summary><strong>🔍 Search & Query</strong></summary>
+### Search & Query
 
 ```typescript
 // Semantic search
 POST /api/search
-Body: { 
+Body: {
   query: string,
   filters?: object,
-  limit?: number 
+  limit?: number
 }
 
 // Natural language query
@@ -1074,10 +522,7 @@ Body: {
 GET /api/search/history
 ```
 
-</details>
-
-<details>
-<summary><strong>🤖 AI Analysis</strong></summary>
+### AI Analysis
 
 ```typescript
 // Analyze document
@@ -1095,86 +540,56 @@ Body: {
 }
 ```
 
-</details>
+---
 
-## 🤝 Contributing
+## Contributing
 
-<div align="center">
+### Getting Started
 
-### 🌟 **Join Our Community**
+**1. Fork and Clone**
+```bash
+git clone https://github.com/your-username/docmind.git
+cd docmind
+```
 
-</div>
+**2. Install Dependencies**
+```bash
+npm install
+```
 
-<table>
-<tr>
-<td width="50%" valign="top">
+**3. Create Feature Branch**
+```bash
+git checkout -b feature/amazing-feature
+```
 
-### 🚀 **Getting Started**
+**4. Make Changes**
+- Follow coding standards
+- Add tests for new features
+- Update documentation
 
-<details>
-<summary><strong>🔧 Development Setup</strong></summary>
+**5. Submit Pull Request**
+- Clear description
+- Link related issues
+- Request review
 
-1. **Fork & Clone**
-   ```bash
-   git clone https://github.com/your-username/docmind.git
-   cd docmind
-   ```
+### Contribution Guidelines
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+**Code Standards**
+- TypeScript - Strict type checking
+- ESLint - Code linting rules
+- Prettier - Code formatting
+- Conventional Commits - Commit message format
+- Testing - Unit tests for new features
 
-3. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
+### Ways to Contribute
 
-4. **Make Changes**
-   - Follow coding standards
-   - Add tests for new features
-   - Update documentation
+- **Bug Fixes** - Fix reported issues
+- **New Features** - Add functionality
+- **UI/UX** - Improve user experience
+- **Documentation** - Enhance docs
+- **Testing** - Add test coverage
 
-5. **Submit Pull Request**
-   - Clear description
-   - Link related issues
-   - Request review
-
-</details>
-
-### 📋 **Contribution Guidelines**
-
-<details>
-<summary><strong>✅ Code Standards</strong></summary>
-
-- **TypeScript** - Strict type checking
-- **ESLint** - Code linting rules
-- **Prettier** - Code formatting
-- **Conventional Commits** - Commit message format
-- **Testing** - Unit tests for new features
-
-</details>
-
-</td>
-<td width="50%" valign="top">
-
-### 🎯 **Ways to Contribute**
-
-<details>
-<summary><strong>🔨 Development</strong></summary>
-
-- **🐛 Bug Fixes** - Fix reported issues
-- **✨ New Features** - Add functionality
-- **🎨 UI/UX** - Improve user experience
-- **📚 Documentation** - Enhance docs
-- **🧪 Testing** - Add test coverage
-
-</details>
-
-### 🏆 **Recognition**
-
-<details>
-<summary><strong>👥 Contributors</strong></summary>
+### Recognition
 
 All contributors are recognized in:
 - GitHub contributors page
@@ -1182,117 +597,44 @@ All contributors are recognized in:
 - Release notes
 - Community showcase
 
-**Top Contributors:**
-- 🥇 Most commits
-- 🥈 Best documentation
-- 🥉 Most helpful reviews
+---
 
-</details>
+## Support & Community
 
-</td>
-</tr>
-</table>
+### Get Help
+
+| Resource | Links |
+|----------|-------|
+| **Documentation** | [User Guide](docs/USER_GUIDE.md) • [API Reference](docs/API.md) • [Design System](docs/DESIGN.md) • [Deployment](docs/DEPLOYMENT.md) |
+| **Issues & Bugs** | [Search Issues](https://github.com/your-username/docmind/issues) • [Report Bug](https://github.com/your-username/docmind/issues/new?template=bug_report.md) • [Feature Request](https://github.com/your-username/docmind/issues/new?template=feature_request.md) |
+| **Community** | [Discord Server](https://discord.gg/docmind) • [Twitter Updates](https://twitter.com/docmind) • [LinkedIn](https://linkedin.com/company/docmind) |
 
 ---
 
-## 🆘 Support & Community
+## Project Stats
 
-<div align="center">
-
-### 💬 **Get Help & Connect**
-
-<p>
-  <a href="#" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/📖_Documentation-Read_Docs-blue?style=for-the-badge" alt="Documentation" />
-  </a>
-  <a href="#" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/💬_Discord-Join_Chat-7289da?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
-  </a>
-  <a href="#" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/🐛_Issues-Report_Bug-red?style=for-the-badge&logo=github" alt="Issues" />
-  </a>
-</p>
-
-</div>
-
-<table>
-<tr>
-<td width="33%" valign="top" align="center">
-
-### 📚 **Documentation**
-
-- **📖 [User Guide](docs/USER_GUIDE.md)**
-- **🔧 [API Reference](docs/API.md)**
-- **🎨 [Design System](docs/DESIGN.md)**
-- **🚀 [Deployment](docs/DEPLOYMENT.md)**
-
-</td>
-<td width="33%" valign="top" align="center">
-
-### 🐛 **Issues & Bugs**
-
-- **🔍 [Search Issues](https://github.com/your-username/docmind/issues)**
-- **📝 [Report Bug](https://github.com/your-username/docmind/issues/new?template=bug_report.md)**
-- **💡 [Feature Request](https://github.com/your-username/docmind/issues/new?template=feature_request.md)**
-- **❓ [Ask Question](https://github.com/your-username/docmind/discussions)**
-
-</td>
-<td width="33%" valign="top" align="center">
-
-### 🌐 **Community**
-
-- **💬 [Discord Server](https://discord.gg/docmind)**
-- **🐦 [Twitter Updates](https://twitter.com/docmind)**
-- **📧 [Newsletter](https://docmind.dev/newsletter)**
-- **📱 [LinkedIn](https://linkedin.com/company/docmind)**
-
-</td>
-</tr>
-</table>
-
----
-
-## 📊 Project Stats
-
-<div align="center">
-
-![GitHub stars](https://img.shields.io/github/stars/your-username/docmind?style=social)
-![GitHub forks](https://img.shields.io/github/forks/your-username/docmind?style=social)
+![GitHub stars](https://img.shields.io/github/stars/your-username/docmind?style=flat)
+![GitHub forks](https://img.shields.io/github/forks/your-username/docmind?style=flat)
 ![GitHub issues](https://img.shields.io/github/issues/your-username/docmind)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/your-username/docmind)
 ![GitHub license](https://img.shields.io/github/license/your-username/docmind)
 
-</div>
-
 ---
 
-## 📄 License
-
-<div align="center">
+## License
 
 **MIT License** - See [LICENSE](LICENSE) file for details
 
-*This project is open source and available under the MIT License.*
-
-</div>
+This project is open source and available under the MIT License.
 
 ---
 
 <div align="center">
 
-## 🎉 **Thank You!**
+**DocMind** - Making documents intelligent, searchable, and actionable
 
-### **DocMind** - Making documents intelligent, searchable, and actionable
+Your support helps us continue improving DocMind
 
-*Built with ❤️ by the DocMind team and amazing contributors*
-
-<p>
-  <strong>⭐ Star this repo if you find it helpful!</strong><br>
-  <em>Your support helps us continue improving DocMind</em>
-</p>
-
----
-
-<sub>🚀 **Ready to transform your documents?** [Get started now](#-quick-start) | 📚 **Need help?** [Join our community](#-support--community)</sub>
+[Get started now](#quick-start) • [Join our community](#support--community)
 
 </div>
