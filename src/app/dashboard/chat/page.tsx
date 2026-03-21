@@ -1,28 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Image from 'next/image'
-import Link from 'next/link'
-import {
-  Upload,
-  FileText,
-  BarChart3,
-  Settings,
-  LogOut,
-  Loader2,
-  MessageSquare
-} from 'lucide-react'
-import { DocumentUpload } from '@/components/document-upload'
-import { DocumentList } from '@/components/document-list'
-import { AnalysisResults } from '@/components/analysis-results'
-import { AiApiSettings } from '@/components/settings/ai-api-settings'
+import { LogOut, LayoutDashboard } from 'lucide-react'
+import { ChatInterface } from '@/components/chat-interface'
 import { useAuth } from '@/lib/auth-context'
 import { ProtectedRoute } from '@/components/protected-route'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
 
 interface Document {
   id: string
@@ -37,17 +25,11 @@ interface Document {
   queryCount?: number
 }
 
-export default function Dashboard() {
+export default function ChatPage() {
   const [documents, setDocuments] = useState<Document[]>([])
-  const [activeTab, setActiveTab] = useState('upload')
-  const [isLoading, setIsLoading] = useState(true)
   const [selectedProvider, setSelectedProvider] = useState<string | undefined>(undefined)
   const [configuredProviders, setConfiguredProviders] = useState<{id: string, name: string}[]>([])
-  const { user, logout, isAuthenticated } = useAuth()
-
-  useEffect(() => {
-    // Auth context handles redirect
-  }, [isAuthenticated, user])
+  const { user, logout } = useAuth()
 
   const fetchDocuments = async () => {
     try {
@@ -56,8 +38,6 @@ export default function Dashboard() {
       setDocuments(data)
     } catch (error) {
       console.error('Error fetching documents:', error)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -118,25 +98,6 @@ export default function Dashboard() {
     fetchProviders()
   }, [])
 
-  useEffect(() => {
-    const hasProcessingDocuments = documents.some(doc =>
-      doc.status === 'UPLOADING' || doc.status === 'PROCESSING'
-    )
-
-    if (!hasProcessingDocuments) return
-
-    const interval = setInterval(() => {
-      fetchDocuments()
-    }, 2500)
-
-    return () => clearInterval(interval)
-  }, [documents])
-
-  const handleDocumentUpload = (_newDocuments: Document[]) => {
-    fetchDocuments()
-    setActiveTab('documents')
-  }
-
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
@@ -152,14 +113,14 @@ export default function Dashboard() {
     <ProtectedRoute>
       <div className="h-screen overflow-hidden bg-secondary/20 text-foreground font-sans flex flex-col">
 
-        {/* Modern Header */}
+        {/* Header */}
         <header className="bg-background border-b border-border px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-sm shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
               <Image src="/logo.png" alt="DocMind Logo" fill className="object-cover" priority />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
+              <h1 className="text-xl font-bold tracking-tight">Chat</h1>
               <p className="text-sm text-muted-foreground">
                 Welcome back, {user.name}
               </p>
@@ -179,11 +140,10 @@ export default function Dashboard() {
                 </SelectContent>
               </Select>
             )}
-            {/* Chat Page Link */}
-            <Link href="/dashboard/chat">
-              <Button className="rounded-full px-5 shadow-sm gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Open Chat
+            <Link href="/dashboard">
+              <Button variant="outline" className="rounded-full px-5 text-muted-foreground">
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                Dashboard
               </Button>
             </Link>
             <ThemeToggle />
@@ -198,74 +158,13 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 p-6 md:p-8 max-w-[1600px] mx-auto w-full space-y-8 flex flex-col">
-
-          {/* Main Interface — No Chat tab here */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col space-y-6">
-            <div className="bg-background rounded-2xl p-1.5 shadow-sm border border-border inline-flex w-fit">
-              <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-1">
-                {[
-                  { id: 'upload', icon: Upload, label: 'Upload' },
-                  { id: 'documents', icon: FileText, label: 'Documents' },
-                  { id: 'results', icon: BarChart3, label: 'Analysis' },
-                  { id: 'settings', icon: Settings, label: 'Settings' }
-                ].map((tab) => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium py-2.5 px-5 transition-all shadow-none"
-                  >
-                    <tab.icon className="w-4 h-4 mr-2" />
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+        {/* Chat Area */}
+        <main className="flex-1 min-h-0 p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col">
+          <div className="flex-1 min-h-0 bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="p-6 h-full min-h-0 flex flex-col">
+              <ChatInterface documents={documents} selectedProvider={selectedProvider} />
             </div>
-
-            <Card className="flex-1 shadow-sm border-border bg-card overflow-hidden flex flex-col">
-              <div className="p-6 h-full min-h-0 flex flex-col">
-                <TabsContent value="upload" className="m-0 focus-visible:outline-none flex-1">
-                  <DocumentUpload onUpload={handleDocumentUpload} />
-                </TabsContent>
-
-                <TabsContent value="documents" className="m-0 focus-visible:outline-none flex-1">
-                  {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-32 text-muted-foreground">
-                      <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
-                      <p className="font-medium">Loading documents...</p>
-                    </div>
-                  ) : documents.length > 0 ? (
-                    <DocumentList documents={documents} />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed border-border rounded-2xl bg-secondary/30">
-                      <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center shadow-sm mb-4 text-muted-foreground">
-                        <FileText className="w-8 h-8" />
-                      </div>
-                      <h3 className="text-xl font-semibold mb-2 text-foreground">No documents found</h3>
-                      <p className="text-muted-foreground text-center max-w-sm mb-6">
-                        Your workspace is empty. Upload your first document to begin processing and querying data.
-                      </p>
-                      <Button
-                        onClick={() => setActiveTab('upload')}
-                        className="rounded-full px-8 shadow-sm"
-                      >
-                        Upload Document
-                      </Button>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="results" className="m-0 focus-visible:outline-none flex-1">
-                  <AnalysisResults />
-                </TabsContent>
-
-                <TabsContent value="settings" className="m-0 focus-visible:outline-none flex-1">
-                  <AiApiSettings />
-                </TabsContent>
-              </div>
-            </Card>
-          </Tabs>
-
+          </div>
         </main>
       </div>
     </ProtectedRoute>
