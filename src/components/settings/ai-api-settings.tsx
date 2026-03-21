@@ -37,7 +37,7 @@ import {
 } from 'lucide-react'
 import { isValidApiKey } from '@/lib/crypto-utils'
 import { useToast } from '@/hooks/use-toast'
-import { ConnectionStatus } from '@/components/ui/connection-status'
+
 import { ApiUsageTracker } from '@/components/features/api-usage-tracker'
 
 interface AIProvider {
@@ -184,21 +184,6 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     iconType: 'server'
   },
   {
-    name: 'DocScan model name from groq (free)',
-    type: 'groq',
-    baseUrl: 'https://api.groq.com/openai/v1',
-    apiKey: '',
-    model: 'llama3-8b-8192',
-    isActive: false,
-    isConfigured: false,
-    models: ['llama3-8b-8192', 'llama3-70b-8192', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
-    maxTokens: 4096,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Ultra-fast inference powered by Groq.',
-    iconType: 'zap'
-  },
-  {
     name: 'DocScan Glm-5 (free)',
     type: 'openai-compatible',
     baseUrl: 'https://api.us-west-2.modal.direct/v1',
@@ -280,28 +265,30 @@ export function AiApiSettings() {
           }
         })
 
-        // Inject DocScan Free provider from server config
+        // Inject DocScan Free providers from server config
         if (freeConfig) {
-          const freeId = 'docscan-free-builtin'
-          const alreadyHasFree = mapped.some(m => m.id === freeId)
-          if (!alreadyHasFree) {
-            mapped = [{
-              id: freeId,
-              name: 'DocScan Glm-5 (free)',
-              type: 'openai-compatible',
-              baseUrl: freeConfig.baseUrl,
-              apiKey: freeConfig.apiKey,
-              model: freeConfig.model,
-              isActive: false,
-              isConfigured: true,
-              models: freeConfig.models || ['zai-org/GLM-5-FP8'],
-              maxTokens: freeConfig.maxTokens || 4096,
-              temperature: freeConfig.temperature || 0.7,
-              topP: freeConfig.topP || 0.9,
-              description: freeConfig.description || 'Free built-in provider. No API key needed!',
-              iconType: 'zap',
-              dirtyApiKey: false,
-            }, ...mapped]
+          const configs = Array.isArray(freeConfig) ? freeConfig : [freeConfig];
+          // reverse so that the first one in the array becomes the first element due to unshifting
+          for (const config of [...configs].reverse()) {
+            const existingIndex = mapped.findIndex(m => m.baseUrl === config.baseUrl && m.type === config.type);
+            if (existingIndex >= 0) {
+              const savedModel = mapped[existingIndex].model;
+              const isModelValid = config.models.length === 0 || config.models.includes(savedModel);
+
+              mapped[existingIndex] = {
+                ...mapped[existingIndex],
+                id: config.id,
+                apiKey: config.apiKey, // Ensure latest env key is used
+                isConfigured: true,
+                model: isModelValid ? savedModel : config.model, // Reset discarded models
+                models: config.models.length > 0 ? config.models : mapped[existingIndex].models, // Keep dynamic models from backend if present
+              };
+            } else {
+              mapped = [{
+                ...config,
+                dirtyApiKey: false,
+              }, ...mapped];
+            }
           }
         }
 
@@ -322,23 +309,33 @@ export function AiApiSettings() {
         const firstId = active?.id || mapped[0]?.id || ''
         setSelectedProviderId(firstId)
 
-        // Auto-fetch live models for all configured providers
-        for (const p of mapped) {
-          if (p.apiKey && p.baseUrl) {
-            // Fire async without blocking UI — errors are swallowed silently
+        // Background auto-test and model fetch for all configured providers
+        Promise.all(mapped.map(async (p) => {
+          if (!p.apiKey && !['ollama', 'lm-studio'].includes(p.type) && !p.id.startsWith('docscan-free')) return;
+          try {
             const { authenticatedRequest } = await import('@/lib/api-client')
-            authenticatedRequest('/api/models', {
-              method: 'POST',
-              body: JSON.stringify({ provider: p })
-            }).then((res: any) => {
-              if (res?.models?.length > 0) {
-                setProviders(prev => prev.map(pp =>
-                  pp.id === p.id ? { ...pp, models: res.models } : pp
-                ))
-              }
-            }).catch(() => { /* silently ignore if fetch fails */ })
-          }
-        }
+            
+            // Mark as testing
+            setProviders(prev => prev.map(pp => pp.id === p.id ? { ...pp, testStatus: 'pending' } : pp))
+            
+            const [testResult, modelsResult] = await Promise.allSettled([
+              authenticatedRequest('/api/test-connection', { method: 'POST', body: JSON.stringify({ provider: p }) }),
+              authenticatedRequest('/api/models', { method: 'POST', body: JSON.stringify({ provider: p }) })
+            ])
+            
+            const isTestSuccess = testResult.status === 'fulfilled' && testResult.value.success;
+            const newModels = modelsResult.status === 'fulfilled' && modelsResult.value?.models?.length > 0 ? modelsResult.value.models : p.models;
+            
+            setProviders(prev => prev.map(pp => pp.id === p.id ? {
+              ...pp,
+              models: newModels,
+              testStatus: isTestSuccess ? 'success' : 'error',
+              lastTested: new Date().toISOString(),
+              errorMessage: isTestSuccess ? undefined : (testResult.status === 'fulfilled' ? testResult.value.error : 'Connection fail'),
+              isConfigured: isTestSuccess || pp.isConfigured
+            } : pp))
+          } catch(e) {}
+        }))
         
         // Show success message if providers were loaded
         if (settingsData.length > 0) {
@@ -423,7 +420,7 @@ export function AiApiSettings() {
         name: pName,
         type: mappedType as AIProvider['type'],
         baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-        // Use the actual API key as returned from server
+        // Use the actual API key as returned from server (or override if it's a known free provider)
         apiKey: s.apiKey || '',
         model: s.model || (defaults?.models?.[0] ?? ''),
         isActive: !!s.isActive,
@@ -467,25 +464,110 @@ export function AiApiSettings() {
     }
   }
 
-  const handleConnectionTest = (id: string, result: any) => {
-    updateProvider(id, {
-      testStatus: result.success ? 'success' : 'error',
-      lastTested: new Date().toISOString(),
-      errorMessage: result.success ? undefined : result.error,
-      isConfigured: result.success
-    })
+  const autoTestAndSave = async (provider: AIProvider) => {
+    if (!provider.apiKey && !['ollama', 'lm-studio'].includes(provider.type) && !provider.id.startsWith('docscan-free')) {
+      return;
+    }
+    
+    setTestingProvider(provider.id);
+    updateProvider(provider.id, { testStatus: 'pending' });
 
-    if (result.success) {
-      toast({
-        title: 'Connection successful',
-        description: `${providers.find(p => p.id === id)?.name} is now configured and ready to use.`,
+    try {
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const [testResult, modelsResult] = await Promise.allSettled([
+        authenticatedRequest('/api/test-connection', {
+          method: 'POST',
+          body: JSON.stringify({ provider })
+        }),
+        authenticatedRequest('/api/models', {
+          method: 'POST',
+          body: JSON.stringify({ provider })
+        })
+      ])
+
+      const isTestSuccess = testResult.status === 'fulfilled' && testResult.value.success;
+      const newModels = modelsResult.status === 'fulfilled' && modelsResult.value?.models?.length > 0 
+        ? modelsResult.value.models 
+        : provider.models;
+
+      if (isTestSuccess) {
+        toast({
+          title: 'Provider Checked',
+          description: `${provider.name} is working correctly. Auto-saved.`,
+        })
+
+        // Find the index of the provider to update it in the latest state
+        setProviders(prev => {
+          const updated = prev.map(p => p.id === provider.id ? {
+            ...p,
+            models: newModels,
+            testStatus: 'success' as const,
+            lastTested: new Date().toISOString(),
+            errorMessage: undefined,
+            isConfigured: true
+          } : p);
+          
+          // Auto-save silently in background
+          const providersToSave = updated.filter(p => 
+            p.isConfigured || p.dirtyApiKey || ['ollama', 'lm-studio'].includes(p.type)
+          );
+          
+          const payload = providersToSave.map(p => ({
+            provider: (() => {
+              switch (p.type) {
+                case 'open-router': return 'OPENROUTER'
+                case 'lm-studio': return 'LM_STUDIO'
+                case 'google': return 'GOOGLE_AI'
+                case 'mistral': return 'MISTRAL'
+                case 'ollama': return 'OLLAMA'
+                case 'openai': return 'OPENAI'
+                case 'anthropic': return 'ANTHROPIC'
+                case 'openai-compatible': return 'OPENAI_COMPATIBLE'
+                case 'groq': return 'GROQ'
+                default: return p.type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
+              }
+            })(),
+            apiKey: p.apiKey ?? '',
+            baseUrl: p.baseUrl,
+            model: p.model,
+            isActive: !!p.isActive,
+            config: {
+              temperature: p.temperature ?? 0.7,
+              maxTokens: p.maxTokens ?? 1000,
+              topP: p.topP ?? 1.0
+            }
+          }))
+
+          authenticatedRequest('/api/settings', {
+            method: 'POST',
+            body: JSON.stringify({ providers: payload })
+          }).catch(console.error);
+
+          return updated;
+        });
+      } else {
+        const errorMsg = testResult.status === 'fulfilled' ? testResult.value.error : 'Connection failed';
+        updateProvider(provider.id, {
+          testStatus: 'error',
+          lastTested: new Date().toISOString(),
+          errorMessage: errorMsg,
+          isConfigured: false
+        })
+        toast({
+          title: 'Connection failed',
+          description: errorMsg || 'Please double check your API key & Base URL.',
+          variant: 'destructive',
+        })
+      }
+    } catch (error: any) {
+      updateProvider(provider.id, {
+        testStatus: 'error',
+        lastTested: new Date().toISOString(),
+        errorMessage: error.message || 'Connection test failed',
+        isConfigured: false
       })
-    } else {
-      toast({
-        title: 'Connection failed',
-        description: result.error || 'Failed to test connection',
-        variant: 'destructive',
-      })
+    } finally {
+      setTestingProvider(null)
     }
   }
 
@@ -720,7 +802,7 @@ export function AiApiSettings() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
-                  {provider.id === 'docscan-free-builtin' ? (
+                  {provider.id.startsWith('docscan-free') ? (
                     <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
                       <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <div>
@@ -738,7 +820,7 @@ export function AiApiSettings() {
                         onChange={(e) => updateProvider(provider.id, { baseUrl: e.target.value })}
                         onBlur={() => {
                           if (provider.baseUrl && provider.apiKey) {
-                            handleFetchModels(provider)
+                            autoTestAndSave(provider)
                           }
                         }}
                         placeholder="API base URL"
@@ -755,7 +837,7 @@ export function AiApiSettings() {
                           onChange={(e) => updateProvider(provider.id, { apiKey: e.target.value, dirtyApiKey: true })}
                           onBlur={() => {
                             if (provider.baseUrl && provider.apiKey) {
-                              handleFetchModels({ ...provider, apiKey: provider.apiKey })
+                              autoTestAndSave({ ...provider, apiKey: provider.apiKey })
                             }
                           }}
                           placeholder="Enter your API key"
@@ -785,22 +867,11 @@ export function AiApiSettings() {
                   </div>
                   )}
 
-                  {provider.id !== 'docscan-free-builtin' && (
+                  {(provider.id !== 'docscan-free-builtin' || provider.models.length > 1) && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor={`model-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Model</Label>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 text-[10px] px-2 py-0 hover:bg-secondary text-muted-foreground"
-                          onClick={() => handleFetchModels(provider)}
-                          disabled={fetchingModels[provider.id]}
-                        >
-                          {fetchingModels[provider.id] ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1.5" />}
-                          Sync
-                        </Button>
                       </div>
                       <Select 
                         value={provider.model} 
@@ -809,13 +880,14 @@ export function AiApiSettings() {
                         <SelectTrigger id={`model-${provider.id}`} className="bg-background rounded-xl shadow-sm h-10">
                           <SelectValue placeholder="Select model" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl">
+                        <SelectContent className="rounded-xl max-h-64">
                           {provider.models.map((model) => (
                             <SelectItem key={model} value={model} className="py-2.5">{model}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
+                     {!provider.id.startsWith('docscan-free') && (<>
                     <div className="space-y-2">
                       <Label htmlFor={`max-tokens-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tokens</Label>
                       <Input
@@ -839,6 +911,7 @@ export function AiApiSettings() {
                         className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
                       />
                     </div>
+                    </>)}
                   </div>
                   )}
 
@@ -849,48 +922,7 @@ export function AiApiSettings() {
                     </Alert>
                   )}
 
-                  <div className="pt-4 border-t border-border/50 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:items-center justify-between">
-                    <div className="text-xs font-medium text-muted-foreground/80 flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5" />
-                      {provider.lastTested ? `Last check: ${new Date(provider.lastTested).toLocaleString()}` : 'Never tested'}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <ConnectionStatus
-                        provider={{
-                          id: provider.id,
-                          name: provider.name,
-                          type: provider.type,
-                          apiKey: provider.apiKey,
-                          model: provider.model,
-                          baseUrl: provider.baseUrl
-                        }}
-                        onTestComplete={(result) => handleConnectionTest(provider.id, result)}
-                      />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="rounded-lg shadow-sm font-medium px-4"
-                        onClick={async () => {
-                          try {
-                            await saveProviders(providers)
-                            toast({
-                              title: 'Provider saved',
-                              description: `${provider.name} configuration has been saved.`,
-                            })
-                          } catch (error) {
-                            console.error('Failed to save provider:', error)
-                            toast({
-                              title: 'Failed to save provider',
-                              description: `There was an error saving ${provider.name}. Please try again.`,
-                              variant: 'destructive',
-                            })
-                          }
-                        }}
-                      >
-                        <Save className="w-4 h-4 mr-1.5" /> Option
-                      </Button>
-                    </div>
-                  </div>
+                  {/* Removed manual option & test connection buttons */}
                 </CardContent>
               </Card>
             </motion.div>

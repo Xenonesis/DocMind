@@ -81,9 +81,12 @@ export default function Dashboard() {
         const provs: {id: string, name: string}[] = []
         
         if (freeProviderRes.status === 'fulfilled' && freeProviderRes.value) {
-          provs.push({
-            id: 'docscan-free-builtin',
-            name: 'DocScan Glm-5 (free)'
+          const fps = Array.isArray(freeProviderRes.value) ? freeProviderRes.value : [freeProviderRes.value];
+          fps.forEach((fp: any) => {
+            provs.push({
+              id: fp.id,
+              name: fp.name
+            })
           })
         }
         
@@ -102,6 +105,7 @@ export default function Dashboard() {
                 : p.provider === 'MISTRAL' ? 'Mistral AI'
                 : p.provider === 'OPENROUTER' ? 'OpenRouter'
                 : p.provider === 'OPENAI_COMPATIBLE' ? 'Custom API'
+                : p.provider === 'GROQ' ? `DocScan ${p.model || 'model name'} from groq (free)`
                 : p.provider === 'OLLAMA' ? 'Ollama'
                 : p.provider === 'LM_STUDIO' ? 'LM Studio'
                 : p.provider

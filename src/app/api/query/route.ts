@@ -62,14 +62,25 @@ export async function POST(request: NextRequest) {
         : aiService.getActiveProvider())
 
       if (!activeProvider) {
-        const freeApiKey = process.env.DOCSCAN_FREE_API_KEY
-        if (freeApiKey) {
+        // Try free providers from env as fallback
+        if (provider === 'docscan-free-groq' && process.env.GROQ_API_KEY) {
+          activeProvider = {
+            id: 'docscan-free-groq',
+            name: 'DocScan model name from groq (free)',
+            type: 'groq',
+            baseUrl: 'https://api.groq.com/openai/v1',
+            apiKey: process.env.GROQ_API_KEY,
+            model: 'llama-3.1-8b-instant',
+            maxTokens: 4096,
+            temperature: 0.7
+          } as any
+        } else if (process.env.DOCSCAN_FREE_API_KEY) {
           activeProvider = {
             id: 'docscan-free-builtin',
             name: 'DocScan Glm-5 (free)',
             type: 'openai-compatible',
             baseUrl: process.env.DOCSCAN_FREE_BASE_URL || 'https://api.us-west-2.modal.direct/v1',
-            apiKey: freeApiKey,
+            apiKey: process.env.DOCSCAN_FREE_API_KEY,
             model: 'zai-org/GLM-5-FP8',
             maxTokens: 4096,
             temperature: 0.7

@@ -120,7 +120,7 @@ function MessageBubble({
             <Badge 
               variant="outline" 
               className={`text-[10px] h-4 px-1.5 font-normal ${
-                message.provider === 'DocScan Glm-5 (free)' 
+                message.provider?.includes('(free)') 
                 ? 'border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5' 
                 : 'border-border/50 text-muted-foreground/70'
               }`}

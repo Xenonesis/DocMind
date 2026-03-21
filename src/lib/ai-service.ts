@@ -4,7 +4,7 @@ import { encryptApiKey, decryptApiKey, isValidApiKey, maskApiKey, sanitizeError 
 export interface AIProvider {
   id?: string
   name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible'
+  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible' | 'groq'
   baseUrl: string
   apiKey: string
   model: string
@@ -127,6 +127,8 @@ export class AIService {
           'claude': 'anthropic',
           // OpenAI Compatible
           'openai-compatible': 'openai-compatible',
+          // Groq
+          'groq': 'groq',
           // Fallback
           'custom': 'custom'
         }
@@ -143,7 +145,8 @@ export class AIService {
           'open-router': 'https://openrouter.ai/api/v1',
           'lm-studio': 'http://localhost:1234/v1',
           'ollama': 'http://localhost:11434/api',
-          'openai-compatible': 'https://api.your-provider.com/v1'
+          'openai-compatible': 'https://api.your-provider.com/v1',
+          'groq': 'https://api.groq.com/openai/v1'
         }
         
         // Decrypt the API key if it exists
@@ -184,6 +187,11 @@ export class AIService {
   async generateCompletion(config: AIServiceConfig): Promise<AIResponse> {
     const provider = config.provider
     
+    // Inject Groq API key from env if missing
+    if (provider.type === 'groq' && !provider.apiKey && process.env.GROQ_API_KEY) {
+      provider.apiKey = process.env.GROQ_API_KEY
+    }
+
     // Only require API key for cloud providers, not local ones
     if (!provider.apiKey && !['ollama', 'lm-studio'].includes(provider.type)) {
       throw new Error('API key not configured for provider')
@@ -203,6 +211,7 @@ export class AIService {
           return this.callOpenRouter(config)
         case 'openai':
         case 'openai-compatible':
+        case 'groq':
           return this.callOpenAI(config)
         case 'anthropic':
           return this.callAnthropic(config)
@@ -563,21 +572,57 @@ export class AIService {
   
 
   async fetchModels(provider: AIProvider): Promise<string[]> {
-    try {
-      if (!provider.baseUrl) return []
+    if (!provider.baseUrl) return provider.models || []
 
-      if (provider.type === 'ollama') {
+    // Inject Groq API key from env if missing
+    if (provider.type === 'groq' && !provider.apiKey && process.env.GROQ_API_KEY) {
+      provider.apiKey = process.env.GROQ_API_KEY
+    }
+
+    // Helper: fetch with an abort timeout (ms)
+    const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 5000) => {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+      try {
+        const res = await fetch(url, { ...options, signal: controller.signal })
+        clearTimeout(timeoutId)
+        return res
+      } catch (e) {
+        clearTimeout(timeoutId)
+        throw e
+      }
+    }
+
+    if (provider.type === 'ollama') {
+      try {
         const baseUrl = provider.baseUrl.endsWith('/api') ? provider.baseUrl.replace('/api', '') : provider.baseUrl
-        const res = await fetch(`${baseUrl}/api/tags`)
+        const res = await fetchWithTimeout(`${baseUrl}/api/tags`, {}, 3000)
         if (res.ok) {
           const data = await res.json()
           return data.models?.map((m: any) => m.name) || []
         }
-      } else if (provider.type === 'open-router') {
-        const res = await fetch(`${provider.baseUrl}/models`, {
+      } catch {
+        // Ollama not running locally — silent fallback
+      }
+    } else if (provider.type === 'lm-studio') {
+      try {
+        const modelsUrl = `${provider.baseUrl}/models`
+        const res = await fetchWithTimeout(modelsUrl, {
+          headers: provider.apiKey ? { 'Authorization': `Bearer ${provider.apiKey}` } : {}
+        }, 3000)
+        if (res.ok) {
+          const data = await res.json()
+          return data.data?.map((m: any) => m.id) || []
+        }
+      } catch {
+        // LM Studio not running locally — silent fallback
+      }
+    } else if (provider.type === 'open-router') {
+      try {
+        const res = await fetchWithTimeout(`${provider.baseUrl}/models`, {
           headers: {
             'Authorization': `Bearer ${provider.apiKey}`,
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://docmind.app'),
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docmind.app',
             'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'DocMind'
           }
         })
@@ -585,20 +630,27 @@ export class AIService {
           const data = await res.json()
           return data.data?.map((m: any) => m.id) || []
         }
-      } else if (provider.type === 'google') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${provider.apiKey}`)
+      } catch {
+        // silent fallback
+      }
+    } else if (provider.type === 'google') {
+      try {
+        const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${provider.apiKey}`)
         if (res.ok) {
           const data = await res.json()
           return data.models?.map((m: any) => m.name.replace('models/', '')) || []
         }
-      } else if (['openai', 'lm-studio', 'mistral', 'openai-compatible'].includes(provider.type)) {
+      } catch {
+        // silent fallback
+      }
+    } else if (['openai', 'mistral', 'openai-compatible', 'groq'].includes(provider.type)) {
+      try {
         const baseUrl = provider.baseUrl
-        // Ensure not appending /models to something that already has it or is a chat endpoint
         const modelsUrl = baseUrl.endsWith('/chat/completions') 
           ? baseUrl.replace('/chat/completions', '/models')
           : `${baseUrl}/models`
 
-        const res = await fetch(modelsUrl, {
+        const res = await fetchWithTimeout(modelsUrl, {
           headers: {
             'Authorization': `Bearer ${provider.apiKey}`
           }
@@ -607,12 +659,11 @@ export class AIService {
           const data = await res.json()
           return data.data?.map((m: any) => m.id) || []
         }
-      } else if (provider.type === 'anthropic') {
-        // Anthropic doesn't have a standard public models endpoint, return standard list
-        return ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest', 'claude-3-sonnet-20240229']
+      } catch {
+        // silent fallback
       }
-    } catch (e) {
-      console.warn('Failed to fetch live models:', e)
+    } else if (provider.type === 'anthropic') {
+      return ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest', 'claude-3-sonnet-20240229']
     }
 
     // Default fallback if fetch fails or is unsupported
