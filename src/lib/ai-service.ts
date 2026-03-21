@@ -447,24 +447,42 @@ export class AIService {
     }
     messages.push({ role: 'user', content: prompt })
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${provider.apiKey}`
-      },
-      body: JSON.stringify({
-        model: provider.model,
-        messages,
-        temperature,
-        max_tokens: maxTokens,
-        top_p: provider.topP
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+
+    let response: Response
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${provider.apiKey}`
+        },
+        body: JSON.stringify({
+          model: provider.model,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+          top_p: provider.topP
+        }),
+        signal: controller.signal
       })
-    })
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+      if (err?.name === 'AbortError') {
+        throw new Error(`Request timed out after 30s. The AI provider (${provider.name}) is not responding.`)
+      }
+      throw new Error(`Network error connecting to AI provider (${provider.name}): ${err?.message || 'Unknown error'}`)
+    }
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`OpenAI API error: ${error}`)
+      const errorText = await response.text().catch(() => response.statusText)
+      const isUpstream = errorText.includes('upstream request failed') || response.status === 502
+      if (isUpstream) {
+        throw new Error(`The AI provider "${provider.name}" is temporarily unavailable (upstream error). Please try again or switch to a different provider in Settings.`)
+      }
+      throw new Error(`AI API error (${response.status}): ${errorText}`)
     }
 
     const data = await response.json()

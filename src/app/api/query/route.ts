@@ -19,13 +19,13 @@ function parseJsonSafely(value: unknown, fallback: any) {
 export async function POST(request: NextRequest) {
   try {
     const { query, documentIds, provider, history } = await request.json()
-    
+
     if (!query || !query.trim()) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
     }
 
     const user = await getAuthenticatedUser(request)
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -60,25 +60,28 @@ export async function POST(request: NextRequest) {
 
     try {
       const aiService = AIService.getInstance()
-      
+
       await aiService.loadProvidersFromDatabase(user.id)
-      
+
       const allProviders = aiService.getProviders()
       let activeProvider = (provider
         ? allProviders.find(p => p.id === provider) || allProviders.find(p => p.name === provider)
         : aiService.getActiveProvider())
 
       if (!activeProvider) {
-        if (provider === 'docscan-free-groq' && process.env.GROQ_API_KEY) {
+        // Priority: Groq (reliable & available) > Modal.direct (may be down)
+        if (process.env.GROQ_API_KEY) {
           activeProvider = {
             id: 'docscan-free-groq',
-            name: 'DocScan model name from groq (free)',
+            name: 'DocScan llama-3.1-8b from groq (free)',
             type: 'groq',
             baseUrl: 'https://api.groq.com/openai/v1',
             apiKey: process.env.GROQ_API_KEY,
             model: 'llama-3.1-8b-instant',
             maxTokens: 4096,
-            temperature: 0.7
+            temperature: 0.7,
+            isActive: true,
+            isConfigured: true
           } as any
         } else if (process.env.DOCSCAN_FREE_API_KEY) {
           activeProvider = {
@@ -89,17 +92,19 @@ export async function POST(request: NextRequest) {
             apiKey: process.env.DOCSCAN_FREE_API_KEY,
             model: 'zai-org/GLM-5-FP8',
             maxTokens: 4096,
-            temperature: 0.7
+            temperature: 0.7,
+            isActive: true,
+            isConfigured: true
           } as any
         } else {
-          return NextResponse.json({ 
-            error: 'No AI provider configured. Please configure a real AI provider in Settings.' 
+          return NextResponse.json({
+            error: 'No AI provider configured. Please configure an AI provider in Settings.'
           }, { status: 400 })
         }
       }
 
       const providerConfig = activeProvider!
-      
+
       let documentsQuery = db
         .from('documents')
         .select('*')
@@ -145,13 +150,43 @@ ${historyText}
         Please provide a comprehensive but concise answer. Respond in plain text (no JSON), referencing the documents by name where relevant.
       `
 
-      const completion = await aiService.generateCompletion({
-        provider: providerConfig,
-        prompt: userPrompt,
-        systemPrompt,
-        temperature: providerConfig.temperature || 0.3,
-        maxTokens: providerConfig.maxTokens || 1000
-      })
+      // Try primary provider, fallback to Groq on upstream errors
+      let completion
+      try {
+        completion = await aiService.generateCompletion({
+          provider: providerConfig,
+          prompt: userPrompt,
+          systemPrompt,
+          temperature: providerConfig.temperature || 0.3,
+          maxTokens: providerConfig.maxTokens || 4096
+        })
+      } catch (primaryErr: any) {
+        const isUpstreamErr = /upstream|timed out|network error/i.test(primaryErr?.message || '')
+        if (isUpstreamErr && process.env.GROQ_API_KEY && providerConfig.id !== 'docscan-free-groq') {
+          console.warn('Primary provider failed, falling back to Groq:', primaryErr.message)
+          const groqFallback = {
+            id: 'docscan-free-groq',
+            name: 'DocScan llama-3.1-8b from groq (free)',
+            type: 'groq' as const,
+            baseUrl: 'https://api.groq.com/openai/v1',
+            apiKey: process.env.GROQ_API_KEY!,
+            model: 'llama-3.1-8b-instant',
+            maxTokens: 4096,
+            temperature: 0.7,
+            isActive: true,
+            isConfigured: true
+          }
+          completion = await aiService.generateCompletion({
+            provider: groqFallback,
+            prompt: userPrompt,
+            systemPrompt,
+            temperature: 0.3,
+            maxTokens: 4096
+          })
+        } else {
+          throw primaryErr
+        }
+      }
 
       let aiResponse: any
       const rawContent = completion.content
@@ -204,7 +239,7 @@ ${historyText}
         })
         .eq('id', queryRecord.id)
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         id: queryRecord.id,
         query: queryRecord.query_text,
         status: 'ERROR',
@@ -221,7 +256,7 @@ ${historyText}
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -253,7 +288,7 @@ export async function GET(request: NextRequest) {
     const formattedQueries = (queries || []).map(query => ({
       id: query.id,
       query: query.query_text,
-      status: 'COMPLETED', 
+      status: 'COMPLETED',
       response: parseJsonSafely(query.response, null),
       timestamp: query.timestamp,
       documentIds: parseJsonSafely(query.document_ids, []),
