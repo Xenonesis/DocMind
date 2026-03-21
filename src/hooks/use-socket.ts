@@ -40,6 +40,7 @@ export function useSocket(options: UseSocketOptions = {}) {
     documentId, 
     joinUpdates: shouldJoinUpdates = true 
   } = options
+  const socketsEnabled = process.env.NEXT_PUBLIC_ENABLE_SOCKETS === 'true'
   
   const socketRef = useRef<Socket | null>(null)
   const [state, setState] = useState<SocketState>({
@@ -53,6 +54,7 @@ export function useSocket(options: UseSocketOptions = {}) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    if (!socketsEnabled) return
 
     // Initialize socket connection
     const baseUrl = process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin
@@ -152,7 +154,7 @@ export function useSocket(options: UseSocketOptions = {}) {
       socket.disconnect()
       socketRef.current = null
     }
-  }, [autoConnect, documentId, shouldJoinUpdates])
+  }, [autoConnect, documentId, shouldJoinUpdates, socketsEnabled])
 
   // Actions
   const joinDocumentRoom = (docId: string) => {
@@ -205,6 +207,7 @@ export function useSocket(options: UseSocketOptions = {}) {
 
   return {
     ...state,
+    isConnected: socketsEnabled ? state.isConnected : false,
     socket: socketRef.current,
     joinDocumentRoom,
     leaveDocumentRoom,

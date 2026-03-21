@@ -31,6 +31,18 @@ interface DocumentUploadProps {
   onUpload: (documents: Document[]) => void
 }
 
+type UploadResponse = {
+  id: string
+  name: string
+  type: string
+  size: string
+  status: 'PROCESSING'
+  uploadDate: string
+  downloadURL: string
+  storageRef: string
+  processingStrategy: 'go' | 'node'
+}
+
 export function DocumentUpload({ onUpload }: DocumentUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploadingFiles, setUploadingFiles] = useState<Document[]>([])
@@ -102,13 +114,19 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
         clearInterval(progressInterval)
 
         if (response.ok) {
-          const result = await response.json()
+          const result = await response.json() as UploadResponse
           
           setUploadingFiles(prev => prev.map(d => 
             d.id === doc.id ? { ...d, progress: 100 } : d
           ))
 
           setTimeout(() => {
+            const updatedDocument = {
+              ...doc,
+              id: result.id,
+              status: 'PROCESSING' as const
+            }
+
             setUploadingFiles(prev => prev.map(d => 
               d.id === doc.id ? { 
                 ...d, 
@@ -117,7 +135,28 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
               } : d
             ))
 
-            onUpload([{ ...doc, id: result.id, status: 'PROCESSING' }])
+            onUpload([updatedDocument])
+
+            const processorEndpoint = result.processingStrategy === 'node'
+              ? '/api/process-document-fallback'
+              : '/api/process-document'
+
+            authenticatedFetch(processorEndpoint, {
+              method: 'POST',
+              body: JSON.stringify({ documentId: result.id })
+            }).then(async (processorResponse) => {
+              if (!processorResponse.ok) {
+                const errorText = await processorResponse.text()
+                throw new Error(errorText || 'Processing failed')
+              }
+              onUpload([updatedDocument])
+            }).catch((error) => {
+              console.error('Document processing error:', error)
+              setUploadingFiles(prev => prev.map(d =>
+                d.id === result.id ? { ...d, status: 'ERROR' } : d
+              ))
+              onUpload([{ ...updatedDocument, status: 'ERROR' }])
+            })
 
             setTimeout(() => {
               setUploadingFiles(prev => prev.filter(d => d.id !== result.id))

@@ -121,18 +121,26 @@ export default function Dashboard() {
     }
     fetchProviders()
   }, [])
+
+  useEffect(() => {
+    const hasProcessingDocuments = documents.some(doc =>
+      doc.status === 'UPLOADING' || doc.status === 'PROCESSING'
+    )
+
+    if (!hasProcessingDocuments) {
+      return
+    }
+
+    const interval = setInterval(() => {
+      fetchDocuments()
+    }, 2500)
+
+    return () => clearInterval(interval)
+  }, [documents])
   
-  const handleDocumentUpload = (newDocuments: Document[]) => {
+  const handleDocumentUpload = (_newDocuments: Document[]) => {
     fetchDocuments()
     setActiveTab('documents')
-    
-    const refreshInterval = setInterval(() => {
-      fetchDocuments()
-    }, 2000)
-    
-    setTimeout(() => {
-      clearInterval(refreshInterval)
-    }, 30000)
   }
 
   const handleQuerySubmit = async (payload?: { query: string; documentIds: string[]; provider?: string }) => {

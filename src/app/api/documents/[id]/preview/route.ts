@@ -6,10 +6,12 @@ import mammoth from 'mammoth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  let documentId = ''
   try {
-    const { id: documentId } = await params
+    const awaitedParams = await params
+    documentId = awaitedParams.id
 
     // Get authenticated user and instantiate DB client
     const authHeader = request.headers.get('authorization')
@@ -206,7 +208,7 @@ export async function GET(
       { 
         error: 'Failed to generate preview',
         details: error instanceof Error ? error.message : 'Unknown error',
-        documentId: params.id
+        documentId
       },
       { status: 500 }
     )
