@@ -43,7 +43,7 @@ import { ApiUsageTracker } from '@/components/features/api-usage-tracker'
 interface AIProvider {
   id: string
   name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible'
+  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible' | 'groq'
   baseUrl: string
   apiKey: string
   model: string
@@ -184,7 +184,22 @@ const defaultProviders: Omit<AIProvider, 'id'>[] = [
     iconType: 'server'
   },
   {
-    name: 'DocScan Free ✨',
+    name: 'DocScan model name from groq (free)',
+    type: 'groq',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    apiKey: '',
+    model: 'llama3-8b-8192',
+    isActive: false,
+    isConfigured: false,
+    models: ['llama3-8b-8192', 'llama3-70b-8192', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
+    maxTokens: 4096,
+    temperature: 0.7,
+    topP: 0.9,
+    description: 'Ultra-fast inference powered by Groq.',
+    iconType: 'zap'
+  },
+  {
+    name: 'DocScan Glm-5 (free)',
     type: 'openai-compatible',
     baseUrl: 'https://api.us-west-2.modal.direct/v1',
     apiKey: '', // injected from server at runtime
@@ -233,12 +248,19 @@ export function AiApiSettings() {
             if (raw === 'GOOGLE_AI') return 'google'
             if (raw === 'LM_STUDIO') return 'lm-studio'
             if (raw === 'OPENAI_COMPATIBLE') return 'openai-compatible'
+            if (raw === 'GROQ') return 'groq'
             return raw.toLowerCase().replace(/_/g, '-')
           })()
           const defaults = defaultProviders.find(d => d.type === mappedType)
+          
+          let pName = `${s.provider} (${s.model || ''})`
+          if (mappedType === 'groq') {
+            pName = `DocScan ${s.model || 'model name'} from groq (free)`
+          }
+
           return {
             id: s.id || `provider-${index}`,
-            name: `${s.provider} (${s.model || ''})`,
+            name: pName,
             type: mappedType as AIProvider['type'],
             baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
             apiKey: s.apiKey || '',
@@ -265,7 +287,7 @@ export function AiApiSettings() {
           if (!alreadyHasFree) {
             mapped = [{
               id: freeId,
-              name: 'DocScan Free ✨',
+              name: 'DocScan Glm-5 (free)',
               type: 'openai-compatible',
               baseUrl: freeConfig.baseUrl,
               apiKey: freeConfig.apiKey,
@@ -358,6 +380,7 @@ export function AiApiSettings() {
           case 'openai': return 'OPENAI'
           case 'anthropic': return 'ANTHROPIC'
           case 'openai-compatible': return 'OPENAI_COMPATIBLE'
+          case 'groq': return 'GROQ'
           default: return p.type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
         }
       })(),
@@ -385,12 +408,19 @@ export function AiApiSettings() {
         if (raw === 'OPENROUTER') return 'open-router'
         if (raw === 'GOOGLE_AI') return 'google'
         if (raw === 'LM_STUDIO') return 'lm-studio'
+        if (raw === 'GROQ') return 'groq'
         return raw.toLowerCase().replace(/_/g, '-')
       })()
       const defaults = defaultProviders.find(d => d.type === mappedType)
+      
+      let pName = `${s.provider} (${s.model || ''})`
+      if (mappedType === 'groq') {
+        pName = `DocScan ${s.model || 'model name'} from groq (free)`
+      }
+
       return {
         id: s.id || `provider-${index}`,
-        name: `${s.provider} (${s.model || ''})`,
+        name: pName,
         type: mappedType as AIProvider['type'],
         baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
         // Use the actual API key as returned from server

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"docscan/internal/docscanapi"
+	"docscan/pkg/docscanapi"
 )
 
 type analyzeDocumentRequest struct {

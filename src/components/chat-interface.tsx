@@ -120,7 +120,7 @@ function MessageBubble({
             <Badge 
               variant="outline" 
               className={`text-[10px] h-4 px-1.5 font-normal ${
-                message.provider === 'DocScan Free ✨' 
+                message.provider === 'DocScan Glm-5 (free)' 
                 ? 'border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5' 
                 : 'border-border/50 text-muted-foreground/70'
               }`}
@@ -378,7 +378,7 @@ export function ChatInterface({ documents, selectedProvider }: ChatInterfaceProp
             <h3 className="text-lg font-semibold text-foreground mb-2">Start a conversation</h3>
             <p className="text-sm text-muted-foreground mb-8 max-w-sm">
               Ask questions about your documents and get AI-powered insights instantly. 
-              {completedDocs.length > 0 && <span className="block mt-1 text-primary/80">Using DocScan Free ✨ automatically if no provider is set.</span>}
+              {completedDocs.length > 0 && <span className="block mt-1 text-primary/80">Using DocScan Glm-5 (free) automatically if no provider is set.</span>}
               {completedDocs.length === 0 && ' Upload a document first to get started.'}
             </p>
 

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"docscan/internal/docscanapi"
+	"docscan/pkg/docscanapi"
 )
 
 type searchRequest struct {

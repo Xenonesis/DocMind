@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"docscan/internal/docscanapi"
+	"docscan/pkg/docscanapi"
 )
 
 type processDocumentRequest struct {

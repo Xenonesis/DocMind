@@ -15,7 +15,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    name: 'DocScan Free',
+    name: 'DocScan Glm-5 (free)',
     type: 'openai-compatible',
     baseUrl,
     apiKey,

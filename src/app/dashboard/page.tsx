@@ -83,7 +83,7 @@ export default function Dashboard() {
         if (freeProviderRes.status === 'fulfilled' && freeProviderRes.value) {
           provs.push({
             id: 'docscan-free-builtin',
-            name: 'DocScan Free ✨'
+            name: 'DocScan Glm-5 (free)'
           })
         }
         

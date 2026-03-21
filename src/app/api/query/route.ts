@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         if (freeApiKey) {
           activeProvider = {
             id: 'docscan-free-builtin',
-            name: 'DocScan Free ✨',
+            name: 'DocScan Glm-5 (free)',
             type: 'openai-compatible',
             baseUrl: process.env.DOCSCAN_FREE_BASE_URL || 'https://api.us-west-2.modal.direct/v1',
             apiKey: freeApiKey,
