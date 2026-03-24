@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Image from 'next/image'
-import { LogOut, LayoutDashboard } from 'lucide-react'
+import { Bot, LogOut, LayoutDashboard } from 'lucide-react'
 import { ChatInterface } from '@/components/chat-interface'
 import { useAuth } from '@/lib/auth-context'
 import { ProtectedRoute } from '@/components/protected-route'
@@ -143,6 +143,12 @@ export default function ChatPage() {
               <Button variant="outline" className="rounded-full px-5 text-muted-foreground">
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 Dashboard
+              </Button>
+            </Link>
+            <Link href="/dashboard/chatbots">
+              <Button variant="outline" className="rounded-full px-5 text-muted-foreground">
+                <Bot className="w-4 h-4 mr-2" />
+                Chatbots
               </Button>
             </Link>
             <ThemeToggle />

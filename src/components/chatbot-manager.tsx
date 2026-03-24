@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
-import { Copy, KeyRound, Link2, Loader2, Pencil, Plus, RefreshCw, ShieldX, Trash2 } from 'lucide-react'
+import { BookOpen, Copy, KeyRound, Link2, Loader2, Pencil, Plus, RefreshCw, ShieldX, Terminal, Trash2 } from 'lucide-react'
 
 interface DocumentItem {
   id: string
@@ -583,41 +583,80 @@ export function ChatbotManager() {
           </CardHeader>
           <CardContent className="space-y-3">
             {generatedToken && (
-              <div className="space-y-2">
-                <Label>Hosted URL with Embed Token</Label>
-                <div className="flex gap-2">
-                  <Input value={generatedToken} readOnly />
-                  <Button variant="outline" onClick={() => copyText(generatedToken, 'Embed URL')}>Copy</Button>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Hosted URL with Embed Token</Label>
+                  <div className="flex gap-2">
+                    <Input value={generatedToken} readOnly />
+                    <Button variant="outline" onClick={() => copyText(generatedToken, 'Embed URL')}>Copy</Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 p-4 bg-muted/50 rounded-md relative text-sm border">
+                  <h4 className="font-semibold mb-2 flex items-center">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    How to integrate (Embed)
+                  </h4>
+                  <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
+                    <li>Copy your customized embed URL (includes your token).</li>
+                    <li>Add an <code>iframe</code> directly to your website.</li>
+                  </ol>
+                  <pre className="p-3 mt-3 bg-secondary/30 border rounded overflow-x-auto text-xs font-mono text-secondary-foreground">
+                    {`<iframe src="${generatedToken}" width="100%" height="600px" frameBorder="0" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"></iframe>`}
+                  </pre>
+                  
+                  <Button 
+                    className="absolute top-3 right-3 h-8"
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => copyText(`### Embed Instructions\n\n1. Copy your customized embed URL: \`${generatedToken}\`\n2. Add the following \`iframe\` code to your website:\n\n\`\`\`html\n<iframe src="${generatedToken}" width="100%" height="600px" frameBorder="0" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);"></iframe>\n\`\`\`\n`, 'Markdown Instructions')}
+                  >
+                    Copy as Markdown
+                  </Button>
                 </div>
               </div>
             )}
 
             {generatedApiKey && (
-              <div className="space-y-2">
-                <Label>REST API Key</Label>
-                <div className="flex gap-2">
-                  <Input value={generatedApiKey} readOnly />
-                  <Button variant="outline" onClick={() => copyText(generatedApiKey, 'API key')}>Copy</Button>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>REST API Key</Label>
+                  <div className="flex gap-2">
+                    <Input value={generatedApiKey} readOnly />
+                    <Button variant="outline" onClick={() => copyText(generatedApiKey, 'API key')}>Copy</Button>
+                  </div>
                 </div>
               </div>
             )}
 
             {generatedApiKey && generatedSlug && (
-              <div className="space-y-2">
-                <Label>REST API Endpoint</Label>
-                <div className="flex gap-2">
-                  <Input value="/api/chatbots/runtime/query" readOnly />
-                  <Button variant="outline" onClick={() => copyText('/api/chatbots/runtime/query', 'Endpoint')}>Copy</Button>
-                </div>
-                <Label className="text-xs text-muted-foreground">cURL Example</Label>
-                <Textarea
-                  readOnly
-                  className="min-h-32 font-mono text-xs"
-                  value={`curl -X POST "${typeof window !== 'undefined' ? window.location.origin : ''}/api/chatbots/runtime/query" \\
+              <div className="space-y-4 pt-2">
+                <div className="space-y-2 p-4 bg-muted/50 rounded-md relative text-sm border">
+                  <h4 className="font-semibold mb-2 flex items-center">
+                    <Terminal className="w-4 h-4 mr-2" />
+                    How to integrate (REST API)
+                  </h4>
+                  <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
+                    <li>Send a POST request to <code>/api/chatbots/runtime/query</code>.</li>
+                    <li>Include your secure API Key in the <code>x-api-key</code> header.</li>
+                    <li>Pass the bot's <code>slug</code> parameter alongside the user's <code>query</code>.</li>
+                  </ol>
+                  <pre className="p-3 mt-3 bg-secondary/30 border rounded overflow-x-auto text-xs font-mono text-secondary-foreground">
+{`curl -X POST "${typeof window !== 'undefined' ? window.location.origin : ''}/api/chatbots/runtime/query" \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: ${generatedApiKey}" \\
   -d '{"slug":"${generatedSlug}","query":"Summarize key points from linked documents"}'`}
-                />
+                  </pre>
+
+                  <Button 
+                    className="absolute top-3 right-3 h-8"
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => copyText(`### API Integration Instructions\n\n1. Send a POST request to \`/api/chatbots/runtime/query\`.\n2. Include your secure API Key in the \`x-api-key\` header.\n3. Pass the bot's \`slug\` parameter alongside the user's \`query\`.\n\n#### cURL Example:\n\`\`\`bash\ncurl -X POST "${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/chatbots/runtime/query" \\\n  -H "Content-Type: application/json" \\\n  -H "x-api-key: ${generatedApiKey}" \\\n  -d '{"slug":"${generatedSlug}","query":"Summarize key points from linked documents"}'\n\`\`\`\n`, 'Markdown Instructions')}
+                  >
+                    Copy as Markdown
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
