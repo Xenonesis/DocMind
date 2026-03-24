@@ -44,7 +44,8 @@ export async function authenticatedRequest<T = any>(url: string, options: Reques
     
     try {
       const errorData = JSON.parse(errorText)
-      errorMessage = errorData.error || errorMessage
+      const parts = [errorData.error, errorData.details, errorData.hint].filter(Boolean)
+      errorMessage = parts.length > 0 ? parts.join(' | ') : errorMessage
     } catch {
       errorMessage = errorText || errorMessage
     }

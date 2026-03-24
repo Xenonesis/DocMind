@@ -14,12 +14,14 @@ import {
   Settings,
   LogOut,
   Loader2,
-  MessageSquare
+  MessageSquare,
+  Bot
 } from 'lucide-react'
 import { DocumentUpload } from '@/components/document-upload'
 import { DocumentList } from '@/components/document-list'
 import { AnalysisResults } from '@/components/analysis-results'
 import { AiApiSettings } from '@/components/settings/ai-api-settings'
+import { ChatbotManager } from '@/components/chatbot-manager'
 import { useAuth } from '@/lib/auth-context'
 import { ProtectedRoute } from '@/components/protected-route'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
@@ -204,6 +206,7 @@ export default function Dashboard() {
                   { id: 'upload', icon: Upload, label: 'Upload' },
                   { id: 'documents', icon: FileText, label: 'Documents' },
                   { id: 'results', icon: BarChart3, label: 'Analysis' },
+                  { id: 'chatbots', icon: Bot, label: 'Chatbots' },
                   { id: 'settings', icon: Settings, label: 'Settings' }
                 ].map((tab) => (
                   <TabsTrigger
@@ -253,6 +256,10 @@ export default function Dashboard() {
 
                 <TabsContent value="results" className="m-0 focus-visible:outline-none flex-1">
                   <AnalysisResults />
+                </TabsContent>
+
+                <TabsContent value="chatbots" className="m-0 focus-visible:outline-none flex-1">
+                  <ChatbotManager />
                 </TabsContent>
 
                 <TabsContent value="settings" className="m-0 focus-visible:outline-none flex-1">
