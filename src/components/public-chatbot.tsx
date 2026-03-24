@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Loader2, Send } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 interface PublicChatbotProps {
   slug: string
@@ -25,6 +26,19 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const [sessionId, setSessionId] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
 
+  const getAuthHeader = async (): Promise<Record<string, string>> => {
+    if (!supabase) return {}
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        return { Authorization: `Bearer ${session.access_token}` }
+      }
+    } catch {
+      // Ignore auth header failures for public chatbot usage.
+    }
+    return {}
+  }
+
   const token = useMemo(() => {
     if (typeof window === 'undefined') return ''
     const params = new URLSearchParams(window.location.search)
@@ -40,7 +54,10 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       }
 
       try {
-        const res = await fetch(`/api/chatbots/runtime/info/${slug}?token=${encodeURIComponent(token)}`)
+        const authHeaders = await getAuthHeader()
+        const res = await fetch(`/api/chatbots/runtime/info/${slug}?token=${encodeURIComponent(token)}`, {
+          headers: authHeaders,
+        })
         const data = await res.json()
         if (!res.ok) {
           throw new Error(data?.error || 'Failed to load chatbot')
@@ -68,11 +85,13 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     setSending(true)
 
     try {
+      const authHeaders = await getAuthHeader()
       const res = await fetch('/api/chatbots/runtime/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-embed-token': token,
+          ...authHeaders,
         },
         body: JSON.stringify({
           slug,

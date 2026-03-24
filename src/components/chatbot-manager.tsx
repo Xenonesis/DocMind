@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
-import { BookOpen, Copy, KeyRound, Link2, Loader2, Pencil, Plus, RefreshCw, ShieldX, Terminal, Trash2 } from 'lucide-react'
+import { BookOpen, Copy, ExternalLink, KeyRound, Link2, Loader2, Pencil, PlayCircle, Plus, RefreshCw, ShieldX, Terminal, Trash2 } from 'lucide-react'
 
 interface DocumentItem {
   id: string
@@ -69,6 +69,8 @@ export function ChatbotManager() {
   const [generatedToken, setGeneratedToken] = useState('')
   const [generatedApiKey, setGeneratedApiKey] = useState('')
   const [generatedSlug, setGeneratedSlug] = useState('')
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewName, setPreviewName] = useState('')
   const [editingBotId, setEditingBotId] = useState<string | null>(null)
   const [updatingBot, setUpdatingBot] = useState(false)
   const [details, setDetails] = useState<ChatbotDetails | null>(null)
@@ -139,6 +141,8 @@ export function ChatbotManager() {
       setSelectedDocumentIds([])
       setGeneratedToken('')
       setGeneratedApiKey('')
+      setPreviewUrl('')
+      setPreviewName('')
       await loadData()
 
       toast({ title: 'Chatbot created', description: 'Your hosted URL and credentials can now be generated.' })
@@ -279,6 +283,30 @@ export function ChatbotManager() {
     }
   }
 
+  const handleTryLive = async (id: string, slug: string, botName: string) => {
+    try {
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const data = await authenticatedRequest<{ token: string }>(`/api/chatbots/${id}/embed-token`, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'dashboard-live-preview',
+          expiresInDays: 30,
+        }),
+      })
+
+      const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const url = `${appUrl}/bot/${slug}?token=${data.token}`
+
+      setGeneratedToken(url)
+      setGeneratedSlug(slug)
+      setPreviewUrl(url)
+      setPreviewName(botName)
+      toast({ title: 'Live preview ready', description: 'Test the chatbot below before embedding it on your website.' })
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Live preview failed', description: error?.message || 'Try again.' })
+    }
+  }
+
   const handleGenerateApiKey = async (id: string, slug: string) => {
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
@@ -415,6 +443,12 @@ export function ChatbotManager() {
                 </Button>
                 <Button variant="outline" onClick={() => handleGenerateApiKey(bot.id, bot.slug)}>
                   <KeyRound className="w-4 h-4 mr-2" /> Generate API Key
+                </Button>
+              </div>
+
+              <div>
+                <Button variant="secondary" onClick={() => handleTryLive(bot.id, bot.slug, bot.name)}>
+                  <PlayCircle className="w-4 h-4 mr-2" /> Generate and Try Live
                 </Button>
               </div>
 
@@ -589,6 +623,9 @@ export function ChatbotManager() {
                   <div className="flex gap-2">
                     <Input value={generatedToken} readOnly />
                     <Button variant="outline" onClick={() => copyText(generatedToken, 'Embed URL')}>Copy</Button>
+                    <Button variant="outline" onClick={() => window.open(generatedToken, '_blank', 'noopener,noreferrer')}>
+                      <ExternalLink className="w-4 h-4 mr-2" /> Open
+                    </Button>
                   </div>
                 </div>
 
@@ -613,6 +650,24 @@ export function ChatbotManager() {
                   >
                     Copy as Markdown
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {previewUrl && (
+              <div className="space-y-3 pt-2">
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <p className="text-sm font-medium">Live Tryout: {previewName || generatedSlug}</p>
+                  <p className="text-xs text-muted-foreground">This is exactly what your website visitors will see inside an embed iframe.</p>
+                </div>
+                <div className="border rounded-xl overflow-hidden bg-background shadow-sm">
+                  <iframe
+                    src={previewUrl}
+                    title="Live chatbot preview"
+                    className="w-full h-[640px]"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
               </div>
             )}

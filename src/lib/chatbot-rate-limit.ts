@@ -28,6 +28,11 @@ async function incrementBucket(
   windowStart: string,
   limit: number
 ): Promise<RateLimitResult> {
+  // Non-positive or invalid values are treated as unlimited for this bucket.
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return { allowed: true }
+  }
+
   const { data: existing, error: fetchError } = await db
     .from('chatbot_rate_limits')
     .select('id, request_count')
@@ -38,7 +43,7 @@ async function incrementBucket(
     .maybeSingle()
 
   if (fetchError) {
-    return { allowed: false, reason: 'Failed to read rate-limit bucket' }
+    return { allowed: true, reason: 'Rate-limit storage unavailable (read)' }
   }
 
   if (!existing) {
@@ -53,7 +58,7 @@ async function incrementBucket(
       })
 
     if (insertError) {
-      return { allowed: false, reason: 'Failed to initialize rate-limit bucket' }
+      return { allowed: true, reason: 'Rate-limit storage unavailable (insert)' }
     }
 
     return { allowed: true }
@@ -72,7 +77,7 @@ async function incrementBucket(
     .eq('id', existing.id)
 
   if (updateError) {
-    return { allowed: false, reason: 'Failed to update rate-limit bucket' }
+    return { allowed: true, reason: 'Rate-limit storage unavailable (update)' }
   }
 
   return { allowed: true }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase'
+import { createServerClientForToken, supabaseServer } from '@/lib/supabase'
 import { verifyEmbedToken } from '@/lib/chatbot-security'
 
 interface Params {
@@ -10,7 +10,14 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest, { params }: Params) {
   try {
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const bearerToken = authHeader?.toLowerCase().startsWith('bearer ')
+      ? authHeader.slice(7).trim()
+      : undefined
+
+    const db = createServerClientForToken(bearerToken) || supabaseServer
+
+    if (!db) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
@@ -21,7 +28,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Embed token is required' }, { status: 401 })
     }
 
-    const verified = await verifyEmbedToken(supabaseServer, token)
+    const verified = await verifyEmbedToken(db, token)
     if (!verified?.chatbots || verified.chatbots.slug !== slug) {
       return NextResponse.json({ error: 'Invalid embed token' }, { status: 401 })
     }

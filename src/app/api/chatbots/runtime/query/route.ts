@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AIService } from '@/lib/ai-service'
-import { supabaseServer } from '@/lib/supabase'
+import { createServerClientForToken, supabaseServer } from '@/lib/supabase'
 import { buildGuardrailedPrompts, normalizeGuardrailResponse } from '@/lib/chatbot-guardrails'
 import { enforceStandardRateLimit } from '@/lib/chatbot-rate-limit'
 import { getClientIp, verifyApiKey, verifyEmbedToken } from '@/lib/chatbot-security'
@@ -54,7 +54,14 @@ async function getFallbackProvider() {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!supabaseServer) {
+    const authHeader = request.headers.get('authorization')
+    const bearerToken = authHeader?.toLowerCase().startsWith('bearer ')
+      ? authHeader.slice(7).trim()
+      : undefined
+
+    const db = createServerClientForToken(bearerToken) || supabaseServer
+
+    if (!db) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
@@ -76,10 +83,10 @@ export async function POST(request: NextRequest) {
     let authMode: 'api_key' | 'embed_token' = 'embed_token'
 
     if (apiKey) {
-      verified = await verifyApiKey(supabaseServer, String(apiKey))
+      verified = await verifyApiKey(db, String(apiKey))
       authMode = 'api_key'
     } else {
-      verified = await verifyEmbedToken(supabaseServer, String(embedToken))
+      verified = await verifyEmbedToken(db, String(embedToken))
       authMode = 'embed_token'
     }
 
@@ -103,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     const ipAddress = getClientIp(request)
 
-    const rateResult = await enforceStandardRateLimit(supabaseServer, {
+    const rateResult = await enforceStandardRateLimit(db, {
       chatbotId: chatbot.id,
       ipAddress,
       botPerMinute: chatbot.requests_per_minute_bot,
@@ -112,7 +119,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!rateResult.allowed) {
-      await supabaseServer.from('chatbot_audit_logs').insert({
+      await db.from('chatbot_audit_logs').insert({
         chatbot_id: chatbot.id,
         auth_mode: authMode,
         client_ip: ipAddress,
@@ -124,7 +131,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Rate limit exceeded. Please try again later.' }, { status: 429 })
     }
 
-    const { data: links, error: docsError } = await supabaseServer
+    const { data: links, error: docsError } = await db
       .from('chatbot_documents')
       .select('document_id, documents!inner(id, name, category, content, status)')
       .eq('chatbot_id', chatbot.id)
@@ -150,10 +157,11 @@ export async function POST(request: NextRequest) {
       documents: docs,
     })
 
-    let sessionId = body.sessionId ? String(body.sessionId) : ''
+    let sessionId = body.sessionId ? String(body.sessionId) : `ephemeral-${Date.now()}`
+    let canPersistSession = false
 
-    if (!sessionId) {
-      const { data: createdSession, error: sessionError } = await supabaseServer
+    if (!body.sessionId) {
+      const { data: createdSession, error: sessionError } = await db
         .from('chatbot_sessions')
         .insert({
           chatbot_id: chatbot.id,
@@ -167,25 +175,30 @@ export async function POST(request: NextRequest) {
         .select('id')
         .single()
 
-      if (sessionError || !createdSession) {
-        return NextResponse.json({ error: 'Failed to create chat session' }, { status: 500 })
+      if (!sessionError && createdSession?.id) {
+        sessionId = createdSession.id
+        canPersistSession = true
       }
-
-      sessionId = createdSession.id
     } else {
-      await supabaseServer
+      const { error: sessionUpdateError } = await db
         .from('chatbot_sessions')
         .update({ last_activity_at: new Date().toISOString() })
         .eq('id', sessionId)
         .eq('chatbot_id', chatbot.id)
+
+      if (!sessionUpdateError) {
+        canPersistSession = true
+      }
     }
 
-    await supabaseServer.from('chatbot_messages').insert({
-      session_id: sessionId,
-      chatbot_id: chatbot.id,
-      role: 'user',
-      content: query,
-    })
+    if (canPersistSession) {
+      await db.from('chatbot_messages').insert({
+        session_id: sessionId,
+        chatbot_id: chatbot.id,
+        role: 'user',
+        content: query,
+      })
+    }
 
     const aiService = AIService.getInstance()
     await aiService.loadProvidersFromDatabase(chatbot.user_id)
@@ -205,36 +218,46 @@ export async function POST(request: NextRequest) {
 
     const normalized = normalizeGuardrailResponse(completion.content, chatbot.refusal_message)
 
-    await supabaseServer.from('chatbot_messages').insert({
-      session_id: sessionId,
-      chatbot_id: chatbot.id,
-      role: 'assistant',
-      content: normalized.answer,
-      tokens_used: completion.usage?.totalTokens || 0,
-    })
+    if (canPersistSession) {
+      await db.from('chatbot_messages').insert({
+        session_id: sessionId,
+        chatbot_id: chatbot.id,
+        role: 'assistant',
+        content: normalized.answer,
+        tokens_used: completion.usage?.totalTokens || 0,
+      })
+    }
 
-    await supabaseServer.from('chatbot_audit_logs').insert({
-      chatbot_id: chatbot.id,
-      session_id: sessionId,
-      auth_mode: authMode,
-      client_ip: ipAddress,
-      query_text: query,
-      decision: normalized.refused ? 'refused' : 'allowed',
-      decision_reason: normalized.refused ? 'outside linked document scope' : null,
-      response_excerpt: normalized.answer.slice(0, 300),
-      tokens_used: completion.usage?.totalTokens || 0,
-    })
+    try {
+      await db.from('chatbot_audit_logs').insert({
+        chatbot_id: chatbot.id,
+        session_id: canPersistSession ? sessionId : null,
+        auth_mode: authMode,
+        client_ip: ipAddress,
+        query_text: query,
+        decision: normalized.refused ? 'refused' : 'allowed',
+        decision_reason: normalized.refused ? 'outside linked document scope' : null,
+        response_excerpt: normalized.answer.slice(0, 300),
+        tokens_used: completion.usage?.totalTokens || 0,
+      })
+    } catch {
+      // Best effort audit logging.
+    }
 
-    if (authMode === 'api_key') {
-      await supabaseServer
-        .from('chatbot_api_keys')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('id', verified.id)
-    } else {
-      await supabaseServer
-        .from('chatbot_embed_tokens')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('id', verified.id)
+    try {
+      if (authMode === 'api_key') {
+        await db
+          .from('chatbot_api_keys')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', verified.id)
+      } else {
+        await db
+          .from('chatbot_embed_tokens')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', verified.id)
+      }
+    } catch {
+      // Best effort credential usage tracking.
     }
 
     return NextResponse.json({
