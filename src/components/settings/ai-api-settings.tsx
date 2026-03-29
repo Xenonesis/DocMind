@@ -60,6 +60,8 @@ interface AIProvider {
   description: string
   iconType: 'brain' | 'zap' | 'server' | 'shield' | 'globe'
   dirtyApiKey?: boolean
+  hasStoredApiKey?: boolean
+  maskedApiKey?: string
 }
 
 const defaultProviders: Omit<AIProvider, 'id'>[] = [
@@ -255,9 +257,11 @@ export function AiApiSettings() {
             type: mappedType as AIProvider['type'],
             baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
             apiKey: s.apiKey || '',
+            hasStoredApiKey: !!s.hasApiKey,
+            maskedApiKey: s.maskedApiKey || '',
             model: s.model || (defaults?.models?.[0] ?? ''),
             isActive: !!s.isActive,
-            isConfigured: !!(s.apiKey && s.apiKey.length > 0),
+            isConfigured: !!s.hasApiKey || !!(s.apiKey && s.apiKey.length > 0),
             lastTested: undefined,
             testStatus: undefined,
             errorMessage: undefined,
@@ -285,6 +289,7 @@ export function AiApiSettings() {
                 id: config.id,
                 apiKey: config.apiKey, 
                 isConfigured: true,
+                hasStoredApiKey: true,
                 model: isModelValid ? savedModel : config.model, 
                 models: config.models.length > 0 ? config.models : mapped[existingIndex].models, 
               };
@@ -418,9 +423,11 @@ export function AiApiSettings() {
         type: mappedType as AIProvider['type'],
         baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
         apiKey: s.apiKey || '',
+        hasStoredApiKey: !!s.hasApiKey,
+        maskedApiKey: s.maskedApiKey || '',
         model: s.model || (defaults?.models?.[0] ?? ''),
         isActive: !!s.isActive,
-        isConfigured: !!(s.apiKey && s.apiKey.length > 0),
+        isConfigured: !!s.hasApiKey || !!(s.apiKey && s.apiKey.length > 0),
         lastTested: undefined,
         testStatus: undefined,
         errorMessage: undefined,
@@ -645,7 +652,7 @@ export function AiApiSettings() {
   }
 
   const getProviderStatus = (provider: AIProvider) => {
-    if (!provider.apiKey) return 'not_configured'
+    if (!provider.isConfigured) return 'not_configured'
     if (provider.testStatus === 'success') return 'connected'
     if (provider.testStatus === 'error') return 'error'
     if (provider.testStatus === 'pending') return 'testing'
@@ -830,7 +837,7 @@ export function AiApiSettings() {
                               autoTestAndSave({ ...provider, apiKey: provider.apiKey })
                             }
                           }}
-                          placeholder="Enter your API key"
+                          placeholder={provider.maskedApiKey || (provider.hasStoredApiKey ? 'API key configured (enter new key to replace)' : 'Enter your API key')}
                           className="pr-10 bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
                         />
                         <Button
@@ -843,7 +850,7 @@ export function AiApiSettings() {
                           {showApiKeys[provider.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </Button>
                       </div>
-                      {provider.apiKey && !isValidApiKey(provider.apiKey, provider.type) && (
+                      {provider.apiKey && provider.dirtyApiKey && !isValidApiKey(provider.apiKey, provider.type) && (
                         <p className="text-xs text-rose-500 font-medium mt-1.5 flex items-center gap-1.5">
                           <AlertCircle className="w-3.5 h-3.5" /> Invalid required API key format
                         </p>

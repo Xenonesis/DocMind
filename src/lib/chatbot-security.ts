@@ -77,7 +77,7 @@ export async function verifyApiKey(db: any, rawApiKey: string): Promise<SecretRe
   const keyHash = hashSecret(rawApiKey)
   const { data, error } = await db
     .from('chatbot_api_keys')
-    .select('id, chatbot_id, expires_at, is_active, key_name, chatbots!inner(id, user_id, slug, name, system_prompt, refusal_message, fallback_message, is_active, model_override, temperature, max_tokens, requests_per_minute_bot, requests_per_minute_ip, requests_per_day_bot)')
+    .select('id, chatbot_id, expires_at, is_active, key_name, allowed_origins, chatbots!inner(id, user_id, slug, name, system_prompt, refusal_message, fallback_message, is_active, model_override, temperature, max_tokens, requests_per_minute_bot, requests_per_minute_ip, requests_per_day_bot)')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
     .maybeSingle()

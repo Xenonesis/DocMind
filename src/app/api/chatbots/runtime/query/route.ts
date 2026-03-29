@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
     }
 
     const slug = String(body.slug || '').trim()
-    const embedToken = request.headers.get('x-embed-token') || body.token
-    const apiKey = request.headers.get('x-api-key') || body.apiKey
+    const embedToken = request.headers.get('x-embed-token')
+    const apiKey = request.headers.get('x-api-key')
 
     if (!embedToken && !apiKey) {
       return NextResponse.json({ error: 'Token or API key required' }, { status: 401 })
@@ -100,12 +100,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid chatbot slug for this credential' }, { status: 401 })
     }
 
-    if (authMode === 'embed_token') {
-      const origin = request.headers.get('origin')
-      const allowedOrigins = Array.isArray(verified.allowed_origins) ? verified.allowed_origins : []
-      if (origin && allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
-        return NextResponse.json({ error: 'Origin is not allowed' }, { status: 403 })
-      }
+    const origin = request.headers.get('origin')
+    const allowedOrigins = Array.isArray(verified.allowed_origins)
+      ? verified.allowed_origins
+          .map((value: unknown) => String(value || '').trim().toLowerCase())
+          .filter(Boolean)
+      : []
+
+    if (origin && allowedOrigins.length > 0 && !allowedOrigins.includes(origin.trim().toLowerCase())) {
+      return NextResponse.json({ error: 'Origin is not allowed' }, { status: 403 })
     }
 
     const ipAddress = getClientIp(request)

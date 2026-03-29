@@ -25,6 +25,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const [query, setQuery] = useState('')
   const [sessionId, setSessionId] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const storageKey = `docscan.public-chat.${slug}`
 
   const getAuthHeader = async (): Promise<Record<string, string>> => {
     if (!supabase) return {}
@@ -42,8 +43,37 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const token = useMemo(() => {
     if (typeof window === 'undefined') return ''
     const params = new URLSearchParams(window.location.search)
-    return params.get('token') || ''
+    const hashToken = window.location.hash.startsWith('#token=')
+      ? decodeURIComponent(window.location.hash.slice('#token='.length))
+      : ''
+    return hashToken || params.get('token') || ''
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = window.localStorage.getItem(storageKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as { sessionId?: string; messages?: Message[] }
+      if (parsed.sessionId) {
+        setSessionId(parsed.sessionId)
+      }
+      if (Array.isArray(parsed.messages)) {
+        setMessages(parsed.messages.slice(-20))
+      }
+    } catch {
+      // Ignore local session parsing errors.
+    }
+  }, [storageKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify({ sessionId, messages }))
+    } catch {
+      // Ignore local session persistence failures.
+    }
+  }, [messages, sessionId, storageKey])
 
   useEffect(() => {
     const load = async () => {
@@ -55,8 +85,11 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
 
       try {
         const authHeaders = await getAuthHeader()
-        const res = await fetch(`/api/chatbots/runtime/info/${slug}?token=${encodeURIComponent(token)}`, {
-          headers: authHeaders,
+        const res = await fetch(`/api/chatbots/runtime/info/${slug}`, {
+          headers: {
+            ...authHeaders,
+            'x-embed-token': token,
+          },
         })
         const data = await res.json()
         if (!res.ok) {

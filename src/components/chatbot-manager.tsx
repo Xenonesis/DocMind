@@ -275,7 +275,7 @@ export function ChatbotManager() {
       })
 
       const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
-      setGeneratedToken(`${appUrl}/bot/${slug}?token=${data.token}`)
+      setGeneratedToken(`${appUrl}/bot/${slug}#token=${encodeURIComponent(data.token)}`)
       setGeneratedSlug(slug)
       toast({ title: 'Embed token generated', description: 'Share URL copied from panel below.' })
     } catch (error: any) {
@@ -295,7 +295,7 @@ export function ChatbotManager() {
       })
 
       const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
-      const url = `${appUrl}/bot/${slug}?token=${data.token}`
+      const url = `${appUrl}/bot/${slug}#token=${encodeURIComponent(data.token)}`
 
       setGeneratedToken(url)
       setGeneratedSlug(slug)

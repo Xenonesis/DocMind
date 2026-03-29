@@ -174,6 +174,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
                   size="icon"
                   className="absolute right-1 top-1.5 h-8 w-8 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -203,6 +204,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
                   size="icon"
                   className="absolute right-1 top-1.5 h-8 w-8 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -233,7 +235,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-sm font-medium text-rose-600 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg border border-rose-100 dark:border-rose-900/50 mt-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-rose-600 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg border border-rose-100 dark:border-rose-900/50 mt-4" role="alert" aria-live="assertive">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <p>{error}</p>
               </div>

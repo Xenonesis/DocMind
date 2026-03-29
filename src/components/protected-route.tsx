@@ -14,23 +14,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/')
+      router.replace('/')
     }
   }, [isAuthenticated, isLoading, router])
 
-  if (isLoading) {
+  if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <p>{isLoading ? 'Loading...' : 'Redirecting...'}</p>
         </div>
       </div>
     )
-  }
-
-  if (!isAuthenticated) {
-    return null
   }
 
   return <>{children}</>

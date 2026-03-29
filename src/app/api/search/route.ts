@@ -2,6 +2,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AIService } from '@/lib/ai-service'
 import { createServerClientForToken, supabaseServer } from '@/lib/supabase'
 import { getAuthenticatedUser } from '@/lib/auth-server'
+import { z } from 'zod'
+
+const searchFilterSchema = z.object({
+  type: z.string().max(64).optional(),
+  category: z.string().max(64).optional(),
+})
+
+const searchBodySchema = z.object({
+  query: z.string().min(1).max(4000),
+  filters: searchFilterSchema.optional().default({}),
+  limit: z.number().int().min(1).max(50).optional().default(10),
+  provider: z.string().max(128).optional(),
+})
+
+function sanitizeFilterValue(value: string | undefined): string {
+  if (!value) return ''
+  return value.trim().replace(/[%_]/g, '')
+}
 
 async function callBasicSearch(request: NextRequest, body: Record<string, unknown>) {
   const response = await fetch(new URL('/api/search-basic', request.url), {
@@ -20,7 +38,13 @@ async function callBasicSearch(request: NextRequest, body: Record<string, unknow
 
 export async function POST(request: NextRequest) {
   try {
-    const { query, filters = {}, limit = 10, provider } = await request.json()
+    const payload = await request.json()
+    const parsed = searchBodySchema.safeParse(payload)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid search payload' }, { status: 400 })
+    }
+
+    const { query, filters, limit, provider } = parsed.data
 
     if (!query || !query.trim()) {
       return NextResponse.json({ error: 'Search query is required' }, { status: 400 })
@@ -47,12 +71,15 @@ export async function POST(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(50)
 
-    if (filters.type) {
-      documentsQuery = documentsQuery.ilike('type', `%${filters.type}%`)
+    const safeType = sanitizeFilterValue(filters.type)
+    const safeCategory = sanitizeFilterValue(filters.category)
+
+    if (safeType) {
+      documentsQuery = documentsQuery.ilike('type', `%${safeType}%`)
     }
 
-    if (filters.category) {
-      documentsQuery = documentsQuery.ilike('category', `%${filters.category}%`)
+    if (safeCategory) {
+      documentsQuery = documentsQuery.ilike('category', `%${safeCategory}%`)
     }
 
     const { data: documents, error: documentsError } = await documentsQuery

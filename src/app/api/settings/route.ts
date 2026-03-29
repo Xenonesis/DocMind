@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
 import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 import { encryptApiKey, decryptApiKey, maskApiKey } from '@/lib/crypto-utils'
+import { z } from 'zod'
+
+const providerPayloadSchema = z.object({
+  provider: z.string().min(1).max(64),
+  apiKey: z.string().max(4096).optional().default(''),
+  model: z.string().max(256).optional().default(''),
+  isActive: z.boolean().optional().default(false),
+  baseUrl: z.string().max(2048).optional().nullable(),
+  config: z.object({
+    temperature: z.number().min(0).max(2).optional(),
+    maxTokens: z.number().int().min(1).max(131072).optional(),
+    topP: z.number().min(0).max(1).optional(),
+    costPer1kTokens: z.number().min(0).max(1000000).nullable().optional(),
+  }).optional(),
+})
+
+const settingsPayloadSchema = z.object({
+  providers: z.array(providerPayloadSchema).max(50),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,7 +85,9 @@ export async function GET(request: NextRequest) {
     const formattedSettings = (settings || []).map(setting => ({
       id: setting.id,
       provider: setting.provider_name,
-      apiKey: setting.api_key ? decryptApiKey(setting.api_key) : '', 
+      apiKey: '',
+      hasApiKey: !!setting.api_key,
+      maskedApiKey: setting.api_key ? maskApiKey(decryptApiKey(setting.api_key)) : '',
       model: setting.model_name,
       isActive: setting.is_active,
       baseUrl: setting.base_url || '',
@@ -106,10 +127,12 @@ export async function POST(request: NextRequest) {
 
     try { await ensureUserProfile(user, db) } catch {}
 
-    const { providers } = body
-    if (!providers || !Array.isArray(providers)) {
+    const parsed = settingsPayloadSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid request format' }, { status: 400 })
     }
+
+    const { providers } = parsed.data
 
     const results: any[] = []
 
@@ -117,7 +140,7 @@ export async function POST(request: NextRequest) {
 
     for (const item of providers) {
       try {
-        console.log(`Processing provider: ${item.provider}, apiKey length: ${item.apiKey?.length || 0}`)
+        console.log(`Processing provider: ${item.provider}`)
         const result = await upsertProviderSetting(db, user.id, item)
         results.push(result)
         console.log(`Successfully processed provider: ${item.provider}`)
@@ -137,6 +160,7 @@ export async function POST(request: NextRequest) {
 async function upsertProviderSetting(db: any, userId: string, item: any) {
   const { provider, apiKey, model, isActive, config, baseUrl } = item
   const costPer1kTokens = typeof config?.costPer1kTokens === 'number' ? config.costPer1kTokens : null
+  const looksMaskedKey = typeof apiKey === 'string' && apiKey.includes('*')
 
   const { data: existingSetting, error: fetchError } = await db
     .from('ai_provider_settings')
@@ -153,7 +177,7 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
   let result
   if (existingSetting) {
     let apiKeyUpdate = existingSetting.api_key
-    if (apiKey !== undefined && apiKey !== '') {
+    if (apiKey !== undefined && apiKey !== '' && !looksMaskedKey) {
       apiKeyUpdate = encryptApiKey(apiKey)
     }
 

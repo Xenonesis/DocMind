@@ -22,10 +22,10 @@ export async function GET(request: NextRequest, { params }: Params) {
     }
 
     const { slug } = await params
-    const token = request.headers.get('x-embed-token') || new URL(request.url).searchParams.get('token')
+    const token = request.headers.get('x-embed-token')
 
     if (!token) {
-      return NextResponse.json({ error: 'Embed token is required' }, { status: 401 })
+      return NextResponse.json({ error: 'Embed token header is required' }, { status: 401 })
     }
 
     const verified = await verifyEmbedToken(db, token)

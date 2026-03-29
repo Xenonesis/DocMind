@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { authenticatedRequest } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 import { 
@@ -17,7 +18,8 @@ import {
   RefreshCw,
   BarChart3,
   PieChart,
-  Calendar
+  Calendar,
+  AlertTriangle
 } from 'lucide-react'
 
 interface UsageStats {
@@ -49,7 +51,20 @@ export function ApiUsageTracker() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
+  const [budgetLimitUsd, setBudgetLimitUsd] = useState<number>(0)
+  const [budgetDraft, setBudgetDraft] = useState<string>('')
   const { toast } = useToast()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const raw = window.localStorage.getItem('docmind.usageBudgetUsd')
+    if (!raw) return
+    const parsed = Number(raw)
+    if (!Number.isNaN(parsed) && parsed >= 0) {
+      setBudgetLimitUsd(parsed)
+      setBudgetDraft(parsed ? parsed.toString() : '')
+    }
+  }, [])
 
   const loadUsageStats = async (showToast = false) => {
     setLoading(true)
@@ -125,6 +140,30 @@ export function ApiUsageTracker() {
   }
 
   const maxRequests = Math.max(1, ...stats.dailyUsage.map(d => d.requests))
+  const budgetUsagePercent = budgetLimitUsd > 0 ? (stats.estimatedCost / budgetLimitUsd) * 100 : 0
+
+  const saveBudget = () => {
+    const parsed = Number(budgetDraft)
+    if (budgetDraft.trim() === '') {
+      setBudgetLimitUsd(0)
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('docmind.usageBudgetUsd')
+      }
+      toast({ title: 'Budget removed', description: 'Usage budget alerts are now disabled.' })
+      return
+    }
+
+    if (Number.isNaN(parsed) || parsed < 0) {
+      toast({ title: 'Invalid budget', description: 'Enter a valid non-negative USD amount.', variant: 'destructive' })
+      return
+    }
+
+    setBudgetLimitUsd(parsed)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('docmind.usageBudgetUsd', String(parsed))
+    }
+    toast({ title: 'Budget updated', description: `Usage budget set to $${parsed.toFixed(2)}.` })
+  }
 
   return (
     <div className="space-y-6">
@@ -158,6 +197,55 @@ export function ApiUsageTracker() {
           Last updated {new Date(lastUpdated).toLocaleString()}
         </div>
       )}
+
+      <Card className="shadow-sm border-border bg-card overflow-hidden">
+        <CardHeader className="p-6 border-b border-border/50">
+          <CardTitle className="flex items-center gap-3 text-xl font-bold">
+            <div className="p-2.5 bg-secondary rounded-xl text-amber-500">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            Usage Budget
+          </CardTitle>
+          <CardDescription>Set a budget for this dashboard window to get visual spend alerts.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={budgetDraft}
+              onChange={(e) => setBudgetDraft(e.target.value)}
+              placeholder="Set budget in USD (example: 25)"
+              className="max-w-xs"
+              aria-label="Usage budget in USD"
+            />
+            <Button variant="outline" onClick={saveBudget} className="rounded-xl shadow-sm">Save Budget</Button>
+          </div>
+
+          {budgetLimitUsd > 0 ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-muted-foreground">Current spend vs budget</span>
+                <span className="font-semibold">
+                  ${stats.estimatedCost.toFixed(2)} / ${budgetLimitUsd.toFixed(2)}
+                </span>
+              </div>
+              <Progress value={Math.min(100, budgetUsagePercent)} className="h-2.5" />
+              {budgetUsagePercent >= 80 && (
+                <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400" role="status" aria-live="polite">
+                  <AlertTriangle className="w-4 h-4" />
+                  {budgetUsagePercent >= 100
+                    ? 'You have exceeded your budget for this range.'
+                    : 'You are approaching your budget limit.'}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No budget configured. Add one to track spending against a threshold.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <motion.div

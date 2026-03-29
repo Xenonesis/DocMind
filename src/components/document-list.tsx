@@ -12,7 +12,7 @@ import {
   Download, 
   Eye, 
   FileText,
-  Image,
+  Image as ImageIcon,
   File,
   FileCode,
   Calendar,
@@ -60,7 +60,7 @@ export function DocumentList({ documents }: DocumentListProps) {
       case 'txt': return <FileText className="w-5 h-5 text-slate-500" />
       case 'jpg':
       case 'jpeg':
-      case 'png': return <Image className="w-5 h-5 text-emerald-500" />
+      case 'png': return <ImageIcon className="w-5 h-5 text-emerald-500" />
       case 'json':
       case 'xml':
       case 'csv': return <FileCode className="w-5 h-5 text-violet-500" />
@@ -149,11 +149,12 @@ export function DocumentList({ documents }: DocumentListProps) {
             placeholder="Search documents by name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search documents"
             className="pl-10 bg-background border-border shadow-sm rounded-xl h-10"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10">
+          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10" aria-label="Filter documents by status">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent className="rounded-xl border-border">
@@ -165,7 +166,7 @@ export function DocumentList({ documents }: DocumentListProps) {
           </SelectContent>
         </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10">
+          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10" aria-label="Filter documents by type">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent className="rounded-xl border-border">
@@ -220,6 +221,7 @@ export function DocumentList({ documents }: DocumentListProps) {
                     onClick={() => handlePreview(doc)}
                     className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
                     title="Preview Document"
+                    aria-label={`Preview ${doc.name}`}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
@@ -229,6 +231,7 @@ export function DocumentList({ documents }: DocumentListProps) {
                     onClick={() => handleDownload(doc)}
                     className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
                     title="Download Document"
+                    aria-label={`Download ${doc.name}`}
                   >
                     <Download className="w-4 h-4" />
                   </Button>

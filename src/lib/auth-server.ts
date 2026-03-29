@@ -1,25 +1,11 @@
 import { NextRequest } from 'next/server'
 import { supabaseServer } from './supabase'
-import type { User } from '@supabase/supabase-js'
 
 export interface AuthenticatedUser {
   id: string
   email: string
   name: string
   avatar_url?: string
-}
-
-function decodeJwtPayload(token: string): any | null {
-  try {
-    const parts = token.split('.')
-    if (parts.length < 2) return null
-    const payload = parts[1]
-    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(payload.length / 4) * 4, '=')
-    const json = Buffer.from(normalized, 'base64').toString('utf8')
-    return JSON.parse(json)
-  } catch {
-    return null
-  }
 }
 
 export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
@@ -29,18 +15,6 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
   }
 
   const token = authHeader.substring(7)
-
-  const payload = decodeJwtPayload(token)
-  if (payload?.sub) {
-    const email: string = payload.email || payload.user_metadata?.email || ''
-    const name: string = payload.user_metadata?.name || (email ? email.split('@')[0] : 'User')
-    return {
-      id: payload.sub,
-      email,
-      name,
-      avatar_url: payload.user_metadata?.avatar_url,
-    }
-  }
 
   if (!supabaseServer) {
     return null

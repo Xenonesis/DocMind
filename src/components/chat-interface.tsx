@@ -151,6 +151,7 @@ function MessageBubble({
             <button
               onClick={() => onCopy(message.id, message.content)}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-muted-foreground/50 hover:text-muted-foreground"
+              aria-label="Copy assistant response"
             >
               {copied === message.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             </button>
@@ -168,6 +169,8 @@ function TypingIndicator() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       className="flex gap-3 items-end"
+      role="status"
+      aria-live="polite"
     >
       <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center shadow-sm">
         <Bot className="w-4 h-4 text-foreground" />
@@ -389,7 +392,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
         </div>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground hover:text-destructive h-8 rounded-lg">
+            <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground hover:text-destructive h-8 rounded-lg" aria-label="Clear chat history">
               <Trash2 className="w-3.5 h-3.5 mr-1.5" />
               Clear
             </Button>
@@ -425,6 +428,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
                     <button
                       key={doc.id}
                       onClick={() => toggleDoc(doc.id)}
+                      aria-label={`${selectedDocIds.includes(doc.id) ? 'Deselect' : 'Select'} document ${doc.name}`}
                       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors
                         ${selectedDocIds.includes(doc.id)
                           ? 'bg-primary/10 border-primary/30 text-primary'
@@ -517,6 +521,8 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
               onKeyDown={handleKeyDown}
               placeholder={completedDocs.length === 0 ? 'Upload a document first to start chatting...' : 'Ask anything about your documents… (Enter to send)'}
               disabled={isStreaming || completedDocs.length === 0}
+              aria-label="Ask a question about your documents"
+              aria-busy={isStreaming}
               className="resize-none min-h-[56px] max-h-[200px] rounded-2xl bg-secondary/30 border-border/50 shadow-inner pl-14 pr-14 py-4 text-sm leading-relaxed focus-visible:ring-1 focus-visible:ring-primary focus-visible:bg-background transition-all"
               rows={1}
               style={{ height: 'auto' }}
@@ -532,6 +538,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
               size="icon"
               variant="ghost"
               className="absolute left-2 bottom-2 h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary"
+              aria-label="Upload documents"
             >
               {isUploadingFiles ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-4 h-4" />}
             </Button>
@@ -540,6 +547,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
               disabled={!input.trim() || isStreaming || completedDocs.length === 0}
               size="icon"
               className={`absolute right-2 bottom-2 h-10 w-10 rounded-xl shadow-sm transition-all ${input.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground'}`}
+              aria-label="Send message"
             >
               {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>
