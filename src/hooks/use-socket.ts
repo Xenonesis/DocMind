@@ -43,7 +43,6 @@ export function useSocket(options: UseSocketOptions = {}) {
   const socketsEnabled = process.env.NEXT_PUBLIC_ENABLE_SOCKETS === 'true'
   
   const socketRef = useRef<Socket | null>(null)
-  const [socketInstance, setSocketInstance] = useState<Socket | null>(null)
   const [state, setState] = useState<SocketState>({
     isConnected: false,
     documentUpdates: [],
@@ -64,7 +63,6 @@ export function useSocket(options: UseSocketOptions = {}) {
     })
 
     socketRef.current = socket
-    setSocketInstance(socket)
 
     socket.on('connect', () => {
       setState(prev => ({ ...prev, isConnected: true }))
@@ -141,9 +139,10 @@ export function useSocket(options: UseSocketOptions = {}) {
     return () => {
       socket.disconnect()
       socketRef.current = null
-      setSocketInstance(null)
     }
   }, [autoConnect, documentId, shouldJoinUpdates, socketsEnabled])
+
+  const getSocket = () => socketRef.current
 
   const joinDocumentRoom = (docId: string) => {
     if (socketRef.current) {
@@ -196,7 +195,7 @@ export function useSocket(options: UseSocketOptions = {}) {
   return {
     ...state,
     isConnected: socketsEnabled ? state.isConnected : false,
-    socket: socketInstance,
+    getSocket,
     joinDocumentRoom,
     leaveDocumentRoom,
     joinUpdates,

@@ -29,6 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
+  function markLoaded() {
+    queueMicrotask(() => setIsLoading(false))
+  }
+
   function setUserFromSupabase(supabaseUser: SupabaseUser) {
     const userData: User = {
       id: supabaseUser.id,
@@ -41,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
-      setIsLoading(false)
+      markLoaded()
       return
     }
 
@@ -49,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setUserFromSupabase(session.user)
       }
-      setIsLoading(false)
+      markLoaded()
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -59,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setUser(null)
         }
-        setIsLoading(false)
+        markLoaded()
       }
     )
 

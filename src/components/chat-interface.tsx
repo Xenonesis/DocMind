@@ -229,6 +229,52 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
     const text = (overrideText ?? input).trim()
     if (!text || isStreaming) return
 
+    const assistantMessageId = `ai-${Date.now()}`
+
+    const upsertAssistantMessage = (
+      fields: Partial<ChatMessage> & { appendContent?: string }
+    ) => {
+      setMessages(prev => {
+        const index = prev.findIndex(msg => msg.id === assistantMessageId)
+
+        if (index === -1) {
+          const newMessage: ChatMessage = {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: fields.content ?? fields.appendContent ?? '',
+            timestamp: new Date(),
+            provider: fields.provider,
+            model: fields.model,
+            docsUsed: fields.docsUsed,
+            tokensUsed: fields.tokensUsed,
+          }
+          return [...prev, newMessage]
+        }
+
+        const current = prev[index]
+        const updated: ChatMessage = {
+          ...current,
+          ...fields,
+          content: fields.content ?? (fields.appendContent ? current.content + fields.appendContent : current.content),
+        }
+
+        const next = [...prev]
+        next[index] = updated
+        return next
+      })
+    }
+
+    const parseSsePayload = (line: string) => {
+      if (!line.startsWith('data:')) return null
+      const raw = line.slice(5).trim()
+      if (!raw) return null
+      try {
+        return JSON.parse(raw)
+      } catch {
+        return null
+      }
+    }
+
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -241,16 +287,97 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
     setIsStreaming(true)
 
     try {
-      const { authenticatedRequest } = await import('@/lib/api-client')
-      const result = await authenticatedRequest('/api/query', {
+      const { authenticatedFetch } = await import('@/lib/api-client')
+      const response = await authenticatedFetch('/api/query', {
         method: 'POST',
         body: JSON.stringify({
           query: text,
           documentIds: selectedDocIds.length > 0 ? selectedDocIds : undefined,
           history: messages.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
           provider: selectedProvider,
+          stream: true,
         }),
-      }) as any
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorMessage = errorText || 'Something went wrong. Please try again.'
+        try {
+          const errorJson = JSON.parse(errorText)
+          if (typeof errorJson?.error === 'string') {
+            errorMessage = errorJson.error
+          }
+        } catch {
+          // Keep raw error text fallback.
+        }
+        throw new Error(errorMessage)
+      }
+
+      const contentType = response.headers.get('content-type') || ''
+
+      if (contentType.includes('text/event-stream') && response.body) {
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let finalPayload: any = null
+        let pendingProvider: string | undefined
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const parts = buffer.split('\n\n')
+          buffer = parts.pop() || ''
+
+          for (const part of parts) {
+            const lines = part.split('\n')
+            for (const line of lines) {
+              const event = parseSsePayload(line)
+              if (!event) continue
+
+              if (event.type === 'start') {
+                if (typeof event.provider === 'string') {
+                  pendingProvider = event.provider
+                }
+                continue
+              }
+
+              if (event.type === 'chunk') {
+                if (typeof event.content === 'string') {
+                  upsertAssistantMessage({ appendContent: event.content, provider: pendingProvider })
+                }
+                continue
+              }
+
+              if (event.type === 'done' && event.payload) {
+                finalPayload = event.payload
+              }
+            }
+          }
+        }
+
+        if (!finalPayload) {
+          throw new Error('Stream ended unexpectedly. Please try again.')
+        }
+
+        const finalAnswer =
+          typeof finalPayload?.response === 'string'
+            ? finalPayload.response
+            : finalPayload?.response?.answer || JSON.stringify(finalPayload?.response, null, 2)
+
+        upsertAssistantMessage({
+          content: finalAnswer,
+          provider: finalPayload?.provider,
+          model: finalPayload?.model,
+          docsUsed: finalPayload?.response?.relevantDocuments || [],
+          tokensUsed: finalPayload?.usage?.totalTokens,
+        })
+
+        return
+      }
+
+      const result = await response.json() as any
 
       if (result?.error) {
         setMessages(prev => [...prev, {
@@ -268,7 +395,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
           : result?.response?.answer || JSON.stringify(result?.response, null, 2)
 
       const assistantMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
+        id: assistantMessageId,
         role: 'assistant',
         content: answer,
         timestamp: new Date(),

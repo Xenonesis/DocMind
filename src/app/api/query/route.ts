@@ -16,9 +16,71 @@ function parseJsonSafely(value: unknown, fallback: any) {
   return fallback
 }
 
+function chunkText(text: string, chunkSize = 120): string[] {
+  if (!text) return []
+  const chunks: string[] = []
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.slice(i, i + chunkSize))
+  }
+  return chunks
+}
+
+function createStreamResponse(payload: {
+  id: string
+  query: string
+  response: any
+  timestamp: string
+  provider: string
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number }
+}) {
+  const encoder = new TextEncoder()
+  const answerText = typeof payload.response?.answer === 'string'
+    ? payload.response.answer
+    : JSON.stringify(payload.response || {}, null, 2)
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (data: unknown) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+      }
+
+      send({ type: 'start', provider: payload.provider })
+
+      for (const chunk of chunkText(answerText)) {
+        send({ type: 'chunk', content: chunk })
+      }
+
+      send({
+        type: 'done',
+        payload: {
+          id: payload.id,
+          query: payload.query,
+          status: 'COMPLETED',
+          response: payload.response,
+          timestamp: payload.timestamp,
+          provider: payload.provider,
+          usage: payload.usage,
+        },
+      })
+
+      controller.close()
+    },
+  })
+
+  return new NextResponse(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    },
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { query, documentIds, provider, history } = await request.json()
+    const { query, documentIds, provider, history, stream } = await request.json()
+    const wantsStream = stream === true
 
     if (!query || !query.trim()) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
@@ -214,15 +276,21 @@ ${historyText}
         console.error('Failed to update query record:', updateError)
       }
 
-      return NextResponse.json({
+      const responsePayload = {
         id: queryRecord.id,
         query: queryRecord.query_text,
-        status: 'COMPLETED',
+        status: 'COMPLETED' as const,
         response: aiResponse,
         timestamp: queryRecord.timestamp,
         provider: providerConfig.name,
-        usage: completion.usage
-      })
+        usage: completion.usage,
+      }
+
+      if (wantsStream) {
+        return createStreamResponse(responsePayload)
+      }
+
+      return NextResponse.json(responsePayload)
 
     } catch (aiError: any) {
       console.error('AI processing error:', aiError)
