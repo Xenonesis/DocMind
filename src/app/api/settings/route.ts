@@ -70,6 +70,9 @@ export async function GET(request: NextRequest) {
       model: setting.model_name,
       isActive: setting.is_active,
       baseUrl: setting.base_url || '',
+      costPer1kTokens: setting.cost_per_1k_tokens !== null && setting.cost_per_1k_tokens !== undefined
+        ? Number(setting.cost_per_1k_tokens)
+        : undefined,
       createdAt: setting.created_at,
       updatedAt: setting.updated_at
     }))
@@ -133,6 +136,7 @@ export async function POST(request: NextRequest) {
 
 async function upsertProviderSetting(db: any, userId: string, item: any) {
   const { provider, apiKey, model, isActive, config, baseUrl } = item
+  const costPer1kTokens = typeof config?.costPer1kTokens === 'number' ? config.costPer1kTokens : null
 
   const { data: existingSetting, error: fetchError } = await db
     .from('ai_provider_settings')
@@ -158,7 +162,8 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
       model_name: model ?? existingSetting.model_name,
       is_active: isActive,
       updated_at: new Date().toISOString(),
-      base_url: baseUrl ?? existingSetting.base_url
+      base_url: baseUrl ?? existingSetting.base_url,
+      cost_per_1k_tokens: costPer1kTokens
     }
 
     const { data: updatedSetting, error: updateError } = await db
@@ -182,7 +187,8 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
       api_key: encryptedApiKey,
       model_name: model || '',
       is_active: isActive,
-      base_url: baseUrl ?? null
+      base_url: baseUrl ?? null,
+      cost_per_1k_tokens: costPer1kTokens
     }
 
     const { data: newSetting, error: createError } = await db

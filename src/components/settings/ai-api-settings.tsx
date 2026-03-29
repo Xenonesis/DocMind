@@ -56,6 +56,7 @@ interface AIProvider {
   maxTokens?: number
   temperature?: number
   topP?: number
+  costPer1kTokens?: number
   description: string
   iconType: 'brain' | 'zap' | 'server' | 'shield' | 'globe'
   dirtyApiKey?: boolean
@@ -240,6 +241,14 @@ export function AiApiSettings() {
             pName = `DocScan ${s.model || 'model name'} from groq (free)`
           }
 
+          if (s.id && s.id.startsWith('docscan-free-')) {
+            switch(s.id) {
+              case 'docscan-free-glm': pName = 'DocScan Glm-5 (free)'; break;
+              case 'docscan-free-llama': pName = 'DocScan Llama-3 (free)'; break;
+              case 'docscan-free-qwen': pName = 'DocScan Qwen-2.5 (free)'; break;
+            }
+          }
+
           return {
             id: s.id || `provider-${index}`,
             name: pName,
@@ -256,6 +265,7 @@ export function AiApiSettings() {
             maxTokens: s.config?.maxTokens ?? defaults?.maxTokens ?? 1000,
             temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
             topP: s.config?.topP ?? defaults?.topP ?? 1.0,
+            costPer1kTokens: typeof s.costPer1kTokens === 'number' ? s.costPer1kTokens : undefined,
             description: defaults?.description || 'Configured provider',
             iconType: defaults?.iconType || 'brain',
             dirtyApiKey: false,
@@ -376,7 +386,8 @@ export function AiApiSettings() {
       config: {
         temperature: p.temperature ?? 0.7,
         maxTokens: p.maxTokens ?? 1000,
-        topP: p.topP ?? 1.0
+        topP: p.topP ?? 1.0,
+        costPer1kTokens: typeof p.costPer1kTokens === 'number' ? p.costPer1kTokens : null
       }
     }))
     const { authenticatedRequest } = await import('@/lib/api-client')
@@ -417,6 +428,7 @@ export function AiApiSettings() {
         maxTokens: s.config?.maxTokens ?? defaults?.maxTokens ?? 1000,
         temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
         topP: s.config?.topP ?? defaults?.topP ?? 1.0,
+        costPer1kTokens: typeof s.costPer1kTokens === 'number' ? s.costPer1kTokens : undefined,
         description: defaults?.description || 'Configured provider',
         iconType: defaults?.iconType || 'brain',
         dirtyApiKey: false,
@@ -516,7 +528,8 @@ export function AiApiSettings() {
             config: {
               temperature: p.temperature ?? 0.7,
               maxTokens: p.maxTokens ?? 1000,
-              topP: p.topP ?? 1.0
+              topP: p.topP ?? 1.0,
+              costPer1kTokens: typeof p.costPer1kTokens === 'number' ? p.costPer1kTokens : null
             }
           }))
 
@@ -887,6 +900,23 @@ export function AiApiSettings() {
                         onChange={(e) => updateProvider(provider.id, { temperature: parseFloat(e.target.value) })}
                         className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
                       />
+                    </div>
+                    <div className="space-y-2 md:col-span-3">
+                      <Label htmlFor={`cost-per-1k-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cost (USD / 1K tokens)</Label>
+                      <Input
+                        id={`cost-per-1k-${provider.id}`}
+                        type="number"
+                        step="0.000001"
+                        min="0"
+                        value={provider.costPer1kTokens ?? ''}
+                        onChange={(e) => {
+                          const next = e.target.value.trim()
+                          updateProvider(provider.id, { costPer1kTokens: next === '' ? undefined : parseFloat(next) })
+                        }}
+                        placeholder="Optional override for exact cost tracking"
+                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
+                      />
+                      <p className="text-xs text-muted-foreground">If set, Analytics Digest uses this exact price for this provider/model instead of built-in estimates.</p>
                     </div>
                     </>)}
                   </div>
