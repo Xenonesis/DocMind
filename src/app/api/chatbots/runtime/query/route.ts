@@ -7,6 +7,53 @@ import { getClientIp, verifyApiKey, verifyEmbedToken } from '@/lib/chatbot-secur
 
 export const dynamic = 'force-dynamic'
 
+function chunkText(text: string, chunkSize = 120): string[] {
+  if (!text) return []
+  const chunks: string[] = []
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.slice(i, i + chunkSize))
+  }
+  return chunks
+}
+
+function createStreamResponse(payload: {
+  chatbot: { id: string; name: string; slug: string }
+  sessionId: string
+  answer: string
+  refused: boolean
+  relevantDocuments: string[]
+  provider: string
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number }
+}) {
+  const encoder = new TextEncoder()
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (data: unknown) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+      }
+
+      send({ type: 'start', provider: payload.provider })
+
+      for (const chunk of chunkText(payload.answer)) {
+        send({ type: 'chunk', content: chunk })
+      }
+
+      send({ type: 'done', payload })
+      controller.close()
+    },
+  })
+
+  return new NextResponse(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    },
+  })
+}
+
 function parseHistory(value: unknown): Array<{ role: string; content: string }> {
   if (!Array.isArray(value)) return []
   return value
@@ -67,6 +114,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const query = String(body.query || '').trim()
+    const wantsStream = body.stream === true
     if (!query) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
     }
@@ -263,7 +311,7 @@ export async function POST(request: NextRequest) {
       // Best effort credential usage tracking.
     }
 
-    return NextResponse.json({
+    const responsePayload = {
       chatbot: {
         id: chatbot.id,
         name: chatbot.name,
@@ -275,7 +323,13 @@ export async function POST(request: NextRequest) {
       relevantDocuments: docs.map((doc: any) => doc.name),
       provider: provider.name,
       usage: completion.usage,
-    })
+    }
+
+    if (wantsStream) {
+      return createStreamResponse(responsePayload)
+    }
+
+    return NextResponse.json(responsePayload)
   } catch (error: any) {
     return NextResponse.json({ error: error?.message || 'Failed to process chatbot query' }, { status: 500 })
   }

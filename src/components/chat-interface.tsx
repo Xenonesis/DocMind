@@ -25,6 +25,7 @@ import {
   Brain,
   Zap,
   AlertCircle,
+  Square,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
@@ -76,10 +77,12 @@ function MessageBubble({
   message,
   onCopy,
   copied,
+  showStreamingCursor,
 }: {
   message: ChatMessage
   onCopy: (id: string, text: string) => void
   copied: string | null
+  showStreamingCursor: boolean
 }) {
   const isUser = message.role === 'user'
   const isError = message.role === 'error'
@@ -118,6 +121,7 @@ function MessageBubble({
           ) : (
             <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none break-words">
               <ReactMarkdown>{message.content}</ReactMarkdown>
+              {showStreamingCursor && <span className="inline-block animate-pulse ml-0.5">▍</span>}
             </div>
           )}
         </div>
@@ -195,6 +199,8 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [streamState, setStreamState] = useState<'idle' | 'streaming' | 'completed' | 'stopped'>('idle')
+  const [activeStreamingMessageId, setActiveStreamingMessageId] = useState<string | null>(null)
   const [isUploadingFiles, setIsUploadingFiles] = useState(false)
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
   const [showDocPicker, setShowDocPicker] = useState(false)
@@ -202,6 +208,8 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const streamAbortRef = useRef<AbortController | null>(null)
+  const streamStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { toast } = useToast()
   const completedDocs = documents.filter(d => d.status === 'COMPLETED')
 
@@ -212,6 +220,25 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
   useEffect(() => {
     scrollToBottom()
   }, [messages, isStreaming, scrollToBottom])
+
+  useEffect(() => {
+    return () => {
+      if (streamStateTimerRef.current) {
+        clearTimeout(streamStateTimerRef.current)
+      }
+      streamAbortRef.current?.abort()
+    }
+  }, [])
+
+  const scheduleStreamStateReset = useCallback((state: 'completed' | 'stopped') => {
+    setStreamState(state)
+    if (streamStateTimerRef.current) {
+      clearTimeout(streamStateTimerRef.current)
+    }
+    streamStateTimerRef.current = setTimeout(() => {
+      setStreamState('idle')
+    }, 1800)
+  }, [])
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text)
@@ -285,11 +312,24 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setIsStreaming(true)
+    setStreamState('streaming')
+    setActiveStreamingMessageId(assistantMessageId)
+
+    if (streamStateTimerRef.current) {
+      clearTimeout(streamStateTimerRef.current)
+    }
+
+    const abortController = new AbortController()
+    streamAbortRef.current = abortController
+
+    let wasAborted = false
+    let finishedSuccessfully = false
 
     try {
       const { authenticatedFetch } = await import('@/lib/api-client')
       const response = await authenticatedFetch('/api/query', {
         method: 'POST',
+        signal: abortController.signal,
         body: JSON.stringify({
           query: text,
           documentIds: selectedDocIds.length > 0 ? selectedDocIds : undefined,
@@ -374,6 +414,8 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
           tokensUsed: finalPayload?.usage?.totalTokens,
         })
 
+        finishedSuccessfully = true
+
         return
       }
 
@@ -406,16 +448,37 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       }
 
       setMessages(prev => [...prev, assistantMsg])
+      finishedSuccessfully = true
     } catch (err: any) {
+      const isAbort = err?.name === 'AbortError' || /abort/i.test(String(err?.message || ''))
+      if (isAbort) {
+        wasAborted = true
+      } else {
       setMessages(prev => [...prev, {
         id: `err-${Date.now()}`,
         role: 'error',
         content: err?.message || 'Something went wrong. Please try again.',
         timestamp: new Date(),
       }])
+      }
     } finally {
       setIsStreaming(false)
+      setActiveStreamingMessageId(null)
+      streamAbortRef.current = null
+
+      if (wasAborted) {
+        scheduleStreamStateReset('stopped')
+      } else if (finishedSuccessfully) {
+        scheduleStreamStateReset('completed')
+      } else {
+        setStreamState('idle')
+      }
     }
+  }
+
+  const stopGenerating = () => {
+    if (!isStreaming || !streamAbortRef.current) return
+    streamAbortRef.current.abort()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -503,6 +566,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
   }
 
   const isEmpty = messages.length === 0
+  const hasActiveStreamingMessage = !!activeStreamingMessageId && messages.some(msg => msg.id === activeStreamingMessageId)
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -614,9 +678,15 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
         ) : (
           <div className="space-y-5 py-2">
             {messages.map(msg => (
-              <MessageBubble key={msg.id} message={msg} onCopy={handleCopy} copied={copied} />
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                onCopy={handleCopy}
+                copied={copied}
+                showStreamingCursor={isStreaming && activeStreamingMessageId === msg.id}
+              />
             ))}
-            {isStreaming && <TypingIndicator />}
+            {isStreaming && !hasActiveStreamingMessage && <TypingIndicator />}
             <div ref={bottomRef} />
           </div>
         )}
@@ -629,6 +699,23 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
             <span className="text-xs text-primary font-medium">
               Searching in {selectedDocIds.length} selected document{selectedDocIds.length > 1 ? 's' : ''}
             </span>
+          </div>
+        )}
+        {streamState !== 'idle' && (
+          <div className="mb-2">
+            <p className={`text-xs font-medium ${
+              streamState === 'streaming'
+                ? 'text-primary'
+                : streamState === 'completed'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-600 dark:text-amber-400'
+            }`}>
+              {streamState === 'streaming'
+                ? 'Generating response...'
+                : streamState === 'completed'
+                  ? 'Response complete.'
+                  : 'Generation stopped.'}
+            </p>
           </div>
         )}
         <div className="flex gap-3 items-end">
@@ -670,13 +757,19 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
               {isUploadingFiles ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-4 h-4" />}
             </Button>
             <Button
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || isStreaming || completedDocs.length === 0}
+              onClick={isStreaming ? stopGenerating : () => sendMessage()}
+              disabled={(!input.trim() && !isStreaming) || completedDocs.length === 0}
               size="icon"
-              className={`absolute right-2 bottom-2 h-10 w-10 rounded-xl shadow-sm transition-all ${input.trim() ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted text-muted-foreground'}`}
-              aria-label="Send message"
+              className={`absolute right-2 bottom-2 h-10 w-10 rounded-xl shadow-sm transition-all ${
+                isStreaming
+                  ? 'bg-amber-500 text-white hover:bg-amber-600'
+                  : input.trim()
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    : 'bg-muted text-muted-foreground'
+              }`}
+              aria-label={isStreaming ? 'Stop generating response' : 'Send message'}
             >
-              {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4" />}
+              {isStreaming ? <Square className="w-4 h-4" /> : <Send className="w-4 h-4" />}
             </Button>
           </div>
         </div>

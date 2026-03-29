@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Loader2, Send } from 'lucide-react'
+import { Loader2, Send, Square } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface PublicChatbotProps {
@@ -20,11 +20,15 @@ interface Message {
 export function PublicChatbot({ slug }: PublicChatbotProps) {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [streamState, setStreamState] = useState<'idle' | 'streaming' | 'completed' | 'stopped'>('idle')
+  const [activeStreamingMessageId, setActiveStreamingMessageId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [name, setName] = useState('Document Chatbot')
   const [query, setQuery] = useState('')
   const [sessionId, setSessionId] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const streamAbortRef = useRef<AbortController | null>(null)
+  const streamStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const storageKey = `docscan.public-chat.${slug}`
 
   const getAuthHeader = async (): Promise<Record<string, string>> => {
@@ -76,6 +80,58 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   }, [messages, sessionId, storageKey])
 
   useEffect(() => {
+    return () => {
+      if (streamStateTimerRef.current) {
+        clearTimeout(streamStateTimerRef.current)
+      }
+      streamAbortRef.current?.abort()
+    }
+  }, [])
+
+  const scheduleStreamStateReset = (state: 'completed' | 'stopped') => {
+    setStreamState(state)
+    if (streamStateTimerRef.current) {
+      clearTimeout(streamStateTimerRef.current)
+    }
+    streamStateTimerRef.current = setTimeout(() => {
+      setStreamState('idle')
+    }, 1800)
+  }
+
+  const parseSsePayload = (line: string) => {
+    if (!line.startsWith('data:')) return null
+    const raw = line.slice(5).trim()
+    if (!raw) return null
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return null
+    }
+  }
+
+  const upsertAssistantMessage = (assistantMessageId: string, fields: { content?: string; appendContent?: string }) => {
+    setMessages((prev) => {
+      const index = prev.findIndex((msg) => msg.id === assistantMessageId)
+
+      if (index === -1) {
+        return [...prev, {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: fields.content ?? fields.appendContent ?? '',
+        }]
+      }
+
+      const current = prev[index]
+      const next = [...prev]
+      next[index] = {
+        ...current,
+        content: fields.content ?? (fields.appendContent ? current.content + fields.appendContent : current.content),
+      }
+      return next
+    })
+  }
+
+  useEffect(() => {
     const load = async () => {
       if (!token) {
         setError('Missing token. Please use a valid chatbot URL.')
@@ -112,15 +168,28 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
 
     const userMessage: Message = { id: `u-${Date.now()}`, role: 'user', content: trimmed }
     const nextMessages = [...messages, userMessage]
+    const assistantMessageId = `a-${Date.now()}`
+    const abortController = new AbortController()
+    streamAbortRef.current = abortController
+
+    if (streamStateTimerRef.current) {
+      clearTimeout(streamStateTimerRef.current)
+    }
 
     setMessages(nextMessages)
     setQuery('')
     setSending(true)
+    setStreamState('streaming')
+    setActiveStreamingMessageId(assistantMessageId)
+
+    let wasAborted = false
+    let finishedSuccessfully = false
 
     try {
       const authHeaders = await getAuthHeader()
       const res = await fetch('/api/chatbots/runtime/query', {
         method: 'POST',
+        signal: abortController.signal,
         headers: {
           'Content-Type': 'application/json',
           'x-embed-token': token,
@@ -131,21 +200,97 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
           query: trimmed,
           sessionId: sessionId || undefined,
           history: nextMessages.slice(-8).map((m) => ({ role: m.role, content: m.content })),
+          stream: true,
         }),
       })
 
-      const data = await res.json()
       if (!res.ok) {
-        throw new Error(data?.error || 'Failed to get response')
+        const errorText = await res.text()
+        let errorMessage = errorText || 'Failed to get response'
+        try {
+          const errorJson = JSON.parse(errorText)
+          if (typeof errorJson?.error === 'string') {
+            errorMessage = errorJson.error
+          }
+        } catch {
+          // Keep text fallback.
+        }
+        throw new Error(errorMessage)
       }
 
-      setSessionId(data.sessionId || sessionId)
-      setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: data.answer || '' }])
+      const contentType = res.headers.get('content-type') || ''
+
+      if (contentType.includes('text/event-stream') && res.body) {
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let finalPayload: any = null
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const parts = buffer.split('\n\n')
+          buffer = parts.pop() || ''
+
+          for (const part of parts) {
+            const lines = part.split('\n')
+            for (const line of lines) {
+              const event = parseSsePayload(line)
+              if (!event) continue
+
+              if (event.type === 'chunk' && typeof event.content === 'string') {
+                upsertAssistantMessage(assistantMessageId, { appendContent: event.content })
+              }
+
+              if (event.type === 'done' && event.payload) {
+                finalPayload = event.payload
+              }
+            }
+          }
+        }
+
+        if (!finalPayload) {
+          throw new Error('Stream ended unexpectedly. Please try again.')
+        }
+
+        setSessionId((prev) => finalPayload.sessionId || prev)
+        upsertAssistantMessage(assistantMessageId, { content: finalPayload.answer || '' })
+        finishedSuccessfully = true
+        return
+      }
+
+      const data = await res.json()
+
+      setSessionId((prev) => data.sessionId || prev)
+      setMessages((prev) => [...prev, { id: assistantMessageId, role: 'assistant', content: data.answer || '' }])
+      finishedSuccessfully = true
     } catch (e: any) {
-      setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: e?.message || 'Something went wrong' }])
+      const isAbort = e?.name === 'AbortError' || /abort/i.test(String(e?.message || ''))
+      if (isAbort) {
+        wasAborted = true
+      } else {
+        setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: e?.message || 'Something went wrong' }])
+      }
     } finally {
       setSending(false)
+      setActiveStreamingMessageId(null)
+      streamAbortRef.current = null
+
+      if (wasAborted) {
+        scheduleStreamStateReset('stopped')
+      } else if (finishedSuccessfully) {
+        scheduleStreamStateReset('completed')
+      } else {
+        setStreamState('idle')
+      }
     }
+  }
+
+  const stopGenerating = () => {
+    if (!sending || !streamAbortRef.current) return
+    streamAbortRef.current.abort()
   }
 
   if (loading) {
@@ -192,6 +337,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                 }`}
               >
                 {message.content}
+                {sending && activeStreamingMessageId === message.id && (
+                  <span className="inline-block animate-pulse ml-0.5">▍</span>
+                )}
               </div>
             ))}
           </CardContent>
@@ -204,6 +352,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ask about your documents..."
+                disabled={sending}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
@@ -211,10 +360,25 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                   }
                 }}
               />
-              <Button onClick={sendMessage} disabled={sending}>
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <Button onClick={sending ? stopGenerating : sendMessage}>
+                {sending ? <Square className="w-4 h-4" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
+            {streamState !== 'idle' && (
+              <p className={`mt-2 text-xs font-medium ${
+                streamState === 'streaming'
+                  ? 'text-primary'
+                  : streamState === 'completed'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-amber-600 dark:text-amber-400'
+              }`}>
+                {streamState === 'streaming'
+                  ? 'Generating response...'
+                  : streamState === 'completed'
+                    ? 'Response complete.'
+                    : 'Generation stopped.'}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
