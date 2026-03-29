@@ -12,7 +12,7 @@ import {
   CheckCircle, 
   AlertCircle,
   File,
-  Image,
+  Image as ImageIcon,
   FileCode,
   Loader2
 } from 'lucide-react'
@@ -57,7 +57,7 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
       case 'txt': return <FileText className="w-8 h-8 text-slate-500" />
       case 'jpg':
       case 'jpeg':
-      case 'png': return <Image className="w-8 h-8 text-emerald-500" />
+      case 'png': return <ImageIcon className="w-8 h-8 text-emerald-500" />
       case 'json':
       case 'xml':
       case 'csv': return <FileCode className="w-8 h-8 text-violet-500" />

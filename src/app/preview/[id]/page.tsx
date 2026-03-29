@@ -14,7 +14,7 @@ import {
   ArrowLeft,
   Download, 
   FileText, 
-  Image, 
+  Image as ImageIcon, 
   File, 
   FileCode,
   Loader2,
@@ -156,7 +156,7 @@ export default function DocumentPreviewPage() {
       case 'txt': return <FileText className="w-6 h-6 text-foreground" />
       case 'jpg':
       case 'jpeg':
-      case 'png': return <Image className="w-6 h-6 text-green-500" />
+      case 'png': return <ImageIcon className="w-6 h-6 text-green-500" />
       case 'json':
       case 'xml':
       case 'csv': return <FileCode className="w-6 h-6 text-purple-500" />

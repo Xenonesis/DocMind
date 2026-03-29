@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
@@ -14,13 +14,8 @@ import { SignupModal } from '@/components/auth/signup-modal'
 export function LandingPage() {
   const { user } = useAuth()
   const router = useRouter()
-  const [isClient, setIsClient] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showSignupModal, setShowSignupModal] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   const handleGetStarted = () => {
     if (user) {
@@ -29,8 +24,6 @@ export function LandingPage() {
       setShowSignupModal(true)
     }
   }
-
-  if (!isClient) return null
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-foreground flex flex-col">

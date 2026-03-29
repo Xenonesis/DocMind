@@ -29,6 +29,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
+  function setUserFromSupabase(supabaseUser: SupabaseUser) {
+    const userData: User = {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+      avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.email}`
+    }
+    setUser(userData)
+  }
+
   useEffect(() => {
     if (!supabase) {
       setIsLoading(false)
@@ -55,16 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  const setUserFromSupabase = (supabaseUser: SupabaseUser) => {
-    const userData: User = {
-      id: supabaseUser.id,
-      email: supabaseUser.email || '',
-      name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
-      avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.email}`
-    }
-    setUser(userData)
-  }
 
   const login = async (email: string, password: string) => {
     if (!supabase) throw new Error('Supabase not configured')
