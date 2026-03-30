@@ -42,6 +42,10 @@ export default function ChatPage() {
   }
 
   useEffect(() => {
+    if (!user) {
+      return
+    }
+
     fetchDocuments()
 
     const fetchProviders = async () => {
@@ -96,7 +100,7 @@ export default function ChatPage() {
       }
     }
     fetchProviders()
-  }, [])
+  }, [user])
 
   if (!user) {
     return (

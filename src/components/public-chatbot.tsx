@@ -17,7 +17,14 @@ interface Message {
   content: string
 }
 
+interface StreamDebugEntry {
+  id: number
+  timestamp: string
+  message: string
+}
+
 export function PublicChatbot({ slug }: PublicChatbotProps) {
+  const streamDebugEnabled = process.env.NEXT_PUBLIC_STREAM_DEBUG === '1'
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [streamState, setStreamState] = useState<'idle' | 'streaming' | 'completed' | 'stopped'>('idle')
@@ -27,6 +34,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const [query, setQuery] = useState('')
   const [sessionId, setSessionId] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [streamDebugEntries, setStreamDebugEntries] = useState<StreamDebugEntry[]>([])
   const streamAbortRef = useRef<AbortController | null>(null)
   const streamStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const storageKey = `docscan.public-chat.${slug}`
@@ -96,6 +104,16 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     streamStateTimerRef.current = setTimeout(() => {
       setStreamState('idle')
     }, 1800)
+  }
+
+  const addStreamDebugEntry = (message: string) => {
+    if (!streamDebugEnabled) return
+    const entry: StreamDebugEntry = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      message,
+    }
+    setStreamDebugEntries((prev) => [...prev.slice(-23), entry])
   }
 
   const parseSsePayload = (line: string) => {
@@ -182,6 +200,11 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     setStreamState('streaming')
     setActiveStreamingMessageId(assistantMessageId)
 
+    if (streamDebugEnabled) {
+      setStreamDebugEntries([])
+      addStreamDebugEntry(`Request started (${assistantMessageId})`)
+    }
+
     let wasAborted = false
     let finishedSuccessfully = false
 
@@ -205,6 +228,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       })
 
       if (!res.ok) {
+        addStreamDebugEntry(`HTTP error ${res.status}`)
         const errorText = await res.text()
         let errorMessage = errorText || 'Failed to get response'
         try {
@@ -219,12 +243,15 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       }
 
       const contentType = res.headers.get('content-type') || ''
+      addStreamDebugEntry(`Response content-type: ${contentType || 'unknown'}`)
 
       if (contentType.includes('text/event-stream') && res.body) {
         const reader = res.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
         let finalPayload: any = null
+        let chunkCount = 0
+        let totalChars = 0
 
         while (true) {
           const { value, done } = await reader.read()
@@ -241,11 +268,17 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
               if (!event) continue
 
               if (event.type === 'chunk' && typeof event.content === 'string') {
+                chunkCount += 1
+                totalChars += event.content.length
                 upsertAssistantMessage(assistantMessageId, { appendContent: event.content })
+                if (chunkCount === 1 || chunkCount % 25 === 0) {
+                  addStreamDebugEntry(`Chunks received: ${chunkCount}, chars: ${totalChars}`)
+                }
               }
 
               if (event.type === 'done' && event.payload) {
                 finalPayload = event.payload
+                addStreamDebugEntry(`Done event received after ${chunkCount} chunks (${totalChars} chars)`)
               }
             }
           }
@@ -261,6 +294,8 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
         return
       }
 
+      addStreamDebugEntry('Fell back to JSON response mode')
+
       const data = await res.json()
 
       setSessionId((prev) => data.sessionId || prev)
@@ -270,7 +305,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       const isAbort = e?.name === 'AbortError' || /abort/i.test(String(e?.message || ''))
       if (isAbort) {
         wasAborted = true
+        addStreamDebugEntry('Stream aborted by user')
       } else {
+        addStreamDebugEntry(`Stream error: ${e?.message || 'unknown error'}`)
         setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: e?.message || 'Something went wrong' }])
       }
     } finally {
@@ -282,6 +319,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
         scheduleStreamStateReset('stopped')
       } else if (finishedSuccessfully) {
         scheduleStreamStateReset('completed')
+        addStreamDebugEntry('Stream completed successfully')
       } else {
         setStreamState('idle')
       }
@@ -378,6 +416,26 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                     ? 'Response complete.'
                     : 'Generation stopped.'}
               </p>
+            )}
+            {streamDebugEnabled && (
+              <Card className="mt-3 border-border/70 bg-secondary/20">
+                <div className="px-3 py-2 border-b border-border/50">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Stream Diagnostics ({streamDebugEntries.length})
+                  </p>
+                </div>
+                <div className="max-h-36 overflow-y-auto px-3 py-2 space-y-1">
+                  {streamDebugEntries.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No stream events yet.</p>
+                  ) : (
+                    streamDebugEntries.map((entry) => (
+                      <p key={entry.id} className="text-xs text-muted-foreground">
+                        <span className="text-foreground/80">[{entry.timestamp}]</span> {entry.message}
+                      </p>
+                    ))
+                  )}
+                </div>
+              </Card>
             )}
           </CardContent>
         </Card>

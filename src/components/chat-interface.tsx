@@ -48,6 +48,12 @@ interface ChatMessage {
   tokensUsed?: number
 }
 
+interface StreamDebugEntry {
+  id: number
+  timestamp: string
+  message: string
+}
+
 interface ChatInterfaceProps {
   documents: Document[]
   selectedProvider?: string
@@ -196,6 +202,7 @@ function TypingIndicator() {
 }
 
 export function ChatInterface({ documents, selectedProvider, onDocumentsChanged }: ChatInterfaceProps) {
+  const streamDebugEnabled = process.env.NEXT_PUBLIC_STREAM_DEBUG === '1'
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
@@ -205,6 +212,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
   const [showDocPicker, setShowDocPicker] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [streamDebugEntries, setStreamDebugEntries] = useState<StreamDebugEntry[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -239,6 +247,16 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       setStreamState('idle')
     }, 1800)
   }, [])
+
+  const addStreamDebugEntry = useCallback((message: string) => {
+    if (!streamDebugEnabled) return
+    const entry: StreamDebugEntry = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      message,
+    }
+    setStreamDebugEntries(prev => [...prev.slice(-23), entry])
+  }, [streamDebugEnabled])
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text)
@@ -322,6 +340,11 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
     const abortController = new AbortController()
     streamAbortRef.current = abortController
 
+    if (streamDebugEnabled) {
+      setStreamDebugEntries([])
+      addStreamDebugEntry(`Request started (${assistantMessageId})`)
+    }
+
     let wasAborted = false
     let finishedSuccessfully = false
 
@@ -340,6 +363,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       })
 
       if (!response.ok) {
+        addStreamDebugEntry(`HTTP error ${response.status}`)
         const errorText = await response.text()
         let errorMessage = errorText || 'Something went wrong. Please try again.'
         try {
@@ -354,6 +378,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       }
 
       const contentType = response.headers.get('content-type') || ''
+      addStreamDebugEntry(`Response content-type: ${contentType || 'unknown'}`)
 
       if (contentType.includes('text/event-stream') && response.body) {
         const reader = response.body.getReader()
@@ -361,6 +386,8 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
         let buffer = ''
         let finalPayload: any = null
         let pendingProvider: string | undefined
+        let chunkCount = 0
+        let totalChars = 0
 
         while (true) {
           const { value, done } = await reader.read()
@@ -379,19 +406,27 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
               if (event.type === 'start') {
                 if (typeof event.provider === 'string') {
                   pendingProvider = event.provider
+                  addStreamDebugEntry(`Stream start from provider: ${event.provider}`)
                 }
                 continue
               }
 
               if (event.type === 'chunk') {
                 if (typeof event.content === 'string') {
+                  chunkCount += 1
+                  totalChars += event.content.length
                   upsertAssistantMessage({ appendContent: event.content, provider: pendingProvider })
+
+                  if (chunkCount === 1 || chunkCount % 25 === 0) {
+                    addStreamDebugEntry(`Chunks received: ${chunkCount}, chars: ${totalChars}`)
+                  }
                 }
                 continue
               }
 
               if (event.type === 'done' && event.payload) {
                 finalPayload = event.payload
+                addStreamDebugEntry(`Done event received after ${chunkCount} chunks (${totalChars} chars)`)
               }
             }
           }
@@ -418,6 +453,8 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
 
         return
       }
+
+      addStreamDebugEntry('Fell back to JSON response mode')
 
       const result = await response.json() as any
 
@@ -453,7 +490,9 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       const isAbort = err?.name === 'AbortError' || /abort/i.test(String(err?.message || ''))
       if (isAbort) {
         wasAborted = true
+        addStreamDebugEntry('Stream aborted by user')
       } else {
+      addStreamDebugEntry(`Stream error: ${err?.message || 'unknown error'}`)
       setMessages(prev => [...prev, {
         id: `err-${Date.now()}`,
         role: 'error',
@@ -470,6 +509,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
         scheduleStreamStateReset('stopped')
       } else if (finishedSuccessfully) {
         scheduleStreamStateReset('completed')
+        addStreamDebugEntry('Stream completed successfully')
       } else {
         setStreamState('idle')
       }
@@ -776,6 +816,26 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
         <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">
           AI can make mistakes. Verify important information from your documents directly.
         </p>
+        {streamDebugEnabled && (
+          <Card className="mt-3 border-border/70 bg-secondary/20">
+            <div className="px-3 py-2 border-b border-border/50">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Stream Diagnostics ({streamDebugEntries.length})
+              </p>
+            </div>
+            <div className="max-h-36 overflow-y-auto px-3 py-2 space-y-1">
+              {streamDebugEntries.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No stream events yet.</p>
+              ) : (
+                streamDebugEntries.map(entry => (
+                  <p key={entry.id} className="text-xs text-muted-foreground">
+                    <span className="text-foreground/80">[{entry.timestamp}]</span> {entry.message}
+                  </p>
+                ))
+              )}
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   )

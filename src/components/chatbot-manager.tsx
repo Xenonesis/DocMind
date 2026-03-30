@@ -404,7 +404,7 @@ export function ChatbotManager() {
       </Card>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-lg">Your Chatbots</CardTitle>
             <CardDescription>Generate hosted URL, embed token, and API key for integrations.</CardDescription>
@@ -695,19 +695,21 @@ export function ChatbotManager() {
                     <li>Send a POST request to <code>/api/chatbots/runtime/query</code>.</li>
                     <li>Include your secure API Key in the <code>x-api-key</code> header.</li>
                     <li>Pass the bot's <code>slug</code> parameter alongside the user's <code>query</code>.</li>
+                    <li>Optional: add <code>"stream": true</code> for SSE chunked responses.</li>
                   </ol>
                   <pre className="p-3 mt-3 bg-secondary/30 border rounded overflow-x-auto text-xs font-mono text-secondary-foreground">
 {`curl -X POST "${typeof window !== 'undefined' ? window.location.origin : ''}/api/chatbots/runtime/query" \\
+  -N \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: ${generatedApiKey}" \\
-  -d '{"slug":"${generatedSlug}","query":"Summarize key points from linked documents"}'`}
+  -d '{"slug":"${generatedSlug}","query":"Summarize key points from linked documents","stream":true}'`}
                   </pre>
 
                   <Button 
                     className="absolute top-3 right-3 h-8"
                     variant="outline" 
                     size="sm"
-                    onClick={() => copyText(`### API Integration Instructions\n\n1. Send a POST request to \`/api/chatbots/runtime/query\`.\n2. Include your secure API Key in the \`x-api-key\` header.\n3. Pass the bot's \`slug\` parameter alongside the user's \`query\`.\n\n#### cURL Example:\n\`\`\`bash\ncurl -X POST "${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/chatbots/runtime/query" \\\n  -H "Content-Type: application/json" \\\n  -H "x-api-key: ${generatedApiKey}" \\\n  -d '{"slug":"${generatedSlug}","query":"Summarize key points from linked documents"}'\n\`\`\`\n`, 'Markdown Instructions')}
+                    onClick={() => copyText(`### API Integration Instructions\n\n1. Send a POST request to \`/api/chatbots/runtime/query\`.\n2. Include your secure API Key in the \`x-api-key\` header.\n3. Pass the bot's \`slug\` parameter alongside the user's \`query\`.\n4. Optional: set \`stream\` to \`true\` for SSE chunked responses.\n\n#### cURL Example:\n\`\`\`bash\ncurl -X POST "${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/chatbots/runtime/query" \\\n+  -N \\\n+  -H "Content-Type: application/json" \\\n+  -H "x-api-key: ${generatedApiKey}" \\\n+  -d '{"slug":"${generatedSlug}","query":"Summarize key points from linked documents","stream":true}'\n\`\`\`\n`, 'Markdown Instructions')}
                   >
                     Copy as Markdown
                   </Button>

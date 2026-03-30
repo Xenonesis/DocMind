@@ -1,0 +1,10 @@
+DocMind Smoke Test Document
+
+This is a sample document for validating end-to-end streaming chat behavior.
+
+Key facts:
+- Project: DocMind
+- Feature: Streaming responses with stop control
+- Date: 2026-03-30
+
+Expected summary: The document is for smoke testing streaming chat and includes key facts about DocMind.

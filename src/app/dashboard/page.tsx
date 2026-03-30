@@ -62,6 +62,10 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
+    if (!user) {
+      return
+    }
+
     fetchDocuments()
 
     const fetchProviders = async () => {
@@ -116,7 +120,7 @@ export default function Dashboard() {
       }
     }
     fetchProviders()
-  }, [])
+  }, [user])
 
   useEffect(() => {
     const hasProcessingDocuments = documents.some(doc =>
