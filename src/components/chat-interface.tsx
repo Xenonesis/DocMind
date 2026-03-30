@@ -26,6 +26,9 @@ import {
   Zap,
   AlertCircle,
   Square,
+  ThumbsUp,
+  ThumbsDown,
+  RotateCcw,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
@@ -82,11 +85,19 @@ const SUGGESTED_PROMPTS = [
 function MessageBubble({
   message,
   onCopy,
+  onFeedback,
+  feedback,
+  onRegenerate,
+  canRegenerate,
   copied,
   showStreamingCursor,
 }: {
   message: ChatMessage
   onCopy: (id: string, text: string) => void
+  onFeedback: (id: string, type: 'up' | 'down') => void
+  feedback: 'up' | 'down' | null
+  onRegenerate: () => void
+  canRegenerate: boolean
   copied: string | null
   showStreamingCursor: boolean
 }) {
@@ -158,13 +169,45 @@ function MessageBubble({
           )}
 
           {!isUser && !isError && (
-            <button
-              onClick={() => onCopy(message.id, message.content)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-muted-foreground/50 hover:text-muted-foreground"
-              aria-label="Copy assistant response"
-            >
-              {copied === message.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            </button>
+            <div className="flex items-center gap-0.5 ml-1">
+              <button
+                onClick={() => onCopy(message.id, message.content)}
+                className="opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-secondary"
+                aria-label="Copy assistant response"
+                title="Copy"
+              >
+                {copied === message.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              </button>
+              <button
+                onClick={() => onFeedback(message.id, 'up')}
+                className={`opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-secondary ${
+                  feedback === 'up' ? 'text-primary' : 'text-muted-foreground/60 hover:text-foreground'
+                }`}
+                aria-label="Mark response as helpful"
+                title="Helpful"
+              >
+                <ThumbsUp className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => onFeedback(message.id, 'down')}
+                className={`opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-secondary ${
+                  feedback === 'down' ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground/60 hover:text-foreground'
+                }`}
+                aria-label="Mark response as unhelpful"
+                title="Not helpful"
+              >
+                <ThumbsDown className="w-3 h-3" />
+              </button>
+              <button
+                onClick={onRegenerate}
+                disabled={!canRegenerate}
+                className="opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Regenerate response"
+                title="Regenerate"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -212,6 +255,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
   const [showDocPicker, setShowDocPicker] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [responseFeedback, setResponseFeedback] = useState<Record<string, 'up' | 'down'>>({})
   const [streamDebugEntries, setStreamDebugEntries] = useState<StreamDebugEntry[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -268,6 +312,10 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
     setSelectedDocIds(prev =>
       prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
     )
+  }
+
+  const handleFeedback = (id: string, type: 'up' | 'down') => {
+    setResponseFeedback(prev => ({ ...prev, [id]: type }))
   }
 
   const sendMessage = async (overrideText?: string) => {
@@ -530,6 +578,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
 
   const clearChat = () => {
     setMessages([])
+    setResponseFeedback({})
   }
 
   const openUploadPicker = () => {
@@ -607,6 +656,13 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
 
   const isEmpty = messages.length === 0
   const hasActiveStreamingMessage = !!activeStreamingMessageId && messages.some(msg => msg.id === activeStreamingMessageId)
+  const latestAssistantMessageId = [...messages].reverse().find(msg => msg.role === 'assistant')?.id || null
+  const lastUserMessage = [...messages].reverse().find(msg => msg.role === 'user')?.content || ''
+
+  const handleRegenerate = () => {
+    if (!lastUserMessage || isStreaming) return
+    sendMessage(lastUserMessage)
+  }
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -722,6 +778,10 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
                 key={msg.id}
                 message={msg}
                 onCopy={handleCopy}
+                onFeedback={handleFeedback}
+                feedback={responseFeedback[msg.id] ?? null}
+                onRegenerate={handleRegenerate}
+                canRegenerate={msg.id === latestAssistantMessageId && !!lastUserMessage && !isStreaming}
                 copied={copied}
                 showStreamingCursor={isStreaming && activeStreamingMessageId === msg.id}
               />

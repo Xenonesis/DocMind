@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Loader2, Send, Square } from 'lucide-react'
+import { Loader2, Send, Square, Copy, Check, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/hooks/use-toast'
 
 interface PublicChatbotProps {
   slug: string
@@ -34,10 +35,13 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const [query, setQuery] = useState('')
   const [sessionId, setSessionId] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const [responseFeedback, setResponseFeedback] = useState<Record<string, 'up' | 'down'>>({})
   const [streamDebugEntries, setStreamDebugEntries] = useState<StreamDebugEntry[]>([])
   const streamAbortRef = useRef<AbortController | null>(null)
   const streamStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const storageKey = `docscan.public-chat.${slug}`
+  const { toast } = useToast()
 
   const getAuthHeader = async (): Promise<Record<string, string>> => {
     if (!supabase) return {}
@@ -180,8 +184,8 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     load()
   }, [slug, token])
 
-  const sendMessage = async () => {
-    const trimmed = query.trim()
+  const sendMessage = async (overrideText?: string) => {
+    const trimmed = (overrideText ?? query).trim()
     if (!trimmed || sending || !token) return
 
     const userMessage: Message = { id: `u-${Date.now()}`, role: 'user', content: trimmed }
@@ -195,7 +199,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     }
 
     setMessages(nextMessages)
-    setQuery('')
+    if (!overrideText) {
+      setQuery('')
+    }
     setSending(true)
     setStreamState('streaming')
     setActiveStreamingMessageId(assistantMessageId)
@@ -331,6 +337,40 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     streamAbortRef.current.abort()
   }
 
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedMessageId(id)
+    setTimeout(() => setCopiedMessageId(null), 2000)
+  }
+
+  const handleFeedback = (id: string, type: 'up' | 'down') => {
+    setResponseFeedback((prev) => ({ ...prev, [id]: type }))
+    toast({
+      title: type === 'up' ? 'Thanks for the feedback' : 'Feedback noted',
+      description: type === 'up' ? 'Glad this response was helpful.' : 'We will use this to improve responses.',
+    })
+  }
+
+  const getPreviousUserMessage = (assistantMessageId: string) => {
+    const assistantIndex = messages.findIndex((msg) => msg.id === assistantMessageId)
+    if (assistantIndex <= 0) return ''
+    for (let index = assistantIndex - 1; index >= 0; index -= 1) {
+      if (messages[index].role === 'user') {
+        return messages[index].content
+      }
+    }
+    return ''
+  }
+
+  const latestAssistantMessageId = [...messages].reverse().find((msg) => msg.role === 'assistant')?.id || null
+
+  const handleRegenerate = (assistantMessageId: string) => {
+    if (sending || assistantMessageId !== latestAssistantMessageId) return
+    const previousUserMessage = getPreviousUserMessage(assistantMessageId)
+    if (!previousUserMessage) return
+    sendMessage(previousUserMessage)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -366,17 +406,64 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
               <p className="text-sm text-muted-foreground">Ask any question related to linked documents.</p>
             )}
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground ml-12'
-                    : 'bg-background border mr-12'
-                }`}
-              >
-                {message.content}
-                {sending && activeStreamingMessageId === message.id && (
-                  <span className="inline-block animate-pulse ml-0.5">▍</span>
+              <div key={message.id} className="space-y-1">
+                <div
+                  className={`rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground ml-12'
+                      : 'bg-background border mr-12'
+                  }`}
+                >
+                  {message.content}
+                  {sending && activeStreamingMessageId === message.id && (
+                    <span className="inline-block animate-pulse ml-0.5">▍</span>
+                  )}
+                </div>
+
+                {message.role === 'assistant' && (
+                  <div className="mr-12 px-1 flex items-center gap-1">
+                    <button
+                      onClick={() => handleCopy(message.id, message.content)}
+                      className="p-1 rounded text-muted-foreground/70 hover:text-foreground hover:bg-secondary"
+                      aria-label="Copy assistant response"
+                      title="Copy"
+                    >
+                      {copiedMessageId === message.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(message.id, 'up')}
+                      className={`p-1 rounded hover:bg-secondary ${
+                        responseFeedback[message.id] === 'up'
+                          ? 'text-primary'
+                          : 'text-muted-foreground/70 hover:text-foreground'
+                      }`}
+                      aria-label="Mark response as helpful"
+                      title="Helpful"
+                    >
+                      <ThumbsUp className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(message.id, 'down')}
+                      className={`p-1 rounded hover:bg-secondary ${
+                        responseFeedback[message.id] === 'down'
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-muted-foreground/70 hover:text-foreground'
+                      }`}
+                      aria-label="Mark response as unhelpful"
+                      title="Not helpful"
+                    >
+                      <ThumbsDown className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => handleRegenerate(message.id)}
+                      disabled={sending || message.id !== latestAssistantMessageId}
+                      className="p-1 rounded text-muted-foreground/70 hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Regenerate response"
+                      title="Regenerate"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
