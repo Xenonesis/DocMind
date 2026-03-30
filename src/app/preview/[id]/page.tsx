@@ -1,15 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Progress } from '@/components/ui/progress'
 import { 
   ArrowLeft,
   Download, 
@@ -22,7 +19,6 @@ import {
   Calendar,
   HardDrive,
   Tag,
-  Eye,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -33,6 +29,7 @@ import {
   Maximize,
   List,
   BookOpen,
+  Sparkles,
   Fullscreen,
   Minimize2,
   TerminalSquare
@@ -61,6 +58,81 @@ interface PreviewContent {
   }
 }
 
+interface ParsedTextSection {
+  id: string
+  title: string
+  lines: string[]
+}
+
+const normalizeSectionTitle = (value: string) =>
+  value.replace(/:\s*$/, '').trim().replace(/\s+/g, ' ')
+
+const toSectionId = (value: string, index: number) =>
+  `${value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index}`
+
+const isLikelySectionHeading = (line: string) => {
+  const trimmed = line.trim()
+  if (!trimmed || trimmed.length > 42 || /[.!?]$/.test(trimmed)) return false
+  if (/^[\-•\d]/.test(trimmed)) return false
+
+  const withoutColon = normalizeSectionTitle(trimmed)
+  const words = withoutColon.split(/\s+/).filter(Boolean)
+  if (words.length === 0 || words.length > 5) return false
+
+  const lettersOnly = withoutColon.replace(/[^a-zA-Z]/g, '')
+  const uppercaseRatio = lettersOnly.length
+    ? lettersOnly.replace(/[^A-Z]/g, '').length / lettersOnly.length
+    : 0
+
+  return trimmed.endsWith(':') || uppercaseRatio > 0.75
+}
+
+const parseTextSections = (content: string): ParsedTextSection[] => {
+  const lines = content.split(/\r?\n/)
+  const sections: ParsedTextSection[] = []
+  let currentTitle = 'Overview'
+  let currentLines: string[] = []
+
+  const flushSection = () => {
+    const compact = currentLines.map((line) => line.trim()).filter(Boolean)
+    if (compact.length === 0) return
+
+    const index = sections.length + 1
+    const title = normalizeSectionTitle(currentTitle) || `Section ${index}`
+    sections.push({ id: toSectionId(title, index), title, lines: compact })
+  }
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim()
+    if (!trimmed) {
+      if (currentLines.length > 0 && currentLines[currentLines.length - 1] !== '') {
+        currentLines.push('')
+      }
+      continue
+    }
+
+    if (isLikelySectionHeading(trimmed)) {
+      flushSection()
+      currentTitle = trimmed
+      currentLines = []
+      continue
+    }
+
+    currentLines.push(trimmed)
+  }
+
+  flushSection()
+
+  if (sections.length === 0) {
+    const fallback = content.trim() || 'No preview text available.'
+    return [{ id: 'overview-1', title: 'Overview', lines: [fallback] }]
+  }
+
+  return sections
+}
+
+const isChipSection = (title: string) => /(skills?|languages?|tools?|technologies|stack)/i.test(title)
+
 export default function DocumentPreviewPage() {
   const params = useParams()
   const router = useRouter()
@@ -75,7 +147,13 @@ export default function DocumentPreviewPage() {
   const [pages, setPages] = useState<number | null>(null)
   const [isFullScreen, setIsFullScreen] = useState(false)
   const [rotation, setRotation] = useState(0)
+  const [textViewMode, setTextViewMode] = useState<'smart' | 'raw'>('smart')
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const parsedTextSections = useMemo(() => {
+    if (previewContent?.contentType !== 'text') return []
+    return parseTextSections(previewContent.content)
+  }, [previewContent])
 
   useEffect(() => {
     if (documentId) {
@@ -237,21 +315,89 @@ export default function DocumentPreviewPage() {
     const renderContent = () => {
       switch (previewContent.contentType) {
         case 'text':
+          const canUseSmartView = parsedTextSections.length > 1
+          const effectiveTextViewMode = canUseSmartView ? textViewMode : 'raw'
+
           return (
             <div className="h-full bg-background rounded-2xl border border-border shadow-sm overflow-hidden">
               <ScrollArea className="h-full">
-                <div className="p-4 sm:p-6 lg:p-8">
-                  <pre 
-                    className="whitespace-pre-wrap leading-relaxed font-mono text-foreground break-words" 
-                    style={{ 
-                      transform: `scale(${zoom / 100})`, 
-                      transformOrigin: 'top left',
-                      fontSize: `${Math.max(12, 14 * (zoom / 100))}px`
-                    }}
-                  >
-                    {previewContent.content}
-                  </pre>
-                </div>
+                {effectiveTextViewMode === 'smart' ? (
+                  <div className="p-4 sm:p-6 lg:p-8 space-y-5">
+                    <div className="flex flex-wrap gap-2 pb-1">
+                      {parsedTextSections.map((section) => (
+                        <a
+                          key={section.id}
+                          href={`#${section.id}`}
+                          className="text-[11px] font-medium px-3 py-1.5 rounded-full border border-border/60 bg-secondary/40 text-foreground hover:bg-secondary transition-colors"
+                        >
+                          {section.title}
+                        </a>
+                      ))}
+                    </div>
+
+                    {parsedTextSections.map((section) => {
+                      const compactText = section.lines.join(' ').replace(/\s+/g, ' ').trim()
+                      const chipItems = compactText
+                        .split(/[•,|]/)
+                        .map((item) => item.trim())
+                        .filter(Boolean)
+
+                      return (
+                        <section
+                          id={section.id}
+                          key={section.id}
+                          className="rounded-2xl border border-border/60 bg-gradient-to-br from-background to-secondary/20 p-4 sm:p-5"
+                        >
+                          <h3 className="text-sm sm:text-base font-semibold tracking-tight mb-3 text-foreground">
+                            {section.title}
+                          </h3>
+
+                          {isChipSection(section.title) && chipItems.length > 1 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {chipItems.map((item) => (
+                                <span
+                                  key={`${section.id}-${item}`}
+                                  className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-background border border-border/60 text-muted-foreground"
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5">
+                              {section.lines.map((line, index) => {
+                                const cleanedLine = line.replace(/^[•\-*]\s*/, '')
+                                const isBullet = /^[•\-*]\s*/.test(line)
+                                return (
+                                  <p
+                                    key={`${section.id}-${index}`}
+                                    className={isBullet ? 'text-sm leading-relaxed text-muted-foreground pl-4 relative' : 'text-sm leading-relaxed text-muted-foreground'}
+                                  >
+                                    {isBullet && <span className="absolute left-0 top-[0.45rem] h-1.5 w-1.5 rounded-full bg-primary/70" />}
+                                    {cleanedLine}
+                                  </p>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </section>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-4 sm:p-6 lg:p-8">
+                    <pre 
+                      className="whitespace-pre-wrap leading-relaxed font-mono text-foreground break-words" 
+                      style={{ 
+                        transform: `scale(${zoom / 100})`, 
+                        transformOrigin: 'top left',
+                        fontSize: `${Math.max(12, 14 * (zoom / 100))}px`
+                      }}
+                    >
+                      {previewContent.content}
+                    </pre>
+                  </div>
+                )}
               </ScrollArea>
             </div>
           )
@@ -404,7 +550,7 @@ export default function DocumentPreviewPage() {
                             <Copy className="w-4 h-4 text-muted-foreground" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="rounded-lg shadow-sm font-medium text-xs">Copy Layout</TooltipContent>
+                        <TooltipContent className="rounded-lg shadow-sm font-medium text-xs">Copy Text</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
@@ -521,6 +667,29 @@ export default function DocumentPreviewPage() {
                   >
                     <RotateCcw className="w-4 h-4 text-muted-foreground" />
                   </Button>
+                )}
+
+                {previewContent?.contentType === 'text' && parsedTextSections.length > 1 && (
+                  <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-full border border-border/50 ml-2 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setTextViewMode('smart')}
+                      className={`h-8 rounded-full px-3 gap-1.5 text-xs ${textViewMode === 'smart' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:bg-background/70'}`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Smart</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setTextViewMode('raw')}
+                      className={`h-8 rounded-full px-3 gap-1.5 text-xs ${textViewMode === 'raw' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:bg-background/70'}`}
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Raw</span>
+                    </Button>
+                  </div>
                 )}
               </div>
 
