@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, FileText, Database, Shield, Zap } from 'lucide-react'
+import { ArrowRight, FileText, Database, Shield, Zap, Menu, X } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { LoginModal } from '@/components/auth/login-modal'
 import { SignupModal } from '@/components/auth/signup-modal'
@@ -16,8 +16,10 @@ export function LandingPage() {
   const router = useRouter()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showSignupModal, setShowSignupModal] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleGetStarted = () => {
+    setMobileMenuOpen(false)
     if (user) {
       router.push('/dashboard')
     } else {
@@ -27,35 +29,86 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 selection:text-foreground flex flex-col">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border px-6 py-4 flex justify-between items-center transition-all">
-        <div className="flex items-center gap-3">
-          <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm border border-primary/20 bg-background/50 flex items-center justify-center">
-            <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
+      {/* ── Header ───────────────────────────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border px-4 sm:px-6 py-3 sm:py-4 transition-all">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm border border-primary/20 bg-background/50 flex items-center justify-center">
+              <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
+            </div>
+            <span className="text-xl font-bold tracking-tight">DocMind</span>
           </div>
-          <span className="text-xl font-bold tracking-tight">DocMind</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          {!user && (
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowLoginModal(true)}
-              className="font-medium rounded-full px-4 hidden sm:inline-flex"
+
+          {/* Desktop nav */}
+          <div className="hidden sm:flex items-center gap-3">
+            <ThemeToggle />
+            {!user && (
+              <Button
+                variant="ghost"
+                onClick={() => setShowLoginModal(true)}
+                className="font-medium rounded-full px-4"
+              >
+                Log in
+              </Button>
+            )}
+            <Button
+              onClick={handleGetStarted}
+              className="font-medium rounded-full px-6 shadow-sm hover:shadow-md transition-all"
             >
-              Log in
+              {user ? 'Go to Dashboard' : 'Get Started'}
             </Button>
-          )}
-          <Button 
-            onClick={handleGetStarted}
-            className="font-medium rounded-full px-6 shadow-sm hover:shadow-md transition-all"
-          >
-            {user ? 'Go to Dashboard' : 'Get Started'}
-          </Button>
+          </div>
+
+          {/* Mobile hamburger */}
+          <div className="flex sm:hidden items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileMenuOpen(o => !o)}
+              className="p-2 rounded-lg text-foreground hover:bg-secondary transition-colors"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="sm:hidden overflow-hidden"
+            >
+              <div className="max-w-7xl mx-auto pt-3 pb-4 flex flex-col gap-2 border-t border-border mt-3">
+                {!user && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}
+                    className="w-full justify-center font-medium rounded-xl"
+                  >
+                    Log in
+                  </Button>
+                )}
+                <Button
+                  onClick={handleGetStarted}
+                  className="w-full justify-center font-medium rounded-xl shadow-sm"
+                >
+                  {user ? 'Go to Dashboard' : 'Get Started'}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      <main className="pt-32 pb-24 px-6 max-w-7xl mx-auto flex flex-col gap-24 flex-grow">
-        <section className="flex flex-col items-center text-center gap-8 mt-12">
+      {/* ── Main ───────────────────────────────────────────────── */}
+      <main className="pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col gap-16 sm:gap-24 flex-grow w-full">
+        {/* Hero */}
+        <section className="flex flex-col items-center text-center gap-6 sm:gap-8 mt-8 sm:mt-12">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -70,20 +123,20 @@ export function LandingPage() {
             </div>
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold tracking-tight text-balance max-w-4xl"
+            className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-balance max-w-4xl"
           >
             Intelligent document processing for modern teams.
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl text-balance"
+            className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl text-balance px-2"
           >
             Unlock the intelligence hidden within your files. Seamlessly extract data, summarize content, and query complex documents using advanced AI.
           </motion.p>
@@ -92,34 +145,35 @@ export function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex gap-4 mt-4"
+            className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-4 w-full sm:w-auto"
           >
-            <Button 
+            <Button
               size="lg"
               onClick={handleGetStarted}
-              className="text-base px-8 py-6 rounded-full font-medium shadow-md hover:shadow-lg transition-all group"
+              className="text-base px-8 py-6 rounded-full font-medium shadow-md hover:shadow-lg transition-all group w-full sm:w-auto"
             >
               Start for free
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button 
+            <Button
               size="lg"
               variant="outline"
-              className="text-base px-8 py-6 rounded-full font-medium"
+              className="text-base px-8 py-6 rounded-full font-medium w-full sm:w-auto"
             >
               View demo
             </Button>
           </motion.div>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-16">
+        {/* Feature cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 pt-4 sm:pt-16">
           {[
             { icon: FileText, title: 'Universal Support', desc: 'Securely upload PDFs, Word documents, text files, and images.' },
             { icon: Database, title: 'Semantic Querying', desc: 'Find exact answers within complex documents instantly using natural language.' },
             { icon: Zap, title: 'High Performance', desc: 'Powered by highly optimized state-of-the-art vector processing.' },
             { icon: Shield, title: 'Enterprise Security', desc: 'Your data is encrypted and strictly isolated within your workspace.' }
           ].map((feature, i) => (
-            <motion.div 
+            <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -137,8 +191,9 @@ export function LandingPage() {
         </section>
       </main>
 
+      {/* ── Footer ───────────────────────────────────────────── */}
       <footer className="border-t border-border bg-card/50 text-muted-foreground py-8 text-center text-sm">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="relative w-5 h-5 rounded overflow-hidden shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
               <Image src="/logo.png" alt="DocMind Logo" fill sizes="48px" className="object-cover" />
@@ -149,8 +204,8 @@ export function LandingPage() {
         </div>
       </footer>
 
-      <LoginModal 
-        open={showLoginModal} 
+      <LoginModal
+        open={showLoginModal}
         onOpenChange={setShowLoginModal}
         onSwitchToSignup={() => {
           setShowLoginModal(false)
@@ -158,8 +213,8 @@ export function LandingPage() {
         }}
       />
 
-      <SignupModal 
-        open={showSignupModal} 
+      <SignupModal
+        open={showSignupModal}
         onOpenChange={setShowSignupModal}
         onSwitchToLogin={() => {
           setShowSignupModal(false)

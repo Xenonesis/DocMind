@@ -108,11 +108,14 @@
   html {
     scroll-behavior: smooth;
     height: 100%;
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     min-height: 100%;
+    overflow-x: hidden;
+    width: 100%;
   }
 }
 

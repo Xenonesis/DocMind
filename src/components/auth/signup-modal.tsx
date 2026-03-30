@@ -78,7 +78,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto border-border rounded-2xl shadow-lg bg-card p-0">
+      <DialogContent className="sm:max-w-md mx-4 max-w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto border-border rounded-2xl shadow-lg bg-card p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="text-xl sm:text-2xl font-semibold text-center tracking-tight">Create an account</DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
