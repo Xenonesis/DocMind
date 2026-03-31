@@ -4,203 +4,28 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Progress } from '@/components/ui/progress'
-import { 
-  Settings, 
-  Key, 
-  TestTube, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Settings,
+  CheckCircle,
   Loader2,
-  Plus,
-  Trash2,
   Save,
-  RefreshCw,
-  Shield,
-  Zap,
   Brain,
-  Cloud,
-  Server,
-  Globe,
-  Eye,
-  EyeOff,
   Activity,
-  Clock
 } from 'lucide-react'
-import { isValidApiKey } from '@/lib/crypto-utils'
 import { useToast } from '@/hooks/use-toast'
-
+import type { AIProvider } from '@/types'
+import {
+  defaultProviders,
+  mapServerDataToProvider,
+  serializeProviderPayload,
+} from './provider-config'
+import { ProviderCard } from './provider-card'
+import { AdvancedSettings } from './advanced-settings'
 import { ApiUsageTracker } from '@/components/features/api-usage-tracker'
-
-interface AIProvider {
-  id: string
-  name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible' | 'groq'
-  baseUrl: string
-  apiKey: string
-  model: string
-  isActive: boolean
-  isConfigured: boolean
-  lastTested?: string
-  testStatus?: 'success' | 'error' | 'pending'
-  errorMessage?: string
-  models: string[]
-  maxTokens?: number
-  temperature?: number
-  topP?: number
-  costPer1kTokens?: number
-  description: string
-  iconType: 'brain' | 'zap' | 'server' | 'shield' | 'globe'
-  dirtyApiKey?: boolean
-  hasStoredApiKey?: boolean
-  maskedApiKey?: string
-}
-
-const defaultProviders: Omit<AIProvider, 'id'>[] = [
-  {
-    name: 'Google Gemini',
-    type: 'google',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    apiKey: '',
-    model: 'gemini-2.5-flash',
-    isActive: true,
-    isConfigured: false,
-    models: [], 
-    maxTokens: 8192,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Google\'s Gemini 2.5/2.0/1.5 models for reasoning and multimodal understanding.',
-    iconType: 'brain'
-  },
-  {
-    name: 'Mistral AI',
-    type: 'mistral',
-    baseUrl: 'https://api.mistral.ai/v1',
-    apiKey: '',
-    model: 'mistral-large-latest',
-    isActive: false,
-    isConfigured: false,
-    models: [], 
-    maxTokens: 8192,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Mistral\'s high-performance language models.',
-    iconType: 'zap'
-  },
-  {
-    name: 'OpenAI',
-    type: 'openai',
-    baseUrl: 'https://api.openai.com/v1',
-    apiKey: '',
-    model: 'gpt-4o-mini',
-    isActive: false,
-    isConfigured: false,
-    models: [], 
-    maxTokens: 8192,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'OpenAI\'s GPT models for chat and reasoning.',
-    iconType: 'brain'
-  },
-  {
-    name: 'Anthropic Claude',
-    type: 'anthropic',
-    baseUrl: 'https://api.anthropic.com/v1',
-    apiKey: '',
-    model: 'claude-3-5-sonnet-latest',
-    isActive: false,
-    isConfigured: false,
-    models: ['claude-opus-4-0', 'claude-sonnet-4-0', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest'], 
-    maxTokens: 8192,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Anthropic\'s Claude 3 family of models.',
-    iconType: 'shield'
-  },
-  {
-    name: 'LM Studio',
-    type: 'lm-studio',
-    baseUrl: 'http://localhost:1234/v1',
-    apiKey: '',
-    model: 'local-model',
-    isActive: false,
-    isConfigured: false,
-    models: [], 
-    maxTokens: 4096,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Run local AI models using LM Studio.',
-    iconType: 'server'
-  },
-  {
-    name: 'Ollama',
-    type: 'ollama',
-    baseUrl: 'http://localhost:11434/api',
-    apiKey: '',
-    model: 'llama2',
-    isActive: false,
-    isConfigured: false,
-    models: [], 
-    maxTokens: 4096,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Run local AI models using Ollama.',
-    iconType: 'shield'
-  },
-  {
-    name: 'OpenRouter',
-    type: 'open-router',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    apiKey: '',
-    model: 'anthropic/claude-3.5-sonnet',
-    isActive: false,
-    isConfigured: false,
-    models: [], 
-    maxTokens: 8192,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Access multiple AI models through OpenRouter.',
-    iconType: 'globe'
-  },
-  {
-    name: 'OpenAI Compatible API',
-    type: 'openai-compatible',
-    baseUrl: 'https://api.your-provider.com/v1',
-    apiKey: '',
-    model: 'gpt-3.5-turbo',
-    isActive: false,
-    isConfigured: false,
-    models: ['gpt-3.5-turbo', 'gpt-4', 'custom-model'],
-    maxTokens: 4096,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Connect to any custom OpenAI-compatible endpoint.',
-    iconType: 'server'
-  },
-  {
-    name: 'DocScan Glm-5 (free)',
-    type: 'openai-compatible',
-    baseUrl: 'https://api.us-west-2.modal.direct/v1',
-    apiKey: '', 
-    model: 'zai-org/GLM-5-FP8',
-    isActive: false,
-    isConfigured: false,
-    models: ['zai-org/GLM-5-FP8'],
-    maxTokens: 4096,
-    temperature: 0.7,
-    topP: 0.9,
-    description: 'Free built-in provider powered by DocScan. No API key needed — just activate and use!',
-    iconType: 'zap'
-  }
-]
 
 export function AiApiSettings() {
   const [providers, setProviders] = useState<AIProvider[]>([])
@@ -212,9 +37,9 @@ export function AiApiSettings() {
   const [selectedProviderId, setSelectedProviderId] = useState<string>('')
   const { toast } = useToast()
 
+  // ── Load ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     setMounted(true)
-    
 
     const load = async () => {
       try {
@@ -225,79 +50,27 @@ export function AiApiSettings() {
         ])
         const settingsData = data.status === 'fulfilled' ? data.value : []
         const freeConfig = freeProviderRes.status === 'fulfilled' ? freeProviderRes.value : null
-        
-        let mapped: AIProvider[] = settingsData.map((s: any, index: number) => {
-          const mappedType = (() => {
-            const raw = (s.provider || 'custom').toString().toUpperCase()
-            if (raw === 'OPENROUTER') return 'open-router'
-            if (raw === 'GOOGLE_AI') return 'google'
-            if (raw === 'LM_STUDIO') return 'lm-studio'
-            if (raw === 'OPENAI_COMPATIBLE') return 'openai-compatible'
-            if (raw === 'GROQ') return 'groq'
-            return raw.toLowerCase().replace(/_/g, '-')
-          })()
-          const defaults = defaultProviders.find(d => d.type === mappedType)
-          
-          let pName = `${s.provider} (${s.model || ''})`
-          if (mappedType === 'groq') {
-            pName = `DocScan ${s.model || 'model name'} from groq (free)`
-          }
 
-          if (s.id && s.id.startsWith('docscan-free-')) {
-            switch(s.id) {
-              case 'docscan-free-glm': pName = 'DocScan Glm-5 (free)'; break;
-              case 'docscan-free-llama': pName = 'DocScan Llama-3 (free)'; break;
-              case 'docscan-free-qwen': pName = 'DocScan Qwen-2.5 (free)'; break;
-            }
-          }
-
-          return {
-            id: s.id || `provider-${index}`,
-            name: pName,
-            type: mappedType as AIProvider['type'],
-            baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-            apiKey: s.apiKey || '',
-            hasStoredApiKey: !!s.hasApiKey,
-            maskedApiKey: s.maskedApiKey || '',
-            model: s.model || (defaults?.models?.[0] ?? ''),
-            isActive: !!s.isActive,
-            isConfigured: !!s.hasApiKey || !!(s.apiKey && s.apiKey.length > 0),
-            lastTested: undefined,
-            testStatus: undefined,
-            errorMessage: undefined,
-            models: defaults?.models || [],
-            maxTokens: s.config?.maxTokens ?? defaults?.maxTokens ?? 1000,
-            temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
-            topP: s.config?.topP ?? defaults?.topP ?? 1.0,
-            costPer1kTokens: typeof s.costPer1kTokens === 'number' ? s.costPer1kTokens : undefined,
-            description: defaults?.description || 'Configured provider',
-            iconType: defaults?.iconType || 'brain',
-            dirtyApiKey: false,
-          }
-        })
+        let mapped: AIProvider[] = (settingsData as any[]).map((s: any, i: number) => mapServerDataToProvider(s, i))
 
         if (freeConfig) {
-          const configs = Array.isArray(freeConfig) ? freeConfig : [freeConfig];
+          const configs = Array.isArray(freeConfig) ? freeConfig : [freeConfig]
           for (const config of [...configs].reverse()) {
-            const existingIndex = mapped.findIndex(m => m.baseUrl === config.baseUrl && m.type === config.type);
+            const existingIndex = mapped.findIndex(m => m.baseUrl === config.baseUrl && m.type === config.type)
             if (existingIndex >= 0) {
-              const savedModel = mapped[existingIndex].model;
-              const isModelValid = config.models.length === 0 || config.models.includes(savedModel);
-
+              const savedModel = mapped[existingIndex].model
+              const isModelValid = config.models.length === 0 || config.models.includes(savedModel)
               mapped[existingIndex] = {
                 ...mapped[existingIndex],
                 id: config.id,
-                apiKey: config.apiKey, 
+                apiKey: config.apiKey,
                 isConfigured: true,
                 hasStoredApiKey: true,
-                model: isModelValid ? savedModel : config.model, 
-                models: config.models.length > 0 ? config.models : mapped[existingIndex].models, 
-              };
+                model: isModelValid ? savedModel : config.model,
+                models: config.models.length > 0 ? config.models : mapped[existingIndex].models,
+              }
             } else {
-              mapped = [{
-                ...config,
-                dirtyApiKey: false,
-              }, ...mapped];
+              mapped = [{ ...config, dirtyApiKey: false }, ...mapped]
             }
           }
         }
@@ -309,390 +82,139 @@ export function AiApiSettings() {
         mapped = [...mapped, ...missingDefaults]
 
         if (mapped.length === 0) {
-          mapped = defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` }))
+          mapped = defaultProviders.map((p, i) => ({ ...p, id: `provider-${i}` }))
         }
 
         setProviders(mapped)
         const active = mapped.find(p => p.isActive)
-        const firstId = active?.id || mapped[0]?.id || ''
-        setSelectedProviderId(firstId)
+        setSelectedProviderId(active?.id || mapped[0]?.id || '')
 
+        // Background test all configured providers
         Promise.all(mapped.map(async (p) => {
-          if (!p.apiKey && !['ollama', 'lm-studio'].includes(p.type) && !p.id.startsWith('docscan-free')) return;
+          if (!p.apiKey && !['ollama', 'lm-studio'].includes(p.type) && !p.id.startsWith('docscan-free')) return
           try {
-            const { authenticatedRequest } = await import('@/lib/api-client')
-            
+            const { authenticatedRequest: ar } = await import('@/lib/api-client')
             setProviders(prev => prev.map(pp => pp.id === p.id ? { ...pp, testStatus: 'pending' } : pp))
-            
             const [testResult, modelsResult] = await Promise.allSettled([
-              authenticatedRequest('/api/test-connection', { method: 'POST', body: JSON.stringify({ provider: p }) }),
-              authenticatedRequest('/api/models', { method: 'POST', body: JSON.stringify({ provider: p }) })
+              ar('/api/test-connection', { method: 'POST', body: JSON.stringify({ provider: p }) }),
+              ar('/api/models', { method: 'POST', body: JSON.stringify({ provider: p }) })
             ])
-            
-            const isTestSuccess = testResult.status === 'fulfilled' && testResult.value.success;
-            const newModels = modelsResult.status === 'fulfilled' && modelsResult.value?.models?.length > 0 ? modelsResult.value.models : p.models;
-            
+            const ok = testResult.status === 'fulfilled' && testResult.value.success
+            const newModels = modelsResult.status === 'fulfilled' && modelsResult.value?.models?.length > 0 ? modelsResult.value.models : p.models
             setProviders(prev => prev.map(pp => pp.id === p.id ? {
               ...pp,
               models: newModels,
-              testStatus: isTestSuccess ? 'success' : 'error',
+              testStatus: ok ? 'success' : 'error',
               lastTested: new Date().toISOString(),
-              errorMessage: isTestSuccess ? undefined : (testResult.status === 'fulfilled' ? testResult.value.error : 'Connection fail'),
-              isConfigured: isTestSuccess || pp.isConfigured
+              errorMessage: ok ? undefined : (testResult.status === 'fulfilled' ? testResult.value.error : 'Connection fail'),
+              isConfigured: ok || pp.isConfigured,
             } : pp))
-          } catch(e) {}
+          } catch {}
         }))
-        
-        if (settingsData.length > 0) {
-          toast({
-            title: 'Settings loaded',
-            description: `Loaded ${settingsData.length} AI provider configuration(s).`,
-          })
+
+        if ((settingsData as any[]).length > 0) {
+          toast({ title: 'Settings loaded', description: `Loaded ${(settingsData as any[]).length} AI provider configuration(s).` })
         }
       } catch (error) {
         console.warn('Failed to load settings from server:', error)
-        setProviders(defaultProviders.map((p, index) => ({ ...p, id: `provider-${index}` })))
-        
-        toast({
-          title: 'Failed to load settings',
-          description: 'Using default provider configurations. Your saved settings could not be loaded.',
-          variant: 'destructive',
-        })
+        setProviders(defaultProviders.map((p, i) => ({ ...p, id: `provider-${i}` })))
+        toast({ title: 'Failed to load settings', description: 'Using default provider configurations.', variant: 'destructive' })
       }
     }
     load()
   }, [])
 
+  // ── Save ──────────────────────────────────────────────────────────────────
   const saveProviders = async (newProviders: AIProvider[]) => {
     setProviders(newProviders)
-    const providersToSave = newProviders.filter(p => 
+    const filteredToSave = newProviders.filter(p =>
       p.isConfigured || p.dirtyApiKey || ['ollama', 'lm-studio'].includes(p.type)
     )
-    
-    const payload = providersToSave.map(p => ({
-      provider: (() => {
-          switch (p.type) {
-          case 'open-router': return 'OPENROUTER'
-          case 'lm-studio': return 'LM_STUDIO'
-          case 'google': return 'GOOGLE_AI'
-          case 'mistral': return 'MISTRAL'
-          case 'ollama': return 'OLLAMA'
-          case 'openai': return 'OPENAI'
-          case 'anthropic': return 'ANTHROPIC'
-          case 'openai-compatible': return 'OPENAI_COMPATIBLE'
-          case 'groq': return 'GROQ'
-          default: return p.type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
-        }
-      })(),
-      apiKey: p.apiKey ?? '',
-      baseUrl: p.baseUrl,
-      model: p.model,
-      isActive: !!p.isActive,
-      config: {
-        temperature: p.temperature ?? 0.7,
-        maxTokens: p.maxTokens ?? 1000,
-        topP: p.topP ?? 1.0,
-        costPer1kTokens: typeof p.costPer1kTokens === 'number' ? p.costPer1kTokens : null
-      }
-    }))
+    const payload = filteredToSave.map(serializeProviderPayload)
     const { authenticatedRequest } = await import('@/lib/api-client')
-    await authenticatedRequest('/api/settings', {
-      method: 'POST',
-      body: JSON.stringify({ providers: payload })
-    })
+    await authenticatedRequest('/api/settings', { method: 'POST', body: JSON.stringify({ providers: payload }) })
     const refreshed = await authenticatedRequest('/api/settings')
-    setProviders((refreshed as any[]).map((s: any, index: number) => {
-      const mappedType = (() => {
-        const raw = (s.provider || 'custom').toString().toUpperCase()
-        if (raw === 'OPENROUTER') return 'open-router'
-        if (raw === 'GOOGLE_AI') return 'google'
-        if (raw === 'LM_STUDIO') return 'lm-studio'
-        if (raw === 'GROQ') return 'groq'
-        return raw.toLowerCase().replace(/_/g, '-')
-      })()
-      const defaults = defaultProviders.find(d => d.type === mappedType)
-      
-      let pName = `${s.provider} (${s.model || ''})`
-      if (mappedType === 'groq') {
-        pName = `DocScan ${s.model || 'model name'} from groq (free)`
-      }
-
-      return {
-        id: s.id || `provider-${index}`,
-        name: pName,
-        type: mappedType as AIProvider['type'],
-        baseUrl: s.baseUrl || (defaults?.baseUrl ?? ''),
-        apiKey: s.apiKey || '',
-        hasStoredApiKey: !!s.hasApiKey,
-        maskedApiKey: s.maskedApiKey || '',
-        model: s.model || (defaults?.models?.[0] ?? ''),
-        isActive: !!s.isActive,
-        isConfigured: !!s.hasApiKey || !!(s.apiKey && s.apiKey.length > 0),
-        lastTested: undefined,
-        testStatus: undefined,
-        errorMessage: undefined,
-        models: defaults?.models || [],
-        maxTokens: s.config?.maxTokens ?? defaults?.maxTokens ?? 1000,
-        temperature: s.config?.temperature ?? defaults?.temperature ?? 0.7,
-        topP: s.config?.topP ?? defaults?.topP ?? 1.0,
-        costPer1kTokens: typeof s.costPer1kTokens === 'number' ? s.costPer1kTokens : undefined,
-        description: defaults?.description || 'Configured provider',
-        iconType: defaults?.iconType || 'brain',
-        dirtyApiKey: false,
-      }
-    }))
+    setProviders((refreshed as any[]).map((s: any, i: number) => mapServerDataToProvider(s, i)))
   }
 
   const updateProvider = (id: string, updates: Partial<AIProvider>) => {
-    const newProviders = providers.map(p => 
-      p.id === id ? { ...p, ...updates } : p
-    )
-    setProviders(newProviders)
-  }
-
-  const saveProviderChanges = async () => {
-    try {
-      await saveProviders(providers)
-      toast({
-        title: 'Provider updated',
-        description: 'Your AI provider configuration has been saved.',
-      })
-    } catch (error) {
-      console.error('Failed to save provider changes:', error)
-      toast({
-        title: 'Failed to save provider',
-        description: 'There was an error saving your provider configuration. Please try again.',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const autoTestAndSave = async (provider: AIProvider) => {
-    if (!provider.apiKey && !['ollama', 'lm-studio'].includes(provider.type) && !provider.id.startsWith('docscan-free')) {
-      return;
-    }
-    
-    setTestingProvider(provider.id);
-    updateProvider(provider.id, { testStatus: 'pending' });
-
-    try {
-      const { authenticatedRequest } = await import('@/lib/api-client')
-      const [testResult, modelsResult] = await Promise.allSettled([
-        authenticatedRequest('/api/test-connection', {
-          method: 'POST',
-          body: JSON.stringify({ provider })
-        }),
-        authenticatedRequest('/api/models', {
-          method: 'POST',
-          body: JSON.stringify({ provider })
-        })
-      ])
-
-      const isTestSuccess = testResult.status === 'fulfilled' && testResult.value.success;
-      const newModels = modelsResult.status === 'fulfilled' && modelsResult.value?.models?.length > 0 
-        ? modelsResult.value.models 
-        : provider.models;
-
-      if (isTestSuccess) {
-        toast({
-          title: 'Provider Checked',
-          description: `${provider.name} is working correctly. Auto-saved.`,
-        })
-
-        setProviders(prev => {
-          const updated = prev.map(p => p.id === provider.id ? {
-            ...p,
-            models: newModels,
-            testStatus: 'success' as const,
-            lastTested: new Date().toISOString(),
-            errorMessage: undefined,
-            isConfigured: true
-          } : p);
-          
-          const providersToSave = updated.filter(p => 
-            p.isConfigured || p.dirtyApiKey || ['ollama', 'lm-studio'].includes(p.type)
-          );
-          
-          const payload = providersToSave.map(p => ({
-            provider: (() => {
-              switch (p.type) {
-                case 'open-router': return 'OPENROUTER'
-                case 'lm-studio': return 'LM_STUDIO'
-                case 'google': return 'GOOGLE_AI'
-                case 'mistral': return 'MISTRAL'
-                case 'ollama': return 'OLLAMA'
-                case 'openai': return 'OPENAI'
-                case 'anthropic': return 'ANTHROPIC'
-                case 'openai-compatible': return 'OPENAI_COMPATIBLE'
-                case 'groq': return 'GROQ'
-                default: return p.type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
-              }
-            })(),
-            apiKey: p.apiKey ?? '',
-            baseUrl: p.baseUrl,
-            model: p.model,
-            isActive: !!p.isActive,
-            config: {
-              temperature: p.temperature ?? 0.7,
-              maxTokens: p.maxTokens ?? 1000,
-              topP: p.topP ?? 1.0,
-              costPer1kTokens: typeof p.costPer1kTokens === 'number' ? p.costPer1kTokens : null
-            }
-          }))
-
-          authenticatedRequest('/api/settings', {
-            method: 'POST',
-            body: JSON.stringify({ providers: payload })
-          }).catch(console.error);
-
-          return updated;
-        });
-      } else {
-        const errorMsg = testResult.status === 'fulfilled' ? testResult.value.error : 'Connection failed';
-        updateProvider(provider.id, {
-          testStatus: 'error',
-          lastTested: new Date().toISOString(),
-          errorMessage: errorMsg,
-          isConfigured: false
-        })
-        toast({
-          title: 'Connection failed',
-          description: errorMsg || 'Please double check your API key & Base URL.',
-          variant: 'destructive',
-        })
-      }
-    } catch (error: any) {
-      updateProvider(provider.id, {
-        testStatus: 'error',
-        lastTested: new Date().toISOString(),
-        errorMessage: error.message || 'Connection test failed',
-        isConfigured: false
-      })
-    } finally {
-      setTestingProvider(null)
-    }
-  }
-
-  const toggleApiKeyVisibility = (id: string) => {
-    setShowApiKeys(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }))
-    
-    const provider = providers.find(p => p.id === id)
-    if (provider) {
-      toast({
-        title: 'API Key visibility changed',
-        description: `API key for ${provider.name} is now ${showApiKeys[id] ? 'hidden' : 'visible'}.`,
-      })
-    }
-  }
-
-  const getDisplayedApiKey = (provider: AIProvider) => {
-    return provider.apiKey || ''
+    setProviders(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
   }
 
   const saveSettings = async () => {
     setSaving(true)
     try {
       const activeProvider = providers.find(p => p.isActive && p.isConfigured)
-      const newProviders = providers.map(p => ({
-        ...p,
-        isActive: p.id === activeProvider?.id
-      }))
+      const newProviders = providers.map(p => ({ ...p, isActive: p.id === activeProvider?.id }))
       await saveProviders(newProviders)
-      
-      toast({
-        title: 'Settings updated',
-        description: 'Your AI provider settings have been updated successfully.',
-      })
-    } catch (error) {
-      console.error('Failed to update settings:', error)
-      toast({
-        title: 'Failed to update settings',
-        description: 'There was an error updating your AI provider settings. Please try again.',
-        variant: 'destructive',
-      })
+      toast({ title: 'Settings updated', description: 'Your AI provider settings have been updated successfully.' })
+    } catch {
+      toast({ title: 'Failed to update settings', description: 'Please try again.', variant: 'destructive' })
     } finally {
       setSaving(false)
     }
   }
 
-  const handleFetchModels = async (provider: AIProvider) => {
-    setFetchingModels(prev => ({ ...prev, [provider.id]: true }))
+  // ── Auto-test ─────────────────────────────────────────────────────────────
+  const autoTestAndSave = async (provider: AIProvider) => {
+    if (!provider.apiKey && !['ollama', 'lm-studio'].includes(provider.type) && !provider.id.startsWith('docscan-free')) return
+    setTestingProvider(provider.id)
+    updateProvider(provider.id, { testStatus: 'pending' })
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      const response = await authenticatedRequest('/api/models', {
-        method: 'POST',
-        body: JSON.stringify({ provider })
-      })
-      
-      if (response && response.models && response.models.length > 0) {
-        updateProvider(provider.id, { models: response.models })
-        toast({
-          title: 'Models fetched successfully',
-          description: `Loaded ${response.models.length} models for ${provider.name}.`,
+      const [testResult, modelsResult] = await Promise.allSettled([
+        authenticatedRequest('/api/test-connection', { method: 'POST', body: JSON.stringify({ provider }) }),
+        authenticatedRequest('/api/models', { method: 'POST', body: JSON.stringify({ provider }) })
+      ])
+      const ok = testResult.status === 'fulfilled' && testResult.value.success
+      const newModels = modelsResult.status === 'fulfilled' && modelsResult.value?.models?.length > 0 ? modelsResult.value.models : provider.models
+
+      if (ok) {
+        toast({ title: 'Provider Checked', description: `${provider.name} is working correctly. Auto-saved.` })
+        setProviders(prev => {
+          const updated = prev.map(p => p.id === provider.id ? { ...p, models: newModels, testStatus: 'success' as const, lastTested: new Date().toISOString(), errorMessage: undefined, isConfigured: true } : p)
+          const payload = updated.filter(p => p.isConfigured || p.dirtyApiKey || ['ollama', 'lm-studio'].includes(p.type)).map(serializeProviderPayload)
+          authenticatedRequest('/api/settings', { method: 'POST', body: JSON.stringify({ providers: payload }) }).catch(console.error)
+          return updated
         })
       } else {
-        toast({
-          title: 'No new models found',
-          description: `Using default or existing models for ${provider.name}.`,
-        })
+        const errorMsg = testResult.status === 'fulfilled' ? testResult.value.error : 'Connection failed'
+        updateProvider(provider.id, { testStatus: 'error', lastTested: new Date().toISOString(), errorMessage: errorMsg, isConfigured: false })
+        toast({ title: 'Connection failed', description: errorMsg || 'Please double check your API key & Base URL.', variant: 'destructive' })
       }
-    } catch (error) {
-      console.error('Failed to fetch models:', error)
-      toast({
-        title: 'Failed to fetch models',
-        description: 'Could not fetch live models. This might be due to an invalid API key or connection issue.',
-        variant: 'destructive',
-      })
+    } catch (error: any) {
+      updateProvider(provider.id, { testStatus: 'error', lastTested: new Date().toISOString(), errorMessage: error.message || 'Connection test failed', isConfigured: false })
     } finally {
-      setFetchingModels(prev => ({ ...prev, [provider.id]: false }))
+      setTestingProvider(null)
     }
   }
 
-  const getProviderStatus = (provider: AIProvider) => {
-    if (!provider.isConfigured) return 'not_configured'
-    if (provider.testStatus === 'success') return 'connected'
-    if (provider.testStatus === 'error') return 'error'
-    if (provider.testStatus === 'pending') return 'testing'
-    return 'needs_test'
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/50'
-      case 'error': return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800/50'
-      case 'testing': return 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50'
-      case 'needs_test': return 'bg-blue-100/50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/50'
-      default: return 'bg-secondary text-muted-foreground border-transparent'
+  const toggleApiKeyVisibility = (id: string) => {
+    setShowApiKeys(prev => ({ ...prev, [id]: !prev[id] }))
+    const provider = providers.find(p => p.id === id)
+    if (provider) {
+      toast({ title: 'API Key visibility changed', description: `API key for ${provider.name} is now ${showApiKeys[id] ? 'hidden' : 'visible'}.` })
     }
   }
 
-  const getStatusIcon = (provider: AIProvider) => {
-    if (testingProvider === provider.id) return <Loader2 className="w-3.5 h-3.5 animate-spin" />
-    if (provider.testStatus === 'success') return <CheckCircle className="w-3.5 h-3.5" />
-    if (provider.testStatus === 'error') return <AlertCircle className="w-3.5 h-3.5" />
-    return <Key className="w-3.5 h-3.5" />
-  }
-
-  const getProviderIcon = (iconType: string) => {
-    switch (iconType) {
-      case 'brain': return <Brain className="w-5 h-5" />
-      case 'zap': return <Zap className="w-5 h-5" />
-      case 'server': return <Server className="w-5 h-5" />
-      case 'shield': return <Shield className="w-5 h-5" />
-      case 'globe': return <Globe className="w-5 h-5" />
-      default: return <Brain className="w-5 h-5" />
+  const handleToggleActive = (provider: AIProvider, checked: boolean) => {
+    if (checked && provider.isConfigured) {
+      const newProviders = providers.map(p => ({ ...p, isActive: p.id === provider.id }))
+      setProviders(newProviders)
+      toast({ title: 'Provider activated', description: `${provider.name} is now the active AI provider.` })
+    } else {
+      updateProvider(provider.id, { isActive: false })
+      toast({ title: 'Provider deactivated', description: `${provider.name} has been deactivated.` })
     }
   }
 
   if (!mounted) {
-    return <div className="space-y-6 flex items-center justify-center p-12 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-3"/> Loading settings...</div>
+    return <div className="space-y-6 flex items-center justify-center p-12 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-3" /> Loading settings...</div>
   }
 
   return (
     <div className="space-y-6">
+      {/* Header Card */}
       <Card className="shadow-sm border-border bg-card overflow-hidden">
         <CardHeader className="p-6 md:p-8 bg-background relative z-10">
           <CardTitle className="flex items-center gap-3 text-2xl font-semibold tracking-tight text-foreground">
@@ -721,6 +243,7 @@ export function AiApiSettings() {
         </CardContent>
       </Card>
 
+      {/* Tabs */}
       <Tabs defaultValue="providers" className="space-y-6">
         <div className="bg-background rounded-2xl p-1.5 shadow-sm border border-border inline-flex w-fit">
           <TabsList className="bg-transparent h-auto p-0 flex gap-1">
@@ -730,6 +253,7 @@ export function AiApiSettings() {
           </TabsList>
         </div>
 
+        {/* Providers Tab */}
         <TabsContent value="providers" className="space-y-6 m-0 outline-none">
           <div className="space-y-3 p-1 mb-2">
             <Label className="text-sm font-semibold text-foreground">Select AI Provider to Configure</Label>
@@ -750,349 +274,26 @@ export function AiApiSettings() {
           </div>
 
           {providers.filter(p => p.id === selectedProviderId).map((provider) => (
-            <motion.div key={provider.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <Card className="shadow-sm border-border bg-card transition-shadow hover:shadow-md">
-                <CardHeader className="p-6 border-b border-border/50 bg-background/50">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className={`p-3 rounded-2xl shadow-sm border ${provider.isActive && provider.isConfigured ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-secondary/50 border-border/50 text-muted-foreground'}`}>
-                        {getProviderIcon(provider.iconType)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="text-lg font-semibold text-foreground truncate">{provider.name}</CardTitle>
-                        <CardDescription className="text-sm mt-1 line-clamp-1">{provider.description}</CardDescription>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                      <Badge className={`px-2.5 py-1 text-xs font-medium tracking-wide shadow-none border ${getStatusColor(getProviderStatus(provider))} flex items-center gap-1.5`}>
-                        {getStatusIcon(provider)}
-                        {getProviderStatus(provider).replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </Badge>
-                      <div className="flex items-center gap-2 bg-secondary/40 p-1.5 rounded-full border border-border/50">
-                        <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 ${!provider.isActive ? 'text-muted-foreground' : 'text-muted-foreground/40'}`}>Off</span>
-                        <Switch
-                          checked={provider.isActive}
-                          onCheckedChange={(checked) => {
-                            if (checked && provider.isConfigured) {
-                              const newProviders = providers.map(p => ({
-                                ...p,
-                                isActive: p.id === provider.id
-                              }))
-                              setProviders(newProviders)
-                              toast({
-                                title: 'Provider activated',
-                                description: `${provider.name} is now the active AI provider.`,
-                              })
-                            } else {
-                              updateProvider(provider.id, { isActive: false })
-                              toast({
-                                title: 'Provider deactivated',
-                                description: `${provider.name} has been deactivated.`,
-                              })
-                            }
-                          }}
-                          disabled={!provider.isConfigured}
-                        />
-                        <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 ${provider.isActive ? 'text-primary' : 'text-muted-foreground/40'}`}>On</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  {provider.id.startsWith('docscan-free') ? (
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
-                      <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">Managed automatically</p>
-                        <p className="text-xs text-muted-foreground mt-1">This provider is pre-configured by DocScan. No setup needed — just toggle it on to start using it for free.</p>
-                      </div>
-                    </div>
-                  ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor={`base-url-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Base URL</Label>
-                      <Input
-                        id={`base-url-${provider.id}`}
-                        value={provider.baseUrl}
-                        onChange={(e) => updateProvider(provider.id, { baseUrl: e.target.value })}
-                        onBlur={() => {
-                          if (provider.baseUrl && provider.apiKey) {
-                            autoTestAndSave(provider)
-                          }
-                        }}
-                        placeholder="API base URL"
-                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`api-key-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">API Key</Label>
-                      <div className="relative">
-                        <Input
-                          id={`api-key-${provider.id}`}
-                          type={showApiKeys[provider.id] ? 'text' : 'password'}
-                          value={getDisplayedApiKey(provider)}
-                          onChange={(e) => updateProvider(provider.id, { apiKey: e.target.value, dirtyApiKey: true })}
-                          onBlur={() => {
-                            if (provider.baseUrl && provider.apiKey) {
-                              autoTestAndSave({ ...provider, apiKey: provider.apiKey })
-                            }
-                          }}
-                          placeholder={provider.maskedApiKey || (provider.hasStoredApiKey ? 'API key configured (enter new key to replace)' : 'Enter your API key')}
-                          className="pr-10 bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-1 top-1 h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-transparent"
-                          onClick={() => toggleApiKeyVisibility(provider.id)}
-                        >
-                          {showApiKeys[provider.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </Button>
-                      </div>
-                      {provider.apiKey && provider.dirtyApiKey && !isValidApiKey(provider.apiKey, provider.type) && (
-                        <p className="text-xs text-rose-500 font-medium mt-1.5 flex items-center gap-1.5">
-                          <AlertCircle className="w-3.5 h-3.5" /> Invalid required API key format
-                        </p>
-                      )}
-                      {fetchingModels[provider.id] && (
-                        <p className="text-xs text-primary font-medium mt-1.5 flex items-center gap-1.5">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Fetching live models...
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  )}
-
-                  {(provider.id !== 'docscan-free-builtin' || provider.models.length > 1) && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor={`model-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Model</Label>
-                      </div>
-                      <Select 
-                        value={provider.model} 
-                        onValueChange={(value) => updateProvider(provider.id, { model: value })}
-                      >
-                        <SelectTrigger id={`model-${provider.id}`} className="bg-background rounded-xl shadow-sm h-10">
-                          <SelectValue placeholder="Select model" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl max-h-64">
-                          {provider.models.map((model) => (
-                            <SelectItem key={model} value={model} className="py-2.5">{model}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                     {!provider.id.startsWith('docscan-free') && (<>
-                    <div className="space-y-2">
-                      <Label htmlFor={`max-tokens-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Tokens</Label>
-                      <Input
-                        id={`max-tokens-${provider.id}`}
-                        type="number"
-                        value={provider.maxTokens}
-                        onChange={(e) => updateProvider(provider.id, { maxTokens: parseInt(e.target.value) })}
-                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`temperature-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creativity (Temp)</Label>
-                      <Input
-                        id={`temperature-${provider.id}`}
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="2"
-                        value={provider.temperature}
-                        onChange={(e) => updateProvider(provider.id, { temperature: parseFloat(e.target.value) })}
-                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-3">
-                      <Label htmlFor={`cost-per-1k-${provider.id}`} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cost (USD / 1K tokens)</Label>
-                      <Input
-                        id={`cost-per-1k-${provider.id}`}
-                        type="number"
-                        step="0.000001"
-                        min="0"
-                        value={provider.costPer1kTokens ?? ''}
-                        onChange={(e) => {
-                          const next = e.target.value.trim()
-                          updateProvider(provider.id, { costPer1kTokens: next === '' ? undefined : parseFloat(next) })
-                        }}
-                        placeholder="Optional override for exact cost tracking"
-                        className="bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary"
-                      />
-                      <p className="text-xs text-muted-foreground">If set, Analytics Digest uses this exact price for this provider/model instead of built-in estimates.</p>
-                    </div>
-                    </>)}
-                  </div>
-                  )}
-
-                  {provider.errorMessage && (
-                    <Alert variant="destructive" className="bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-400">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-sm font-medium ml-2">{provider.errorMessage}</AlertDescription>
-                    </Alert>
-                  )}
-
-                </CardContent>
-              </Card>
-            </motion.div>
+            <ProviderCard
+              key={provider.id}
+              provider={provider}
+              testingProvider={testingProvider}
+              showApiKey={!!showApiKeys[provider.id]}
+              fetchingModel={!!fetchingModels[provider.id]}
+              onUpdate={updateProvider}
+              onAutoTestAndSave={autoTestAndSave}
+              onToggleActive={handleToggleActive}
+              onToggleApiKeyVisibility={toggleApiKeyVisibility}
+            />
           ))}
         </TabsContent>
 
+        {/* Advanced Tab */}
         <TabsContent value="advanced" className="space-y-6 m-0 outline-none">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="shadow-sm border-border bg-card">
-              <CardHeader className="p-6 border-b border-border/50 bg-background/50">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Brain className="w-5 h-5 text-indigo-500" /> System Prompting
-                </CardTitle>
-                <CardDescription>Configure core behavioral directives for all models</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-5">
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Base Persona</Label>
-                  <Textarea
-                    placeholder="You are a helpful AI assistant that analyzes documents..."
-                    className="min-h-[120px] bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary resize-none"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timeout (sec)</Label>
-                    <Input type="number" defaultValue="30" min="5" max="300" className="bg-background rounded-xl shadow-sm" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Retries</Label>
-                    <Input type="number" defaultValue="3" min="1" max="10" className="bg-background rounded-xl shadow-sm" />
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Archival Responses</Label>
-                      <p className="text-xs text-muted-foreground">Save payloads structurally</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Vector Caching</Label>
-                      <p className="text-xs text-muted-foreground">Reuse historical embeddings</p>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm border-border bg-card">
-              <CardHeader className="p-6 border-b border-border/50 bg-background/50">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-emerald-500" /> Security Layer
-                </CardTitle>
-                <CardDescription>Manage keys, data lifecycles, and access</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-5">
-                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">At-Rest Encryption</Label>
-                    <p className="text-xs text-muted-foreground">Keys undergo AES-256 wrapping</p>
-                  </div>
-                  <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none shadow-sm gap-1.5 font-normal">
-                    <CheckCircle className="w-3.5 h-3.5" /> Enforced
-                  </Badge>
-                </div>
-
-                <div className="space-y-3 p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Lifecycle Policy</Label>
-                    <p className="text-xs text-muted-foreground mb-3">Retention window for raw logs</p>
-                  </div>
-                  <Select defaultValue="30">
-                    <SelectTrigger className="w-full bg-background rounded-xl shadow-sm h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="7">7 Days (Ephemeral)</SelectItem>
-                      <SelectItem value="30">30 Days (Standard)</SelectItem>
-                      <SelectItem value="90">90 Days (Compliance)</SelectItem>
-                      <SelectItem value="365">365 Days (Archival)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Telemetry Sharing</Label>
-                    <p className="text-xs text-muted-foreground">Submit anonymous operational data</p>
-                  </div>
-                  <Switch />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm border-border bg-card lg:col-span-2">
-              <CardHeader className="p-6 border-b border-border/50 bg-background/50">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-amber-500" /> Operations Center
-                </CardTitle>
-                <CardDescription>Pipeline monitoring and resource throttles</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Concurrency Cap</Label>
-                  <div className="flex items-center gap-3">
-                    <Input type="number" defaultValue="5" min="1" max="20" className="w-24 bg-background rounded-xl shadow-sm" />
-                    <span className="text-sm text-muted-foreground">req/min</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Traffic Shaping</Label>
-                  <Select defaultValue="balanced">
-                    <SelectTrigger className="bg-background rounded-xl shadow-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="speed">Optimize for Latency</SelectItem>
-                      <SelectItem value="balanced">Balanced Mode</SelectItem>
-                      <SelectItem value="quality">Optimize for Payload</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="md:col-span-2 flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
-                  <div className="space-y-0.5">
-                    <Label className="text-sm font-medium">Event Stream (SSE)</Label>
-                    <p className="text-xs text-muted-foreground">Deliver chunks organically as generated</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-border/50 bg-primary/5 dark:bg-primary/10 shadow-sm lg:col-span-2 mt-2">
-              <CardContent className="p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Global Registry Commit</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Apply these policies universally across all configured units.
-                  </p>
-                </div>
-                <Button className="w-full sm:w-auto shadow-sm px-6 rounded-full font-medium">
-                  <Save className="w-4 h-4 mr-2" />
-                  Synchronize
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <AdvancedSettings />
         </TabsContent>
 
+        {/* Usage Tab */}
         <TabsContent value="usage" className="space-y-6 m-0 outline-none">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <Card className="shadow-sm border-border bg-card overflow-hidden">

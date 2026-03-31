@@ -485,7 +485,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                   }
                 }}
               />
-              <Button onClick={sending ? stopGenerating : sendMessage}>
+              <Button onClick={() => sending ? stopGenerating() : sendMessage()}>
                 {sending ? <Square className="w-4 h-4" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
