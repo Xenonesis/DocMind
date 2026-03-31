@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { BookOpen, ExternalLink, Terminal } from 'lucide-react'
 
+import { useState, useEffect } from 'react'
+
 interface CredentialsPanelProps {
   generatedToken: string
   generatedApiKey: string
@@ -23,6 +25,14 @@ export function CredentialsPanel({
   previewName,
   onCopyText,
 }: CredentialsPanelProps) {
+  const [origin, setOrigin] = useState('')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin)
+    }
+  }, [])
+
   if (!generatedToken && !generatedApiKey) return null
 
   return (
@@ -114,7 +124,7 @@ export function CredentialsPanel({
                 <li>Optional: add <code>"stream": true</code> for SSE chunked responses.</li>
               </ol>
               <pre className="p-3 mt-3 bg-secondary/30 border rounded overflow-x-auto text-xs font-mono text-secondary-foreground">
-{`curl -X POST "${typeof window !== 'undefined' ? window.location.origin : ''}/api/chatbots/runtime/query" \\
+{`curl -X POST "${origin || 'https://your-domain.com'}/api/chatbots/runtime/query" \\
   -N \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: ${generatedApiKey}" \\

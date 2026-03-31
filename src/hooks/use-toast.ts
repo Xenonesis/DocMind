@@ -59,7 +59,7 @@ function useToast() {
   return {
     toast,
     dismiss: (toastId?: string | number) => sonnerToast.dismiss(toastId),
-    toasts: []
+    toasts: [] as any[]
   }
 }
 

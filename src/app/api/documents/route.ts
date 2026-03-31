@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
-    console.log(`[API /documents] Fetched user ${user.id} documents:`, documents?.length || 0, 'Error:', error)
+    console.log(`[API /documents] Fetched user ${user.id} documents:`, documents?.length || 0, error ? `Error: ${error}` : '')
 
     if (error) {
       console.error('Error fetching documents:', error)
