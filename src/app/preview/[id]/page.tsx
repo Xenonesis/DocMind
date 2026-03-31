@@ -277,9 +277,29 @@ export default function DocumentPreviewPage() {
   const renderPreviewContent = () => {
     if (isLoading) {
       return (
-        <div className="flex flex-col items-center justify-center h-[60vh] bg-background/50 rounded-2xl border border-border">
-          <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground font-medium">Loading preview...</p>
+        <div className="h-full w-full bg-background rounded-2xl border border-border shadow-sm flex flex-col animate-in fade-in duration-500 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <div className="p-6 md:p-8 lg:p-12 space-y-10 flex-1 overflow-hidden">
+            <div className="space-y-5">
+              <div className="h-8 w-1/3 bg-muted/80 rounded-lg animate-pulse" />
+              <div className="space-y-3">
+                <div className="h-5 w-full bg-muted/40 rounded-md animate-pulse" />
+                <div className="h-5 w-11/12 bg-muted/40 rounded-md animate-pulse" />
+                <div className="h-5 w-4/5 bg-muted/40 rounded-md animate-pulse" />
+                <div className="h-5 w-full bg-muted/40 rounded-md animate-pulse" />
+              </div>
+            </div>
+            <div className="space-y-5">
+              <div className="h-7 w-1/4 bg-muted/60 rounded-lg animate-pulse" />
+              <div className="space-y-3">
+                <div className="h-5 w-full bg-muted/30 rounded-md animate-pulse" />
+                <div className="h-5 w-10/12 bg-muted/30 rounded-md animate-pulse" />
+                <div className="h-5 w-full bg-muted/30 rounded-md animate-pulse" />
+                <div className="h-5 w-2/3 bg-muted/30 rounded-md animate-pulse" />
+                <div className="h-5 w-3/4 bg-muted/30 rounded-md animate-pulse" />
+              </div>
+            </div>
+          </div>
         </div>
       )
     }

@@ -373,8 +373,31 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin" />
+      <div className="min-h-screen bg-secondary/20 p-4 md:p-8 animate-in fade-in duration-500">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <Card className="shadow-sm border-border overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+            <CardHeader className="border-b border-border/50">
+              <div className="h-6 w-48 bg-muted/80 rounded-md animate-pulse" />
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div className="flex flex-col gap-4">
+                 <div className="h-12 w-3/4 max-w-sm bg-muted/40 rounded-2xl rounded-bl-none animate-pulse self-start mr-12" />
+                 <div className="h-16 w-2/3 max-w-md bg-primary/20 rounded-2xl rounded-br-none animate-pulse self-end ml-12" />
+                 <div className="h-10 w-1/2 max-w-xs bg-muted/40 rounded-2xl rounded-bl-none animate-pulse self-start mr-12" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm border-border overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+            <CardContent className="pt-6">
+               <div className="flex gap-3">
+                 <div className="h-10 w-full bg-muted/30 rounded-xl animate-pulse" />
+                 <div className="h-10 w-12 bg-primary/30 rounded-xl animate-pulse shrink-0" />
+               </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }

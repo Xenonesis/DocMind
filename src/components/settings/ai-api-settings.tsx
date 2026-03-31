@@ -209,7 +209,31 @@ export function AiApiSettings() {
   }
 
   if (!mounted) {
-    return <div className="space-y-6 flex items-center justify-center p-12 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-3" /> Loading settings...</div>
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <Card className="shadow-sm border-border bg-card overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <CardHeader className="p-6 md:p-8 bg-background border-b border-border/50">
+            <div className="h-8 w-64 bg-muted/80 rounded-md animate-pulse mb-2" />
+            <div className="h-4 w-full max-w-md bg-muted/50 rounded-md animate-pulse" />
+          </CardHeader>
+          <CardContent className="p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-secondary/10">
+            <div className="flex gap-3">
+              <div className="h-8 w-24 bg-muted/40 rounded-full animate-pulse" />
+              <div className="h-8 w-24 bg-muted/40 rounded-full animate-pulse" />
+            </div>
+            <div className="h-10 w-36 bg-muted/60 rounded-md animate-pulse" />
+          </CardContent>
+        </Card>
+        
+        <div className="h-10 w-64 bg-muted/40 rounded-2xl animate-pulse mb-6" />
+        
+        <div className="space-y-4">
+           <div className="h-4 w-48 bg-muted/60 rounded-md animate-pulse" />
+           <div className="h-12 w-full bg-muted/30 rounded-xl animate-pulse" />
+        </div>
+      </div>
+    )
   }
 
   return (

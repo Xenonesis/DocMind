@@ -197,8 +197,52 @@ export function ChatbotManager() {
   // ── Render ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="py-20 flex items-center justify-center text-muted-foreground">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading chatbots...
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-sm overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <div className="space-y-2 mb-6">
+            <div className="h-6 w-1/4 bg-muted/80 rounded-md animate-pulse" />
+            <div className="h-4 w-1/3 bg-muted/50 rounded-md animate-pulse" />
+          </div>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <div className="h-4 w-16 bg-muted/60 rounded-md animate-pulse" />
+              <div className="h-11 w-full bg-muted/30 rounded-lg animate-pulse" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 w-24 bg-muted/60 rounded-md animate-pulse" />
+              <div className="h-24 w-full bg-muted/30 rounded-lg animate-pulse" />
+            </div>
+            <div className="h-10 w-32 bg-primary/20 rounded-lg animate-pulse mt-2" />
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-sm overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <div className="space-y-2 mb-6 border-b border-border/40 pb-5">
+            <div className="h-6 w-48 bg-muted/80 rounded-md animate-pulse" />
+            <div className="h-4 w-64 bg-muted/50 rounded-md animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border border-border/60 p-5 rounded-xl space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <div className="h-5 w-2/3 bg-muted/80 rounded-md animate-pulse" />
+                    <div className="h-4 w-full bg-muted/40 rounded-md animate-pulse" />
+                    <div className="h-4 w-4/5 bg-muted/40 rounded-md animate-pulse" />
+                  </div>
+                  <div className="h-6 w-12 bg-muted/30 rounded-full animate-pulse ml-4" />
+                </div>
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <div className="h-8 w-24 bg-muted/40 rounded-md animate-pulse" />
+                  <div className="h-8 w-20 bg-muted/40 rounded-md animate-pulse" />
+                  <div className="h-8 w-8 bg-muted/40 rounded-md animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }

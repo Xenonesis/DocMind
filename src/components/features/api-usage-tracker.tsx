@@ -102,24 +102,52 @@ export function ApiUsageTracker() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            API Usage Analytics
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded"></div>
-              </div>
-            ))}
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-2 border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-16 bg-muted/60 rounded-xl animate-pulse" />
+            <div className="h-8 w-16 bg-muted/30 rounded-xl animate-pulse" />
+            <div className="h-8 w-16 bg-muted/30 rounded-xl animate-pulse" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="h-8 w-24 bg-muted/50 rounded-xl animate-pulse" />
+        </div>
+        <Card className="shadow-sm border-border bg-card overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          <CardHeader className="p-6 border-b border-border/50">
+            <div className="h-6 w-40 bg-muted/80 rounded-md animate-pulse" />
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="h-10 w-64 bg-muted/40 rounded-md animate-pulse" />
+              <div className="h-10 w-32 bg-muted/60 rounded-xl animate-pulse" />
+            </div>
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between">
+                <div className="h-4 w-32 bg-muted/50 rounded-md animate-pulse" />
+                <div className="h-4 w-16 bg-muted/80 rounded-md animate-pulse" />
+              </div>
+              <div className="h-2.5 w-full bg-muted/30 rounded-full animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="shadow-sm border-border bg-card overflow-hidden">
+              <CardContent className="p-6 relative">
+                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                 <div className="flex items-center justify-between">
+                   <div className="space-y-2">
+                     <div className="h-4 w-24 bg-muted/50 rounded-md animate-pulse" />
+                     <div className="h-8 w-16 bg-muted/80 rounded-md animate-pulse" />
+                   </div>
+                   <div className="h-12 w-12 bg-muted/30 rounded-2xl animate-pulse" />
+                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     )
   }
 
