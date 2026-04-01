@@ -14,7 +14,6 @@ export interface ToastProps {
 
 function toast({ variant, title, description, action, duration, id: predefinedId }: ToastProps) {
   const options: any = {
-    description,
     duration,
     id: predefinedId,
   }
@@ -23,11 +22,16 @@ function toast({ variant, title, description, action, duration, id: predefinedId
     options.action = action;
   }
 
+  const mainMessage = title || description || "";
+  if (title && description) {
+    options.description = description;
+  }
+
   let id;
-  const tStr = title?.toString().toLowerCase() || "";
+  const tStr = mainMessage.toString().toLowerCase();
   
   if (variant === "destructive" || tStr.includes("fail") || tStr.includes("error") || tStr.includes("required") || tStr.includes("invalid") || tStr.includes("denied") || tStr.includes("wrong")) {
-    id = sonnerToast.error(title, options);
+    id = sonnerToast.error(mainMessage, options);
   } else if (
     tStr.includes("success") || 
     tStr.includes("updated") || 
@@ -41,11 +45,13 @@ function toast({ variant, title, description, action, duration, id: predefinedId
     tStr.includes("activated") ||
     tStr.includes("deactivated") ||
     tStr.includes("revoked") ||
+    tStr.includes("saved") ||
+    tStr.includes("changed") ||
     tStr.includes("deleted")
   ) {
-    id = sonnerToast.success(title, options);
+    id = sonnerToast.success(mainMessage, options);
   } else {
-    id = sonnerToast(title, options);
+    id = sonnerToast(mainMessage, options);
   }
 
   return {
