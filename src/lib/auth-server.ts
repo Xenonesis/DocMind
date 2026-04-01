@@ -11,18 +11,25 @@ export interface AuthenticatedUser {
 export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
+    console.warn('[auth-server] Missing or invalid Authorization header')
     return null
   }
 
   const token = authHeader.substring(7)
 
   if (!supabaseServer) {
+    console.error('[auth-server] supabaseServer is null. Check NEXT_PUBLIC_SUPABASE_URL and Anon Key env variables.')
     return null
   }
 
   try {
     const { data: { user }, error } = await supabaseServer.auth.getUser(token)
-    if (error || !user) {
+    if (error) {
+      console.error('[auth-server] Supabase getUser error:', error.message, error.status)
+      return null
+    }
+    if (!user) {
+      console.warn('[auth-server] getUser returned no user and no error')
       return null
     }
     return {
