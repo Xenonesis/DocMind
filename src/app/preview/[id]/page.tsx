@@ -148,7 +148,10 @@ export default function DocumentPreviewPage() {
   const [isFullScreen, setIsFullScreen] = useState(false)
   const [rotation, setRotation] = useState(0)
   const [textViewMode, setTextViewMode] = useState<'smart' | 'raw'>('smart')
+  const [selectionAction, setSelectionAction] = useState<{ text: string; x: number; y: number } | null>(null)
+  const [previewSelectionEnabled, setPreviewSelectionEnabled] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
+  const previewAreaRef = useRef<HTMLDivElement>(null)
 
   const parsedTextSections = useMemo(() => {
     if (previewContent?.contentType !== 'text') return []
@@ -161,6 +164,71 @@ export default function DocumentPreviewPage() {
       fetchPreviewContent()
     }
   }, [documentId])
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const { authenticatedRequest } = await import('@/lib/api-client')
+        const prefs = await authenticatedRequest<{ preview_selection_enabled?: boolean }>('/api/settings/response-preferences')
+        setPreviewSelectionEnabled(prefs?.preview_selection_enabled !== false)
+      } catch {
+        setPreviewSelectionEnabled(true)
+      }
+    }
+
+    loadPreferences()
+  }, [])
+
+  useEffect(() => {
+    if (previewContent?.contentType !== 'text' || !previewSelectionEnabled) {
+      setSelectionAction(null)
+      return
+    }
+
+    const updateSelectionAction = () => {
+      const selection = window.getSelection()
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        setSelectionAction(null)
+        return
+      }
+
+      const selectedText = selection.toString().trim()
+      if (selectedText.length < 3) {
+        setSelectionAction(null)
+        return
+      }
+
+      const range = selection.getRangeAt(0)
+      const root = previewAreaRef.current
+      if (!root || !root.contains(range.commonAncestorContainer)) {
+        setSelectionAction(null)
+        return
+      }
+
+      const rect = range.getBoundingClientRect()
+      if (!rect.width && !rect.height) {
+        setSelectionAction(null)
+        return
+      }
+
+      const nextX = Math.max(16, Math.min(window.innerWidth - 200, rect.left + rect.width / 2 - 80))
+      const nextY = Math.max(80, rect.top - 44)
+
+      setSelectionAction({
+        text: selectedText.slice(0, 700),
+        x: nextX,
+        y: nextY,
+      })
+    }
+
+    globalThis.document.addEventListener('mouseup', updateSelectionAction)
+    globalThis.document.addEventListener('keyup', updateSelectionAction)
+
+    return () => {
+      globalThis.document.removeEventListener('mouseup', updateSelectionAction)
+      globalThis.document.removeEventListener('keyup', updateSelectionAction)
+    }
+  }, [previewContent?.contentType, previewSelectionEnabled])
 
   const fetchDocument = async () => {
     try {
@@ -272,6 +340,21 @@ export default function DocumentPreviewPage() {
     } catch (error) {
       console.error('Download failed:', error)
     }
+  }
+
+  const handleAskWithDocMind = () => {
+    if (!selectionAction?.text) return
+
+    const params = new URLSearchParams({
+      autoAsk: '1',
+      docId: documentId,
+      selected: selectionAction.text,
+      q: 'Explain this selected text in context, highlight key points, and include references.',
+    })
+
+    setSelectionAction(null)
+    window.getSelection()?.removeAllRanges()
+    router.push(`/dashboard/chat?${params.toString()}`)
   }
 
   const renderPreviewContent = () => {
@@ -732,10 +815,27 @@ export default function DocumentPreviewPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-hidden p-4 lg:p-8 bg-muted/30">
+          <div ref={previewAreaRef} className="flex-1 overflow-hidden p-4 lg:p-8 bg-muted/30">
             {renderPreviewContent()}
           </div>
         </div>
+
+        {selectionAction && (
+          <div
+            className="fixed z-[60]"
+            style={{ left: `${selectionAction.x}px`, top: `${selectionAction.y}px` }}
+          >
+            <Button
+              size="sm"
+              className="rounded-full shadow-lg h-9 px-4"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={handleAskWithDocMind}
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              Ask with DocMind
+            </Button>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   )

@@ -14,12 +14,26 @@ export interface Document {
 }
 
 // ── Chat ──────────────────────────────────────────────────────────────────────
+export interface MessageReference {
+  documentId: string
+  documentName: string
+  snippet: string
+  score: number
+}
+
+export interface MessageHighlight {
+  text: string
+  reason: string
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'error'
   content: string
   timestamp: Date
   docsUsed?: string[]
+  references?: MessageReference[]
+  highlights?: MessageHighlight[]
   provider?: string
   model?: string
   tokensUsed?: number
@@ -109,7 +123,21 @@ export interface ChatbotDetails {
   requests_per_minute_bot: number
   requests_per_minute_ip: number
   requests_per_day_bot: number
+  response_style: 'concise' | 'balanced' | 'detailed'
+  include_references: boolean
+  include_highlights: boolean
+  use_chat_memory: boolean
+  auto_regenerate_on_dislike: boolean
   documentIds: string[]
+}
+
+export interface UserResponsePreferences {
+  response_style: 'concise' | 'balanced' | 'detailed'
+  highlight_enabled: boolean
+  reference_enabled: boolean
+  memory_learning_enabled: boolean
+  auto_regenerate_on_dislike: boolean
+  preview_selection_enabled: boolean
 }
 
 export interface SecretItem {

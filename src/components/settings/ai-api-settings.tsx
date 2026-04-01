@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Switch } from '@/components/ui/switch'
 import {
   Settings,
   CheckCircle,
@@ -17,7 +18,7 @@ import {
   Activity,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import type { AIProvider } from '@/types'
+import type { AIProvider, UserResponsePreferences } from '@/types'
 import {
   defaultProviders,
   mapServerDataToProvider,
@@ -27,6 +28,15 @@ import { ProviderCard } from './provider-card'
 import { AdvancedSettings } from './advanced-settings'
 import { ApiUsageTracker } from '@/components/features/api-usage-tracker'
 
+const defaultResponsePreferences: UserResponsePreferences = {
+  response_style: 'balanced',
+  highlight_enabled: true,
+  reference_enabled: true,
+  memory_learning_enabled: true,
+  auto_regenerate_on_dislike: true,
+  preview_selection_enabled: true,
+}
+
 export function AiApiSettings() {
   const [providers, setProviders] = useState<AIProvider[]>([])
   const [testingProvider, setTestingProvider] = useState<string | null>(null)
@@ -35,6 +45,9 @@ export function AiApiSettings() {
   const [showApiKeys, setShowApiKeys] = useState<Record<string, boolean>>({})
   const [mounted, setMounted] = useState(false)
   const [selectedProviderId, setSelectedProviderId] = useState<string>('')
+  const [responsePreferences, setResponsePreferences] = useState<UserResponsePreferences>(defaultResponsePreferences)
+  const [savingResponsePreferences, setSavingResponsePreferences] = useState(false)
+  const didShowInitialLoadToast = useRef(false)
   const { toast } = useToast()
 
   // ── Load ──────────────────────────────────────────────────────────────────
@@ -44,12 +57,18 @@ export function AiApiSettings() {
     const load = async () => {
       try {
         const { authenticatedRequest } = await import('@/lib/api-client')
-        const [data, freeProviderRes] = await Promise.allSettled([
+        const [data, freeProviderRes, preferencesRes] = await Promise.allSettled([
           authenticatedRequest('/api/settings'),
-          fetch('/api/free-provider').then(r => r.ok ? r.json() : null)
+          fetch('/api/free-provider').then(r => r.ok ? r.json() : null),
+          authenticatedRequest<UserResponsePreferences>('/api/settings/response-preferences'),
         ])
         const settingsData = data.status === 'fulfilled' ? data.value : []
         const freeConfig = freeProviderRes.status === 'fulfilled' ? freeProviderRes.value : null
+        const prefs = preferencesRes.status === 'fulfilled'
+          ? { ...defaultResponsePreferences, ...preferencesRes.value }
+          : defaultResponsePreferences
+
+        setResponsePreferences(prefs)
 
         let mapped: AIProvider[] = (settingsData as any[]).map((s: any, i: number) => mapServerDataToProvider(s, i))
 
@@ -112,12 +131,18 @@ export function AiApiSettings() {
           } catch {}
         }))
 
-        if ((settingsData as any[]).length > 0) {
-          toast({ title: 'Settings loaded', description: `Loaded ${(settingsData as any[]).length} AI provider configuration(s).` })
+        if ((settingsData as any[]).length > 0 && !didShowInitialLoadToast.current) {
+          didShowInitialLoadToast.current = true
+          toast({
+            id: 'settings-loaded',
+            title: 'Settings loaded',
+            description: `Loaded ${(settingsData as any[]).length} AI provider configuration(s).`,
+          })
         }
       } catch (error) {
         console.warn('Failed to load settings from server:', error)
         setProviders(defaultProviders.map((p, i) => ({ ...p, id: `provider-${i}` })))
+        setResponsePreferences(defaultResponsePreferences)
         toast({ title: 'Failed to load settings', description: 'Using default provider configurations.', variant: 'destructive' })
       }
     }
@@ -152,6 +177,23 @@ export function AiApiSettings() {
       toast({ title: 'Failed to update settings', description: 'Please try again.', variant: 'destructive' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const saveResponseControls = async () => {
+    setSavingResponsePreferences(true)
+    try {
+      const { authenticatedRequest } = await import('@/lib/api-client')
+      const saved = await authenticatedRequest<UserResponsePreferences>('/api/settings/response-preferences', {
+        method: 'POST',
+        body: JSON.stringify(responsePreferences),
+      })
+      setResponsePreferences({ ...defaultResponsePreferences, ...saved })
+      toast({ title: 'Response controls saved', description: 'AI response behavior settings were updated.' })
+    } catch {
+      toast({ title: 'Failed to save response controls', description: 'Please try again.', variant: 'destructive' })
+    } finally {
+      setSavingResponsePreferences(false)
     }
   }
 
@@ -310,6 +352,93 @@ export function AiApiSettings() {
               onToggleApiKeyVisibility={toggleApiKeyVisibility}
             />
           ))}
+
+          <Card className="shadow-sm border-border bg-card">
+            <CardHeader className="p-6 border-b border-border/50 bg-background/50">
+              <CardTitle className="text-lg font-semibold">DocMind Response Controls</CardTitle>
+              <CardDescription>
+                Configure default answer behavior for dashboard chat and document query experience.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-5">
+              <div className="space-y-2">
+                <Label>Default Response Style</Label>
+                <Select
+                  value={responsePreferences.response_style}
+                  onValueChange={(value: 'concise' | 'balanced' | 'detailed') =>
+                    setResponsePreferences(prev => ({ ...prev, response_style: value }))
+                  }
+                >
+                  <SelectTrigger className="max-w-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="concise">Concise</SelectItem>
+                    <SelectItem value="balanced">Balanced</SelectItem>
+                    <SelectItem value="detailed">Detailed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex items-center justify-between rounded-xl border border-border/50 p-4">
+                  <div>
+                    <p className="text-sm font-medium">Show references</p>
+                    <p className="text-xs text-muted-foreground">Include source snippets in responses.</p>
+                  </div>
+                  <Switch
+                    checked={responsePreferences.reference_enabled}
+                    onCheckedChange={(checked) => setResponsePreferences(prev => ({ ...prev, reference_enabled: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border/50 p-4">
+                  <div>
+                    <p className="text-sm font-medium">Show highlights</p>
+                    <p className="text-xs text-muted-foreground">Return important text blocks in answers.</p>
+                  </div>
+                  <Switch
+                    checked={responsePreferences.highlight_enabled}
+                    onCheckedChange={(checked) => setResponsePreferences(prev => ({ ...prev, highlight_enabled: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border/50 p-4">
+                  <div>
+                    <p className="text-sm font-medium">Memory learning</p>
+                    <p className="text-xs text-muted-foreground">Use feedback history to adapt future responses.</p>
+                  </div>
+                  <Switch
+                    checked={responsePreferences.memory_learning_enabled}
+                    onCheckedChange={(checked) => setResponsePreferences(prev => ({ ...prev, memory_learning_enabled: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border/50 p-4">
+                  <div>
+                    <p className="text-sm font-medium">Auto-improve after dislike</p>
+                    <p className="text-xs text-muted-foreground">Regenerate an improved response after feedback.</p>
+                  </div>
+                  <Switch
+                    checked={responsePreferences.auto_regenerate_on_dislike}
+                    onCheckedChange={(checked) => setResponsePreferences(prev => ({ ...prev, auto_regenerate_on_dislike: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border/50 p-4 md:col-span-2">
+                  <div>
+                    <p className="text-sm font-medium">Preview text selection action</p>
+                    <p className="text-xs text-muted-foreground">Show Ask with DocMind button on selected text in preview.</p>
+                  </div>
+                  <Switch
+                    checked={responsePreferences.preview_selection_enabled}
+                    onCheckedChange={(checked) => setResponsePreferences(prev => ({ ...prev, preview_selection_enabled: checked }))}
+                  />
+                </div>
+              </div>
+
+              <Button onClick={saveResponseControls} disabled={savingResponsePreferences} className="w-full sm:w-auto">
+                {savingResponsePreferences ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Response Controls
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Advanced Tab */}

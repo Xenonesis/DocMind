@@ -10,12 +10,23 @@ import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardHeader } from '@/components/dashboard-header'
 import { useProviders } from '@/hooks/use-providers'
+import { useSearchParams } from 'next/navigation'
 import type { Document } from '@/types'
 
 export default function ChatPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const { user, logout } = useAuth()
   const { configuredProviders, selectedProvider, setSelectedProvider } = useProviders({ user })
+  const searchParams = useSearchParams()
+
+  const selectedTextFromPreview = searchParams.get('selected') || ''
+  const initialDocIdFromPreview = searchParams.get('docId') || ''
+  const initialQueryFromPreview =
+    searchParams.get('q') ||
+    (selectedTextFromPreview
+      ? 'Please answer based on this selected text, highlight key points, and include references.'
+      : '')
+  const autoAskFromPreview = searchParams.get('autoAsk') === '1'
 
   const fetchDocuments = async () => {
     try {
@@ -114,6 +125,10 @@ export default function ChatPage() {
                 documents={documents}
                 selectedProvider={selectedProvider}
                 onDocumentsChanged={fetchDocuments}
+                initialQuery={initialQueryFromPreview}
+                initialSelectedText={selectedTextFromPreview}
+                initialDocumentId={initialDocIdFromPreview}
+                autoSendInitial={autoAskFromPreview}
               />
             </div>
           </div>

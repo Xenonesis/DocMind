@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer, createServerClientForToken } from '@/lib/supabase'
 import { getAuthenticatedUser, ensureUserProfile } from '@/lib/auth-server'
 import { AIService } from '@/lib/ai-service'
+import {
+  buildMemoryInstruction,
+  clampSelectionText,
+  deriveHighlights,
+  deriveReferences,
+} from '@/lib/answer-utils'
 
 function parseJsonSafely(value: unknown, fallback: any) {
   if (value === null || value === undefined) return fallback
@@ -27,6 +33,8 @@ function chunkText(text: string, chunkSize = 120): string[] {
 
 function createStreamResponse(payload: {
   id: string
+  sessionId?: string
+  messageId?: string
   query: string
   response: any
   timestamp: string
@@ -54,6 +62,8 @@ function createStreamResponse(payload: {
         type: 'done',
         payload: {
           id: payload.id,
+          sessionId: payload.sessionId,
+          messageId: payload.messageId,
           query: payload.query,
           status: 'COMPLETED',
           response: payload.response,
@@ -79,7 +89,16 @@ function createStreamResponse(payload: {
 
 export async function POST(request: NextRequest) {
   try {
-    const { query, documentIds, provider, history, stream } = await request.json()
+    const {
+      query,
+      documentIds,
+      provider,
+      history,
+      stream,
+      sessionId,
+      selectedTextContext,
+      improveFromFeedback,
+    } = await request.json()
     const wantsStream = stream === true
 
     if (!query || !query.trim()) {
@@ -101,6 +120,82 @@ export async function POST(request: NextRequest) {
     }
 
     await ensureUserProfile(user, db)
+
+    let activeSessionId: string | null = typeof sessionId === 'string' ? sessionId : null
+
+    if (activeSessionId) {
+      const { error: sessionTouchError } = await db
+        .from('user_chat_sessions')
+        .update({ last_activity_at: new Date().toISOString() })
+        .eq('id', activeSessionId)
+        .eq('user_id', user.id)
+
+      if (sessionTouchError) {
+        activeSessionId = null
+      }
+    }
+
+    if (!activeSessionId) {
+      const { data: createdSession, error: createSessionError } = await db
+        .from('user_chat_sessions')
+        .insert({
+          user_id: user.id,
+          title: String(query).trim().slice(0, 80),
+          last_activity_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single()
+
+      if (!createSessionError && createdSession?.id) {
+        activeSessionId = createdSession.id
+      }
+    }
+
+    const selectedText = clampSelectionText(selectedTextContext?.text || '')
+
+    if (activeSessionId) {
+      await db.from('user_chat_messages').insert({
+        session_id: activeSessionId,
+        user_id: user.id,
+        role: 'user',
+        content: query.trim(),
+        metadata: {
+          selectedTextContext: selectedText
+            ? {
+                text: selectedText,
+                documentId: selectedTextContext?.documentId || null,
+              }
+            : null,
+          improveFromFeedback: improveFromFeedback || null,
+        },
+      })
+    }
+
+    const [{ data: preferenceRow }, { data: memoryProfileRow }] = await Promise.all([
+      db
+        .from('user_response_preferences')
+        .select('response_style, highlight_enabled, reference_enabled, memory_learning_enabled, auto_regenerate_on_dislike, preview_selection_enabled')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      db
+        .from('user_memory_profiles')
+        .select('feedback_summary')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ])
+
+    const responseStyle = preferenceRow?.response_style || 'balanced'
+    const allowHighlights = preferenceRow?.highlight_enabled !== false
+    const allowReferences = preferenceRow?.reference_enabled !== false
+    const allowMemoryLearning = preferenceRow?.memory_learning_enabled !== false
+    const allowAutoRegenerate = preferenceRow?.auto_regenerate_on_dislike !== false
+    const allowPreviewSelection = preferenceRow?.preview_selection_enabled !== false
+
+    const memoryInstruction = buildMemoryInstruction(
+      responseStyle,
+      allowMemoryLearning ? (memoryProfileRow?.feedback_summary || {}) : {}
+    )
+    const selectedTextForPrompt = allowPreviewSelection ? selectedText : ''
 
     const { data: queryRecord, error: createError } = await db
       .from('queries')
@@ -187,13 +282,14 @@ export async function POST(request: NextRequest) {
       }
 
       const context = (documents || []).map(doc => ({
+        id: doc.id,
         name: doc.name,
         content: doc.content || '',
         category: doc.category || '',
         metadata: parseJsonSafely(doc.metadata, {})
       }))
 
-      const systemPrompt = `You are an expert document analysis assistant. Answer the user's question clearly and concisely based on the provided document context. If asked for summaries, key points, comparisons, or analysis — provide them helpfully. Always mention which document you're referencing. If the answer is not found in the documents, say so clearly.`
+      const systemPrompt = `You are an expert document analysis assistant. Answer the user's question clearly and concisely based on the provided document context. If asked for summaries, key points, comparisons, or analysis provide them helpfully. Always mention which document you're referencing. If the answer is not found in the documents, say so clearly. ${memoryInstruction}`
 
       const historyText = Array.isArray(history) && history.length > 0
         ? `\n\nConversation history (for context):\n${history.map((m: any) => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`).join('\n')}\n`
@@ -202,6 +298,11 @@ export async function POST(request: NextRequest) {
       const userPrompt = `
         Query: ${query}
 ${historyText}
+        ${selectedTextForPrompt ? `Selected text focus:
+        ${selectedTextForPrompt}
+      ` : ''}
+        ${allowAutoRegenerate && improveFromFeedback?.feedbackReason ? `User disliked a previous answer. Improve this response specifically by addressing: ${String(improveFromFeedback.feedbackReason).slice(0, 300)}
+      ` : ''}
         Document Context:
         ${context.map((doc, index) => `
         Document ${index + 1}: ${doc.name}
@@ -209,7 +310,7 @@ ${historyText}
         Content: ${doc.content.slice(0, 4000)}
         `).join('\n')}
 
-        Please provide a comprehensive but concise answer. Respond in plain text (no JSON), referencing the documents by name where relevant.
+        Please provide a comprehensive but concise answer. If possible, provide structured references and key highlights.
       `
 
       // Try primary provider, fallback to Groq on upstream errors
@@ -252,13 +353,85 @@ ${historyText}
 
       let aiResponse: any
       const rawContent = completion.content
+      let parsedContent: any = null
       try {
-        aiResponse = JSON.parse(rawContent)
+        parsedContent = JSON.parse(rawContent)
       } catch {
-        aiResponse = {
-          answer: rawContent,
-          relevantDocuments: (documents || []).map(doc => doc.name)
-        }
+        parsedContent = null
+      }
+
+      const answerText = typeof parsedContent?.answer === 'string' ? parsedContent.answer : rawContent
+
+      const referencesFromModel = allowReferences && Array.isArray(parsedContent?.references)
+        ? parsedContent.references
+            .filter((ref: any) => ref && typeof ref.documentName === 'string')
+            .map((ref: any) => ({
+              documentId:
+                typeof ref.documentId === 'string'
+                  ? ref.documentId
+                  : context.find(doc => doc.name === ref.documentName)?.id || '',
+              documentName: ref.documentName,
+              snippet: typeof ref.snippet === 'string' ? ref.snippet.slice(0, 280) : '',
+              score: Number(ref.score || 1),
+            }))
+        : []
+
+      const derivedReferences = allowReferences ? deriveReferences(query, answerText, context) : []
+      const references = allowReferences
+        ? (referencesFromModel.length > 0 ? referencesFromModel : derivedReferences)
+        : []
+
+      const highlightsFromModel = allowHighlights && Array.isArray(parsedContent?.highlights)
+        ? parsedContent.highlights
+            .filter((item: any) => item && typeof item.text === 'string')
+            .slice(0, 5)
+            .map((item: any) => ({
+              text: item.text.slice(0, 260),
+              reason: typeof item.reason === 'string' ? item.reason.slice(0, 80) : 'Key point',
+            }))
+        : []
+
+      const highlights = allowHighlights
+        ? (highlightsFromModel.length > 0 ? highlightsFromModel : deriveHighlights(answerText))
+        : []
+
+      aiResponse = {
+        answer: answerText,
+        relevantDocuments: references.length > 0
+          ? references.map((ref: any) => ref.documentName)
+          : (documents || []).map(doc => doc.name),
+        references,
+        highlights,
+      }
+
+      let assistantMessageId: string | null = null
+      if (activeSessionId) {
+        const { data: assistantMessage } = await db
+          .from('user_chat_messages')
+          .insert({
+            session_id: activeSessionId,
+            user_id: user.id,
+            role: 'assistant',
+            content: answerText,
+            model_provider: providerConfig.name,
+            model_name: providerConfig.model || 'unknown',
+            tokens_used: completion.usage?.totalTokens || 0,
+            metadata: {
+              relevantDocuments: aiResponse.relevantDocuments,
+              references,
+              highlights,
+            },
+          })
+          .select('id')
+          .single()
+
+        assistantMessageId = assistantMessage?.id || null
+
+        await db
+          .from('user_chat_sessions')
+          .update({ last_activity_at: new Date().toISOString() })
+          .eq('id', activeSessionId)
+          .eq('user_id', user.id)
       }
 
       const { error: updateError } = await db
@@ -278,6 +451,8 @@ ${historyText}
 
       const responsePayload = {
         id: queryRecord.id,
+        sessionId: activeSessionId || undefined,
+        messageId: assistantMessageId || undefined,
         query: queryRecord.query_text,
         status: 'COMPLETED' as const,
         response: aiResponse,

@@ -39,6 +39,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       slug: verified.chatbots.slug,
       description: null,
       isActive: verified.chatbots.is_active,
+      autoRegenerateOnDislike: verified.chatbots.auto_regenerate_on_dislike !== false,
     })
   } catch {
     return NextResponse.json({ error: 'Failed to fetch chatbot info' }, { status: 500 })

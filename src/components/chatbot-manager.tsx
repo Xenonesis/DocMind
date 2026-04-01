@@ -102,7 +102,17 @@ export function ChatbotManager() {
         authenticatedRequest<SecretItem[]>(`/api/chatbots/${id}/credentials`),
         authenticatedRequest<SecretItem[]>(`/api/chatbots/${id}/embed-token`),
       ])
-      setEditingBotId(id); setDetails(botData); setApiKeys(keysData || []); setEmbedTokens(tokensData || [])
+      setEditingBotId(id)
+      setDetails({
+        ...botData,
+        response_style: botData.response_style || 'balanced',
+        include_references: botData.include_references !== false,
+        include_highlights: botData.include_highlights !== false,
+        use_chat_memory: botData.use_chat_memory !== false,
+        auto_regenerate_on_dislike: botData.auto_regenerate_on_dislike !== false,
+      })
+      setApiKeys(keysData || [])
+      setEmbedTokens(tokensData || [])
       setAllowedOriginsInput(Array.isArray(botData.allowed_origins) ? botData.allowed_origins.join('\n') : '')
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Failed to load chatbot details', description: error?.message || 'Try again.' })
@@ -126,6 +136,11 @@ export function ChatbotManager() {
           refusalMessage: details.refusal_message, fallbackMessage: details.fallback_message, isActive: details.is_active,
           requestsPerMinuteBot: details.requests_per_minute_bot, requestsPerMinuteIp: details.requests_per_minute_ip,
           requestsPerDayBot: details.requests_per_day_bot, allowedOrigins: parsedOrigins, documentIds: details.documentIds,
+          responseStyle: details.response_style,
+          includeReferences: details.include_references,
+          includeHighlights: details.include_highlights,
+          useChatMemory: details.use_chat_memory,
+          autoRegenerateOnDislike: details.auto_regenerate_on_dislike,
         }),
       })
       await loadData(); await openEditor(editingBotId)

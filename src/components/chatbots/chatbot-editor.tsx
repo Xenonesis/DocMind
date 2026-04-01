@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, ShieldX } from 'lucide-react'
 import type { ChatbotDetails, SecretItem } from '@/types'
 
@@ -94,6 +95,58 @@ export function ChatbotEditor({
           <div className="space-y-2">
             <Label>Bot requests/day</Label>
             <Input type="number" value={details.requests_per_day_bot} onChange={(e) => onDetailsChange({ ...details, requests_per_day_bot: Number(e.target.value || 0) })} />
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-lg border p-3">
+          <Label className="text-sm font-medium">Response Controls</Label>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Response Style</Label>
+              <Select
+                value={details.response_style}
+                onValueChange={(value: 'concise' | 'balanced' | 'detailed') => onDetailsChange({ ...details, response_style: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="concise">Concise</SelectItem>
+                  <SelectItem value="balanced">Balanced</SelectItem>
+                  <SelectItem value="detailed">Detailed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={details.include_references}
+                onCheckedChange={(checked) => onDetailsChange({ ...details, include_references: checked === true })}
+              />
+              Show references in answers
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={details.include_highlights}
+                onCheckedChange={(checked) => onDetailsChange({ ...details, include_highlights: checked === true })}
+              />
+              Show important text highlights
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={details.use_chat_memory}
+                onCheckedChange={(checked) => onDetailsChange({ ...details, use_chat_memory: checked === true })}
+              />
+              Use conversation memory while answering
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={details.auto_regenerate_on_dislike}
+                onCheckedChange={(checked) => onDetailsChange({ ...details, auto_regenerate_on_dislike: checked === true })}
+              />
+              Auto-improve answer after dislike feedback
+            </label>
           </div>
         </div>
 

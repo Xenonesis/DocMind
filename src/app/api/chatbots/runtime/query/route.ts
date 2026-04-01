@@ -4,6 +4,7 @@ import { createServerClientForToken, supabaseServer } from '@/lib/supabase'
 import { buildGuardrailedPrompts, normalizeGuardrailResponse } from '@/lib/chatbot-guardrails'
 import { enforceStandardRateLimit } from '@/lib/chatbot-rate-limit'
 import { getClientIp, verifyApiKey, verifyEmbedToken } from '@/lib/chatbot-security'
+import { clampSelectionText, deriveHighlights, deriveReferences } from '@/lib/answer-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,9 +20,12 @@ function chunkText(text: string, chunkSize = 120): string[] {
 function createStreamResponse(payload: {
   chatbot: { id: string; name: string; slug: string }
   sessionId: string
+  messageId?: string | null
   answer: string
   refused: boolean
   relevantDocuments: string[]
+  references: Array<{ documentId: string; documentName: string; snippet: string; score: number }>
+  highlights: Array<{ text: string; reason: string }>
   provider: string
   usage?: { promptTokens: number; completionTokens: number; totalTokens: number }
 }) {
@@ -114,6 +118,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const query = String(body.query || '').trim()
+    const selectedText = clampSelectionText(body?.selectedTextContext?.text || '')
+    const feedbackReason = body?.improveFromFeedback?.feedbackReason
+      ? String(body.improveFromFeedback.feedbackReason).slice(0, 300)
+      : ''
     const wantsStream = body.stream === true
     if (!query) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 })
@@ -143,6 +151,21 @@ export async function POST(request: NextRequest) {
     }
 
     const chatbot = verified.chatbots
+    const responseStyle = chatbot.response_style || 'balanced'
+    const includeReferences = chatbot.include_references !== false
+    const includeHighlights = chatbot.include_highlights !== false
+    const useChatMemory = chatbot.use_chat_memory !== false
+    const allowAutoRegenerate = chatbot.auto_regenerate_on_dislike !== false
+
+    const promptQuery = [
+      query,
+      selectedText ? `Selected text focus:\n${selectedText}` : '',
+      allowAutoRegenerate && feedbackReason
+        ? `User disliked a previous answer. Improve this response by addressing: ${feedbackReason}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n')
 
     if (slug && slug !== chatbot.slug) {
       return NextResponse.json({ error: 'Invalid chatbot slug for this credential' }, { status: 401 })
@@ -199,9 +222,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No completed documents linked to this chatbot' }, { status: 400 })
     }
 
-    const history = parseHistory(body.history)
+    const history = useChatMemory ? parseHistory(body.history) : []
     const prompts = buildGuardrailedPrompts({
-      query,
+      query: promptQuery,
       history,
       systemPrompt: chatbot.system_prompt,
       refusalMessage: chatbot.refusal_message,
@@ -242,6 +265,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let assistantMessageId: string | null = null
+
     if (canPersistSession) {
       await db.from('chatbot_messages').insert({
         session_id: sessionId,
@@ -259,10 +284,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No AI provider configured for bot owner' }, { status: 400 })
     }
 
+    const styleInstruction = responseStyle === 'concise'
+      ? 'Keep responses concise, direct, and short.'
+      : responseStyle === 'detailed'
+        ? 'Provide detailed explanations with complete context and rationale.'
+        : 'Keep a balanced response style: clear, moderately detailed, and practical.'
+
     const completion = await aiService.generateCompletion({
       provider,
       prompt: prompts.userPrompt,
-      systemPrompt: prompts.systemPrompt,
+      systemPrompt: `${prompts.systemPrompt}\n\n${styleInstruction}`,
       temperature: chatbot.temperature ?? 0.2,
       maxTokens: chatbot.max_tokens ?? 1024,
     })
@@ -270,14 +301,27 @@ export async function POST(request: NextRequest) {
     const normalized = normalizeGuardrailResponse(completion.content, chatbot.refusal_message)
 
     if (canPersistSession) {
-      await db.from('chatbot_messages').insert({
+      const { data: assistantMessage } = await db.from('chatbot_messages').insert({
         session_id: sessionId,
         chatbot_id: chatbot.id,
         role: 'assistant',
         content: normalized.answer,
         tokens_used: completion.usage?.totalTokens || 0,
       })
+      .select('id')
+      .single()
+
+      assistantMessageId = assistantMessage?.id || null
     }
+
+    const references = normalized.refused || !includeReferences
+      ? []
+      : deriveReferences(query, normalized.answer, docs.map((doc: any) => ({
+          id: doc.id,
+          name: doc.name,
+          content: doc.content,
+        })))
+    const highlights = normalized.refused || !includeHighlights ? [] : deriveHighlights(normalized.answer)
 
     try {
       await db.from('chatbot_audit_logs').insert({
@@ -318,9 +362,12 @@ export async function POST(request: NextRequest) {
         slug: chatbot.slug,
       },
       sessionId,
+      messageId: assistantMessageId,
       answer: normalized.answer,
       refused: normalized.refused,
-      relevantDocuments: docs.map((doc: any) => doc.name),
+      relevantDocuments: references.length > 0 ? references.map((ref: any) => ref.documentName) : docs.map((doc: any) => doc.name),
+      references,
+      highlights,
       provider: provider.name,
       usage: completion.usage,
     }

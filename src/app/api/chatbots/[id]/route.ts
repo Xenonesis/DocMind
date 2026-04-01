@@ -66,6 +66,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const slug = body.name && body.name.trim() !== existing.name
       ? await buildUniqueSlug(ctx.db, ctx.user.id, name)
       : existing.slug
+    const supportsResponseControls = Object.prototype.hasOwnProperty.call(existing, 'response_style')
 
     const updates = {
       name,
@@ -83,6 +84,14 @@ export async function PUT(request: NextRequest, { params }: Params) {
       requests_per_minute_ip: typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : existing.requests_per_minute_ip,
       requests_per_day_bot: typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : existing.requests_per_day_bot,
       updated_at: new Date().toISOString(),
+    } as Record<string, any>
+
+    if (supportsResponseControls) {
+      updates.response_style = ['concise', 'balanced', 'detailed'].includes(body.responseStyle) ? body.responseStyle : existing.response_style
+      updates.include_references = body.includeReferences !== undefined ? !!body.includeReferences : existing.include_references
+      updates.include_highlights = body.includeHighlights !== undefined ? !!body.includeHighlights : existing.include_highlights
+      updates.use_chat_memory = body.useChatMemory !== undefined ? !!body.useChatMemory : existing.use_chat_memory
+      updates.auto_regenerate_on_dislike = body.autoRegenerateOnDislike !== undefined ? !!body.autoRegenerateOnDislike : existing.auto_regenerate_on_dislike
     }
 
     const { data: bot, error: updateError } = await ctx.db

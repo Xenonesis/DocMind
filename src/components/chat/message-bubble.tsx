@@ -73,9 +73,46 @@ export function MessageBubble({
           {isUser || isError ? (
             <div className="whitespace-pre-wrap">{message.content}</div>
           ) : (
-            <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none break-words">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
-              {showStreamingCursor && <span className="inline-block animate-pulse ml-0.5">▍</span>}
+            <div className="space-y-3">
+              <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none break-words">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+                {showStreamingCursor && <span className="inline-block animate-pulse ml-0.5">▍</span>}
+              </div>
+
+              {message.highlights && message.highlights.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Important Text</div>
+                  <div className="space-y-1.5">
+                    {message.highlights.slice(0, 4).map((item, idx) => (
+                      <div key={`${message.id}-hl-${idx}`} className="rounded-md border border-amber-300/40 bg-amber-50/80 dark:bg-amber-900/20 px-2.5 py-1.5">
+                        <div className="text-[12px] leading-relaxed">{item.text}</div>
+                        {item.reason && (
+                          <div className="text-[10px] text-muted-foreground mt-0.5">{item.reason}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {message.references && message.references.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">References</div>
+                  <div className="space-y-1.5">
+                    {message.references.slice(0, 3).map((ref, idx) => (
+                      <div key={`${message.id}-ref-${idx}`} className="rounded-md border border-border/70 bg-background/60 px-2.5 py-1.5">
+                        <div className="text-[11px] font-medium flex items-center gap-1 text-foreground/90">
+                          <FileText className="w-3 h-3" />
+                          {ref.documentName}
+                        </div>
+                        {ref.snippet && (
+                          <div className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{ref.snippet}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

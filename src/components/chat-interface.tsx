@@ -21,9 +21,21 @@ interface ChatInterfaceProps {
   documents: Document[]
   selectedProvider?: string
   onDocumentsChanged?: () => Promise<void> | void
+  initialQuery?: string
+  initialSelectedText?: string
+  initialDocumentId?: string
+  autoSendInitial?: boolean
 }
 
-export function ChatInterface({ documents, selectedProvider, onDocumentsChanged }: ChatInterfaceProps) {
+export function ChatInterface({
+  documents,
+  selectedProvider,
+  onDocumentsChanged,
+  initialQuery,
+  initialSelectedText,
+  initialDocumentId,
+  autoSendInitial,
+}: ChatInterfaceProps) {
   const streamDebugEnabled = process.env.NEXT_PUBLIC_STREAM_DEBUG === '1'
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -36,6 +48,9 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
   const [copied, setCopied] = useState<string | null>(null)
   const [responseFeedback, setResponseFeedback] = useState<Record<string, 'up' | 'down'>>({})
   const [streamDebugEntries, setStreamDebugEntries] = useState<StreamDebugEntry[]>([])
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [initialAskSent, setInitialAskSent] = useState(false)
+  const [autoRegenerateOnDislike, setAutoRegenerateOnDislike] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const streamAbortRef = useRef<AbortController | null>(null)
@@ -55,6 +70,20 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       if (streamStateTimerRef.current) clearTimeout(streamStateTimerRef.current)
       streamAbortRef.current?.abort()
     }
+  }, [])
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const { authenticatedRequest } = await import('@/lib/api-client')
+        const prefs = await authenticatedRequest<{ auto_regenerate_on_dislike?: boolean }>('/api/settings/response-preferences')
+        setAutoRegenerateOnDislike(prefs?.auto_regenerate_on_dislike !== false)
+      } catch {
+        setAutoRegenerateOnDislike(true)
+      }
+    }
+
+    loadPreferences()
   }, [])
 
   const scheduleStreamStateReset = useCallback((state: 'completed' | 'stopped') => {
@@ -83,14 +112,77 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
     setSelectedDocIds(prev => prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id])
   }
 
-  const handleFeedback = (id: string, type: 'up' | 'down') => {
+  const handleFeedback = async (id: string, type: 'up' | 'down') => {
     setResponseFeedback(prev => ({ ...prev, [id]: type }))
+
+    const assistantIndex = messages.findIndex(m => m.id === id)
+    if (assistantIndex < 0) return
+
+    const assistantMessage = messages[assistantIndex]
+    const previousUserMessage = [...messages.slice(0, assistantIndex)].reverse().find(m => m.role === 'user')
+    const queryText = previousUserMessage?.content || ''
+
+    let feedbackReason = ''
+    if (type === 'down') {
+      const prompted = window.prompt('Tell DocMind what was wrong so it can improve the next response:', '')
+      if (prompted === null) return
+      feedbackReason = prompted.trim().slice(0, 500)
+    }
+
+    try {
+      const { authenticatedFetch } = await import('@/lib/api-client')
+      await authenticatedFetch('/api/chat/feedback', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: activeSessionId,
+          appMessageId: id,
+          feedbackType: type,
+          feedbackReason,
+          queryText,
+          responseText: assistantMessage.content,
+        }),
+      })
+
+      if (type === 'down' && queryText && autoRegenerateOnDislike) {
+        toast({
+          title: 'Thanks for the feedback',
+          description: 'Generating an improved response using your feedback.',
+        })
+        await sendMessage(queryText, {
+          improveFromFeedback: {
+            feedbackReason,
+            feedbackMessageId: id,
+          },
+        })
+      } else if (type === 'down') {
+        toast({
+          title: 'Feedback saved',
+          description: 'Auto-regeneration is disabled in AI Service Integration settings.',
+        })
+      }
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Feedback not saved',
+        description: 'Could not store feedback. Please try again.',
+      })
+    }
   }
 
-  const clearChat = () => { setMessages([]); setResponseFeedback({}) }
+  const clearChat = () => {
+    setMessages([])
+    setResponseFeedback({})
+    setActiveSessionId(null)
+  }
 
   // ── SSE Streaming ─────────────────────────────────────────────────────────
-  const sendMessage = async (overrideText?: string) => {
+  const sendMessage = async (
+    overrideText?: string,
+    options?: {
+      selectedTextContext?: { text: string; documentId?: string }
+      improveFromFeedback?: { feedbackReason?: string; feedbackMessageId?: string }
+    }
+  ) => {
     const text = (overrideText ?? input).trim()
     if (!text || isStreaming) return
 
@@ -105,6 +197,7 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
             content: fields.content ?? fields.appendContent ?? '',
             timestamp: new Date(), provider: fields.provider, model: fields.model,
             docsUsed: fields.docsUsed, tokensUsed: fields.tokensUsed,
+            references: fields.references, highlights: fields.highlights,
           } as ChatMessage]
         }
         const current = prev[index]
@@ -145,6 +238,9 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
         signal: abortController.signal,
         body: JSON.stringify({
           query: text,
+          sessionId: activeSessionId || undefined,
+          selectedTextContext: options?.selectedTextContext,
+          improveFromFeedback: options?.improveFromFeedback,
           documentIds: selectedDocIds.length > 0 ? selectedDocIds : undefined,
           history: messages.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
           provider: selectedProvider,
@@ -193,9 +289,14 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
         if (!finalPayload) throw new Error('Stream ended unexpectedly. Please try again.')
 
         const finalAnswer = typeof finalPayload?.response === 'string' ? finalPayload.response : finalPayload?.response?.answer || JSON.stringify(finalPayload?.response, null, 2)
+        if (typeof finalPayload?.sessionId === 'string') {
+          setActiveSessionId(finalPayload.sessionId)
+        }
         upsertAssistantMessage({
           content: finalAnswer, provider: finalPayload?.provider, model: finalPayload?.model,
           docsUsed: finalPayload?.response?.relevantDocuments || [], tokensUsed: finalPayload?.usage?.totalTokens,
+          references: finalPayload?.response?.references || [],
+          highlights: finalPayload?.response?.highlights || [],
         })
         finishedSuccessfully = true
         return
@@ -206,9 +307,17 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       if (result?.error) { setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: 'error', content: result.error, timestamp: new Date() } as ChatMessage]); return }
 
       const answer = typeof result?.response === 'string' ? result.response : result?.response?.answer || JSON.stringify(result?.response, null, 2)
+      if (typeof result?.sessionId === 'string') {
+        setActiveSessionId(result.sessionId)
+      }
       setMessages(prev => [...prev, {
         id: assistantMessageId, role: 'assistant', content: answer, timestamp: new Date(),
-        provider: result?.provider, model: result?.model, docsUsed: result?.response?.relevantDocuments || [], tokensUsed: result?.usage?.totalTokens,
+        provider: result?.provider,
+        model: result?.model,
+        docsUsed: result?.response?.relevantDocuments || [],
+        references: result?.response?.references || [],
+        highlights: result?.response?.highlights || [],
+        tokensUsed: result?.usage?.totalTokens,
       } as ChatMessage])
       finishedSuccessfully = true
     } catch (err: any) {
@@ -222,6 +331,32 @@ export function ChatInterface({ documents, selectedProvider, onDocumentsChanged 
       else setStreamState('idle')
     }
   }
+
+  useEffect(() => {
+    if (!autoSendInitial || initialAskSent || isStreaming) return
+    if (!initialQuery || !initialQuery.trim()) return
+
+    if (initialDocumentId) {
+      setSelectedDocIds(prev => prev.includes(initialDocumentId) ? prev : [...prev, initialDocumentId])
+    }
+
+    setInitialAskSent(true)
+    sendMessage(initialQuery, {
+      selectedTextContext: initialSelectedText
+        ? {
+            text: initialSelectedText,
+            documentId: initialDocumentId,
+          }
+        : undefined,
+    })
+  }, [
+    autoSendInitial,
+    initialAskSent,
+    isStreaming,
+    initialQuery,
+    initialSelectedText,
+    initialDocumentId,
+  ])
 
   const stopGenerating = () => { if (!isStreaming || !streamAbortRef.current) return; streamAbortRef.current.abort() }
 

@@ -7,6 +7,12 @@ function isMissingTableError(error: any): boolean {
   return code === '42P01' || message.includes('does not exist')
 }
 
+function isMissingColumnError(error: any): boolean {
+  const code = error?.code || error?.details?.code
+  const message = (error?.message || '').toLowerCase()
+  return code === '42703' || (message.includes('column') && message.includes('does not exist'))
+}
+
 function migrationHint() {
   return 'Chatbot schema is missing. Run migration: supabase/migrations/20260322091500_chatbot_platform.sql'
 }
@@ -105,14 +111,47 @@ export async function POST(request: NextRequest) {
       requests_per_minute_bot: typeof body.requestsPerMinuteBot === 'number' ? body.requestsPerMinuteBot : 60,
       requests_per_minute_ip: typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : 20,
       requests_per_day_bot: typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : 2000,
+      response_style: ['concise', 'balanced', 'detailed'].includes(body.responseStyle) ? body.responseStyle : 'balanced',
+      include_references: body.includeReferences !== false,
+      include_highlights: body.includeHighlights !== false,
+      use_chat_memory: body.useChatMemory !== false,
+      auto_regenerate_on_dislike: body.autoRegenerateOnDislike !== false,
+    }
+
+    const legacyChatbotInsert = {
+      user_id: ctx.user.id,
+      name,
+      slug,
+      description: body.description?.trim() || null,
+      system_prompt: body.systemPrompt?.trim() || null,
+      refusal_message: body.refusalMessage?.trim() || undefined,
+      fallback_message: body.fallbackMessage?.trim() || undefined,
+      allowed_origins: Array.isArray(body.allowedOrigins) ? body.allowedOrigins : [],
+      is_active: body.isActive !== false,
+      model_override: body.modelOverride?.trim() || null,
+      temperature: typeof body.temperature === 'number' ? body.temperature : 0.2,
+      max_tokens: typeof body.maxTokens === 'number' ? body.maxTokens : 1024,
+      requests_per_minute_bot: typeof body.requestsPerMinuteBot === 'number' ? body.requestsPerMinuteBot : 60,
+      requests_per_minute_ip: typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : 20,
+      requests_per_day_bot: typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : 2000,
     }
 
     step = 'insert-chatbot'
-    const { data: bot, error: insertError } = await ctx.db
+    let { data: bot, error: insertError } = await ctx.db
       .from('chatbots')
       .insert(chatbotInsert)
       .select('*')
       .single()
+
+    if (insertError && isMissingColumnError(insertError)) {
+      const fallbackInsert = await ctx.db
+        .from('chatbots')
+        .insert(legacyChatbotInsert)
+        .select('*')
+        .single()
+      bot = fallbackInsert.data
+      insertError = fallbackInsert.error
+    }
 
     if (insertError || !bot) {
       const status = isMissingTableError(insertError) ? 503 : 500

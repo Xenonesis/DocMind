@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Loader2, Send, Square, Copy, Check, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react'
+import { Send, Square, Copy, Check, ThumbsUp, ThumbsDown, RotateCcw, FileText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import type { MessageHighlight, MessageReference } from '@/types'
 
 interface PublicChatbotProps {
   slug: string
@@ -16,6 +17,9 @@ interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
+  references?: MessageReference[]
+  highlights?: MessageHighlight[]
+  serverMessageId?: string
 }
 
 interface StreamDebugEntry {
@@ -37,6 +41,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [responseFeedback, setResponseFeedback] = useState<Record<string, 'up' | 'down'>>({})
+  const [autoRegenerateOnDislike, setAutoRegenerateOnDislike] = useState(true)
   const [streamDebugEntries, setStreamDebugEntries] = useState<StreamDebugEntry[]>([])
   const streamAbortRef = useRef<AbortController | null>(null)
   const streamStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -131,7 +136,16 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     }
   }
 
-  const upsertAssistantMessage = (assistantMessageId: string, fields: { content?: string; appendContent?: string }) => {
+  const upsertAssistantMessage = (
+    assistantMessageId: string,
+    fields: {
+      content?: string
+      appendContent?: string
+      references?: MessageReference[]
+      highlights?: MessageHighlight[]
+      serverMessageId?: string | null
+    }
+  ) => {
     setMessages((prev) => {
       const index = prev.findIndex((msg) => msg.id === assistantMessageId)
 
@@ -147,6 +161,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       const next = [...prev]
       next[index] = {
         ...current,
+        references: fields.references ?? current.references,
+        highlights: fields.highlights ?? current.highlights,
+        serverMessageId: fields.serverMessageId || current.serverMessageId,
         content: fields.content ?? (fields.appendContent ? current.content + fields.appendContent : current.content),
       }
       return next
@@ -174,6 +191,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
           throw new Error(data?.error || 'Failed to load chatbot')
         }
         setName(data.name || 'Document Chatbot')
+        setAutoRegenerateOnDislike(data.autoRegenerateOnDislike !== false)
       } catch (e: any) {
         setError(e?.message || 'Failed to load chatbot')
       } finally {
@@ -184,7 +202,12 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     load()
   }, [slug, token])
 
-  const sendMessage = async (overrideText?: string) => {
+  const sendMessage = async (
+    overrideText?: string,
+    options?: {
+      improveFromFeedback?: { feedbackReason?: string; feedbackMessageId?: string }
+    }
+  ) => {
     const trimmed = (overrideText ?? query).trim()
     if (!trimmed || sending || !token) return
 
@@ -228,6 +251,7 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
           slug,
           query: trimmed,
           sessionId: sessionId || undefined,
+          improveFromFeedback: options?.improveFromFeedback,
           history: nextMessages.slice(-8).map((m) => ({ role: m.role, content: m.content })),
           stream: true,
         }),
@@ -295,7 +319,12 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
         }
 
         setSessionId((prev) => finalPayload.sessionId || prev)
-        upsertAssistantMessage(assistantMessageId, { content: finalPayload.answer || '' })
+        upsertAssistantMessage(assistantMessageId, {
+          content: finalPayload.answer || '',
+          references: finalPayload.references || [],
+          highlights: finalPayload.highlights || [],
+          serverMessageId: finalPayload.messageId || null,
+        })
         finishedSuccessfully = true
         return
       }
@@ -305,7 +334,14 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       const data = await res.json()
 
       setSessionId((prev) => data.sessionId || prev)
-      setMessages((prev) => [...prev, { id: assistantMessageId, role: 'assistant', content: data.answer || '' }])
+      setMessages((prev) => [...prev, {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: data.answer || '',
+        references: data.references || [],
+        highlights: data.highlights || [],
+        serverMessageId: data.messageId || undefined,
+      }])
       finishedSuccessfully = true
     } catch (e: any) {
       const isAbort = e?.name === 'AbortError' || /abort/i.test(String(e?.message || ''))
@@ -343,8 +379,56 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     setTimeout(() => setCopiedMessageId(null), 2000)
   }
 
-  const handleFeedback = (id: string, type: 'up' | 'down') => {
+  const handleFeedback = async (id: string, type: 'up' | 'down') => {
     setResponseFeedback((prev) => ({ ...prev, [id]: type }))
+
+    const assistantMessage = messages.find((msg) => msg.id === id)
+    const previousUserMessage = getPreviousUserMessage(id)
+    let feedbackReason = ''
+
+    if (type === 'down') {
+      const prompted = window.prompt('What should DocMind improve in this response?', '')
+      if (prompted === null) return
+      feedbackReason = prompted.trim().slice(0, 500)
+    }
+
+    try {
+      const authHeaders = await getAuthHeader()
+      await fetch('/api/chatbots/runtime/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-embed-token': token,
+          ...authHeaders,
+        },
+        body: JSON.stringify({
+          slug,
+          sessionId: sessionId || undefined,
+          appMessageId: assistantMessage?.serverMessageId || id,
+          feedbackType: type,
+          feedbackReason,
+          queryText: previousUserMessage,
+          responseText: assistantMessage?.content || '',
+        }),
+      })
+    } catch {
+      // Best-effort feedback persistence for public mode.
+    }
+
+    if (type === 'down' && previousUserMessage && autoRegenerateOnDislike) {
+      toast({
+        title: 'Improving response',
+        description: 'Using your feedback to generate a better answer.',
+      })
+      await sendMessage(previousUserMessage, {
+        improveFromFeedback: {
+          feedbackReason,
+          feedbackMessageId: assistantMessage?.serverMessageId || id,
+        },
+      })
+      return
+    }
+
     toast({
       title: type === 'up' ? 'Thanks for the feedback' : 'Feedback noted',
       description: type === 'up' ? 'Glad this response was helpful.' : 'We will use this to improve responses.',
@@ -440,6 +524,32 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                   {message.content}
                   {sending && activeStreamingMessageId === message.id && (
                     <span className="inline-block animate-pulse ml-0.5">▍</span>
+                  )}
+
+                  {message.role === 'assistant' && message.highlights && message.highlights.length > 0 && (
+                    <div className="mt-3 space-y-1.5">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Important Text</p>
+                      {message.highlights.slice(0, 4).map((item, idx) => (
+                        <div key={`${message.id}-h-${idx}`} className="rounded-md border border-amber-300/40 bg-amber-50/70 dark:bg-amber-900/20 px-2.5 py-1.5">
+                          <p className="text-xs leading-relaxed">{item.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {message.role === 'assistant' && message.references && message.references.length > 0 && (
+                    <div className="mt-3 space-y-1.5">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">References</p>
+                      {message.references.slice(0, 3).map((ref, idx) => (
+                        <div key={`${message.id}-r-${idx}`} className="rounded-md border border-border/70 bg-secondary/30 px-2.5 py-1.5">
+                          <p className="text-[11px] font-medium flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            {ref.documentName}
+                          </p>
+                          {ref.snippet && <p className="text-[11px] text-muted-foreground mt-1">{ref.snippet}</p>}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
