@@ -14,7 +14,18 @@ export async function GET(request: NextRequest) {
     const user = await getAuthenticatedUser(request)
     
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      // Try to get detailed error
+      const authHeader = request.headers.get('authorization')
+      const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined
+      let dbgError = 'No token provided'
+      if (token && supabaseServer) {
+        const { error } = await supabaseServer.auth.getUser(token)
+        dbgError = error ? `[${error.status}] ${error.message} (${error.name})` : 'User not found in result'
+      } else if (!supabaseServer) {
+        dbgError = 'supabaseServer instance is null'
+      }
+
+      return NextResponse.json({ error: 'Authentication required', details: dbgError }, { status: 401 })
     }
 
     const authHeader = request.headers.get('authorization')
