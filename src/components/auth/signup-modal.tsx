@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Eye, EyeOff, Mail, Lock, User, Github, Chrome, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, Globe, GitBranch, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
 interface SignupModalProps {
@@ -99,7 +99,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
               onClick={() => handleSocialSignup('google')}
               disabled={isLoading}
             >
-              <Chrome className="w-5 h-5 mr-3 text-muted-foreground" />
+              <Globe className="w-5 h-5 mr-3 text-muted-foreground" />
               Continue with Google
             </Button>
             <Button
@@ -108,7 +108,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
               onClick={() => handleSocialSignup('github')}
               disabled={isLoading}
             >
-              <Github className="w-5 h-5 mr-3 text-muted-foreground" />
+              <GitBranch className="w-5 h-5 mr-3 text-muted-foreground" />
               Continue with GitHub
             </Button>
           </div>

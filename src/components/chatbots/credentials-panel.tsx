@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { BookOpen, ExternalLink, Terminal } from 'lucide-react'
 
-import { useState, useEffect } from 'react'
-
 interface CredentialsPanelProps {
   generatedToken: string
   generatedApiKey: string
@@ -25,13 +23,7 @@ export function CredentialsPanel({
   previewName,
   onCopyText,
 }: CredentialsPanelProps) {
-  const [origin, setOrigin] = useState('')
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setOrigin(window.location.origin)
-    }
-  }, [])
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   if (!generatedToken && !generatedApiKey) return null
 
