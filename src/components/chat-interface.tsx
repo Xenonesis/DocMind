@@ -12,7 +12,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import type { Document, ChatMessage, StreamDebugEntry, UploadResponse } from '@/types'
-import { MessageBubble, TypingIndicator } from './chat/message-bubble'
+import { MessageBubble } from './chat/message-bubble'
+import { ChatTypingSkeleton } from './chat/chat-typing-skeleton'
 import { DocPicker } from './chat/doc-picker'
 import { ChatEmptyState } from './chat/empty-state'
 import { ChatInput } from './chat/chat-input'
@@ -456,7 +457,7 @@ export function ChatInterface({
               />
             ))}
             <AnimatePresence>
-              {isStreaming && !hasActiveStreamingMessage && <TypingIndicator />}
+              {isStreaming && !hasActiveStreamingMessage && <ChatTypingSkeleton />}
             </AnimatePresence>
             <div ref={bottomRef} />
           </div>

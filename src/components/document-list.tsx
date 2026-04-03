@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 
 import { DocumentPreview } from './document-preview'
+import { DocumentItemSkeleton } from './document-item-skeleton'
 
 interface Document {
   id: string
@@ -181,62 +182,65 @@ export function DocumentList({ documents }: DocumentListProps) {
       <ScrollArea className="flex-1 border border-border/50 rounded-2xl bg-card shadow-sm overflow-hidden h-[500px]">
         <div className="divide-y divide-border/40">
           {filteredDocuments.map((doc) => (
-            <div
-              key={doc.id}
-              className="p-5 hover:bg-secondary/20 transition-colors group flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="p-3 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground shadow-sm">
-                  {getFileIcon(doc.name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground truncate mb-1">{doc.name}</h3>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> {doc.size}</span>
-                    <span className="text-border">•</span>
-                    <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formatDate(doc.uploadDate)}</span>
-                  </div>
-                  {doc.tags && doc.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {doc.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-[10px] px-2 py-0 font-medium">
-                          {tag}
-                        </Badge>
-                      ))}
+            <div key={doc.id}>
+              {doc.status === 'UPLOADING' || doc.status === 'PROCESSING' ? (
+                <DocumentItemSkeleton />
+              ) : (
+                <div className="p-5 hover:bg-secondary/20 transition-colors group flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="p-3 rounded-lg bg-secondary/50 border border-border/50 text-muted-foreground shadow-sm">
+                      {getFileIcon(doc.name)}
                     </div>
-                  )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground truncate mb-1">{doc.name}</h3>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> {doc.size}</span>
+                        <span className="text-border">•</span>
+                        <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formatDate(doc.uploadDate)}</span>
+                      </div>
+                      {doc.tags && doc.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2.5">
+                          {doc.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-[10px] px-2 py-0 font-medium">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
+                    <Badge className={`${getStatusColor(doc.status)} px-3 py-1 shadow-none border-0 gap-1.5 capitalize font-medium`}>
+                      {getStatusIcon(doc.status)}
+                      {doc.status.toLowerCase()}
+                    </Badge>
+                    
+                    <div className="flex items-center gap-1.5">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handlePreview(doc)}
+                        className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
+                        title="Preview Document"
+                        aria-label={`Preview ${doc.name}`}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDownload(doc)}
+                        className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
+                        title="Download Document"
+                        aria-label={`Download ${doc.name}`}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
-                <Badge className={`${getStatusColor(doc.status)} px-3 py-1 shadow-none border-0 gap-1.5 capitalize font-medium`}>
-                  {getStatusIcon(doc.status)}
-                  {doc.status.toLowerCase()}
-                </Badge>
-                
-                <div className="flex items-center gap-1.5">
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handlePreview(doc)}
-                    className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
-                    title="Preview Document"
-                    aria-label={`Preview ${doc.name}`}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleDownload(doc)}
-                    className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
-                    title="Download Document"
-                    aria-label={`Download ${doc.name}`}
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+              )}
             </div>
           ))}
           

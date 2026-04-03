@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { DocumentUpload } from '@/components/document-upload'
 import { DocumentList } from '@/components/document-list'
+import { DocumentSkeleton } from '@/components/document-skeleton'
 import { AnalysisResults } from '@/components/analysis-results'
 import { AiApiSettings } from '@/components/settings/ai-api-settings'
 import { useAuth } from '@/lib/auth-context'
@@ -131,10 +132,7 @@ export default function Dashboard() {
 
                 <TabsContent value="documents" className="m-0 focus-visible:outline-none flex-1">
                   {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-32 text-muted-foreground">
-                      <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
-                      <p className="font-medium">Loading documents...</p>
-                    </div>
+                    <DocumentSkeleton />
                   ) : documents.length > 0 ? (
                     <DocumentList documents={documents} />
                   ) : (
