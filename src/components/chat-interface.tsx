@@ -552,7 +552,7 @@ export function ChatInterface({
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header Bar */}
-      <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50 shrink-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 pb-4 border-b border-border/50 shrink-0 gap-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
             <Sparkles className="w-4 h-4" />
@@ -564,7 +564,7 @@ export function ChatInterface({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           {messages.length > 0 && (
             <Button
               variant="ghost"

@@ -698,7 +698,7 @@ export default function DocumentPreviewPage() {
                 </div>
 
                 {document && (
-                  <div className="flex items-center gap-2 shrink-0 bg-secondary/30 p-1.5 rounded-full border border-border/50">
+                  <div className="flex items-center gap-2 shrink-0 bg-secondary/30 p-1.5 rounded-full border border-border/50 overflow-x-auto max-w-full">
                     <Badge
                       variant="outline"
                       className="rounded-full px-3 py-1 font-medium bg-background text-foreground border-border/50 hidden sm:flex"
@@ -781,7 +781,7 @@ export default function DocumentPreviewPage() {
             </div>
           </div>
 
-          <div className="bg-background border-b border-border px-4 py-2 sticky top-[73px] sm:top-[73px] z-40">
+          <div className="bg-background border-b border-border px-2 sm:px-4 py-2 sticky top-[73px] sm:top-[73px] z-40">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 overflow-x-auto flex-1">
                 <div className="flex items-center gap-1.5 bg-secondary/30 p-1 rounded-full border border-border/50">

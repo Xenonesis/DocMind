@@ -251,7 +251,7 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
       </div>
 
       <div
-        className={`relative flex-1 group border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center transition-all min-h-[400px] ${
+        className={`relative flex-1 group border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-6 sm:p-8 md:p-12 text-center transition-all min-h-[300px] sm:min-h-[400px] ${
           isDragOver
             ? 'border-primary bg-primary/5'
             : 'border-border bg-card/50 hover:bg-card hover:border-border/80'
@@ -260,12 +260,12 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
       >
-        <div className="relative z-10 flex flex-col items-center max-w-sm">
-          <div className="w-20 h-20 bg-background shadow-sm rounded-full flex items-center justify-center mb-6 text-muted-foreground group-hover:scale-105 transition-transform group-hover:text-primary">
-            <Upload className="w-10 h-10" />
+        <div className="relative z-10 flex flex-col items-center max-w-xs sm:max-w-sm px-4">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-background shadow-sm rounded-full flex items-center justify-center mb-4 sm:mb-6 text-muted-foreground group-hover:scale-105 transition-transform group-hover:text-primary">
+            <Upload className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Drag & drop files here</h3>
-          <p className="text-muted-foreground mb-8">
+          <h3 className="text-lg sm:text-xl font-semibold mb-2">Drag & drop files here</h3>
+          <p className="text-muted-foreground mb-6 sm:mb-8 text-sm sm:text-base">
             or select files from your computer. Supports PDF, Word, TXT, Images, and structured data
             formats.
           </p>
@@ -278,7 +278,11 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
             className="hidden"
             id="file-upload"
           />
-          <Button asChild size="lg" className="rounded-full px-8 shadow-sm cursor-pointer">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-full px-6 sm:px-8 shadow-sm cursor-pointer w-full sm:w-auto"
+          >
             <label htmlFor="file-upload">Browse Files</label>
           </Button>
         </div>

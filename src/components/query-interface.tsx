@@ -325,7 +325,7 @@ export function QueryInterface({
                 onInput={handleInput}
               />
 
-              <div className="flex items-center justify-between p-3 bg-secondary/20 border-t border-border/50">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 bg-secondary/20 border-t border-border/50">
                 <div className="flex items-center gap-2">
                   <Button
                     onClick={toggleVoiceRecognition}
