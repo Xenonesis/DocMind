@@ -1,11 +1,12 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Send, Loader2, Paperclip, Square } from 'lucide-react'
 import type { StreamDebugEntry, Document } from '@/types'
+import { useTextMeasurement } from '@/hooks/use-text-measurement'
 
 interface ChatInputProps {
   input: string
@@ -39,6 +40,21 @@ export function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const measurement = useTextMeasurement({
+    font: '14px Inter, system-ui, sans-serif',
+    whiteSpace: 'pre-wrap',
+    lineHeight: 20,
+    maxWidth: 600,
+  })
+
+  const calculateHeight = useCallback(
+    (text: string, width: number) => {
+      const { height } = measurement.measureText(text, width)
+      return Math.min(Math.max(height + 20, 56), 200)
+    },
+    [measurement]
+  )
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -49,6 +65,16 @@ export function ChatInput({
   const openUploadPicker = () => {
     fileInputRef.current?.click()
   }
+
+  const handleInput = useCallback(
+    (e: React.FormEvent<HTMLTextAreaElement>) => {
+      const t = e.currentTarget
+      const width = t.offsetWidth - 56
+      const height = calculateHeight(t.value, width)
+      t.style.height = `${height}px`
+    },
+    [calculateHeight]
+  )
 
   return (
     <div className="mt-4 pt-4 border-t border-border/50 shrink-0">
@@ -106,11 +132,7 @@ export function ChatInput({
             className="resize-none min-h-[56px] max-h-[200px] rounded-2xl bg-secondary/30 border-border/50 shadow-inner pl-14 pr-14 py-4 text-sm leading-relaxed focus-visible:ring-1 focus-visible:ring-primary focus-visible:bg-background transition-all"
             rows={1}
             style={{ height: 'auto' }}
-            onInput={(e) => {
-              const t = e.currentTarget
-              t.style.height = 'auto'
-              t.style.height = Math.min(t.scrollHeight, 200) + 'px'
-            }}
+            onInput={handleInput}
           />
           <Button
             onClick={openUploadPicker}

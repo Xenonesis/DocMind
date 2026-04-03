@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,7 @@ import {
   Shield,
   MessageSquare,
 } from 'lucide-react'
+import { useTextMeasurement } from '@/hooks/use-text-measurement'
 
 interface QueryInterfaceProps {
   query: string
@@ -72,6 +73,31 @@ export function QueryInterface({
   const [mentionQuery, setMentionQuery] = useState('')
   const [isListening, setIsListening] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const measurement = useTextMeasurement({
+    font: '16px Inter, system-ui, sans-serif',
+    whiteSpace: 'pre-wrap',
+    lineHeight: 24,
+    maxWidth: 800,
+  })
+
+  const calculateHeight = useCallback(
+    (text: string, width: number) => {
+      const { height } = measurement.measureText(text, width)
+      return Math.min(Math.max(height + 20, 220), 400)
+    },
+    [measurement]
+  )
+
+  const handleInput = useCallback(
+    (e: React.FormEvent<HTMLTextAreaElement>) => {
+      const t = e.currentTarget
+      const width = t.offsetWidth - 40
+      const height = calculateHeight(t.value, width)
+      t.style.height = `${height}px`
+    },
+    [calculateHeight]
+  )
 
   const fetchCurrentProvider = async () => {
     try {
@@ -296,6 +322,7 @@ export function QueryInterface({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit()
                 }}
+                onInput={handleInput}
               />
 
               <div className="flex items-center justify-between p-3 bg-secondary/20 border-t border-border/50">

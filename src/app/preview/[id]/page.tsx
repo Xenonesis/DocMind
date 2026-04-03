@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -34,6 +34,7 @@ import {
   Minimize2,
   TerminalSquare,
 } from 'lucide-react'
+import { useTextMeasurement } from '@/hooks/use-text-measurement'
 
 interface Document {
   id: string
@@ -158,10 +159,31 @@ export default function DocumentPreviewPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const previewAreaRef = useRef<HTMLDivElement>(null)
 
+  const measurement = useTextMeasurement({
+    font: '14px Inter, system-ui, sans-serif',
+    whiteSpace: 'normal',
+    lineHeight: 22,
+    maxWidth: 800,
+  })
+
   const parsedTextSections = useMemo(() => {
     if (previewContent?.contentType !== 'text') return []
     return parseTextSections(previewContent.content)
   }, [previewContent])
+
+  const sectionHeights = useMemo(() => {
+    if (previewContent?.contentType !== 'text') return {}
+    const widths = typeof window !== 'undefined' ? Math.min(window.innerWidth - 100, 800) : 600
+    return parsedTextSections.reduce(
+      (acc, section) => {
+        const text = section.lines.join(' ')
+        const { height } = measurement.measureText(text, widths)
+        acc[section.id] = height
+        return acc
+      },
+      {} as Record<string, number>
+    )
+  }, [parsedTextSections, previewContent?.contentType, measurement])
 
   useEffect(() => {
     if (documentId) {
