@@ -284,12 +284,10 @@ export function ChatInterface({
           selectedTextContext: options?.selectedTextContext,
           improveFromFeedback: options?.improveFromFeedback,
           documentIds: selectedDocIds.length > 0 ? selectedDocIds : undefined,
-          history: messages
-            .slice(-8)
-            .map((m) => ({
-              role: m.role === 'assistant' ? 'assistant' : 'user',
-              content: m.content,
-            })),
+          history: messages.slice(-8).map((m) => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content,
+          })),
           provider: selectedProvider,
           stream: true,
         }),
