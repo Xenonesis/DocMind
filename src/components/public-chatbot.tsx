@@ -32,7 +32,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const streamDebugEnabled = process.env.NEXT_PUBLIC_STREAM_DEBUG === '1'
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  const [streamState, setStreamState] = useState<'idle' | 'streaming' | 'completed' | 'stopped'>('idle')
+  const [streamState, setStreamState] = useState<'idle' | 'streaming' | 'completed' | 'stopped'>(
+    'idle'
+  )
   const [activeStreamingMessageId, setActiveStreamingMessageId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [name, setName] = useState('Document Chatbot')
@@ -51,7 +53,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
   const getAuthHeader = async (): Promise<Record<string, string>> => {
     if (!supabase) return {}
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       if (session?.access_token) {
         return { Authorization: `Bearer ${session.access_token}` }
       }
@@ -119,7 +123,11 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     if (!streamDebugEnabled) return
     const entry: StreamDebugEntry = {
       id: Date.now() + Math.floor(Math.random() * 1000),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }),
       message,
     }
     setStreamDebugEntries((prev) => [...prev.slice(-23), entry])
@@ -150,11 +158,14 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       const index = prev.findIndex((msg) => msg.id === assistantMessageId)
 
       if (index === -1) {
-        return [...prev, {
-          id: assistantMessageId,
-          role: 'assistant',
-          content: fields.content ?? fields.appendContent ?? '',
-        }]
+        return [
+          ...prev,
+          {
+            id: assistantMessageId,
+            role: 'assistant',
+            content: fields.content ?? fields.appendContent ?? '',
+          },
+        ]
       }
 
       const current = prev[index]
@@ -164,7 +175,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
         references: fields.references ?? current.references,
         highlights: fields.highlights ?? current.highlights,
         serverMessageId: fields.serverMessageId || current.serverMessageId,
-        content: fields.content ?? (fields.appendContent ? current.content + fields.appendContent : current.content),
+        content:
+          fields.content ??
+          (fields.appendContent ? current.content + fields.appendContent : current.content),
       }
       return next
     })
@@ -308,7 +321,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
 
               if (event.type === 'done' && event.payload) {
                 finalPayload = event.payload
-                addStreamDebugEntry(`Done event received after ${chunkCount} chunks (${totalChars} chars)`)
+                addStreamDebugEntry(
+                  `Done event received after ${chunkCount} chunks (${totalChars} chars)`
+                )
               }
             }
           }
@@ -334,14 +349,17 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
       const data = await res.json()
 
       setSessionId((prev) => data.sessionId || prev)
-      setMessages((prev) => [...prev, {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: data.answer || '',
-        references: data.references || [],
-        highlights: data.highlights || [],
-        serverMessageId: data.messageId || undefined,
-      }])
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: data.answer || '',
+          references: data.references || [],
+          highlights: data.highlights || [],
+          serverMessageId: data.messageId || undefined,
+        },
+      ])
       finishedSuccessfully = true
     } catch (e: any) {
       const isAbort = e?.name === 'AbortError' || /abort/i.test(String(e?.message || ''))
@@ -350,7 +368,14 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
         addStreamDebugEntry('Stream aborted by user')
       } else {
         addStreamDebugEntry(`Stream error: ${e?.message || 'unknown error'}`)
-        setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: e?.message || 'Something went wrong' }])
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            content: e?.message || 'Something went wrong',
+          },
+        ])
       }
     } finally {
       setSending(false)
@@ -431,7 +456,10 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
 
     toast({
       title: type === 'up' ? 'Thanks for the feedback' : 'Feedback noted',
-      description: type === 'up' ? 'Glad this response was helpful.' : 'We will use this to improve responses.',
+      description:
+        type === 'up'
+          ? 'Glad this response was helpful.'
+          : 'We will use this to improve responses.',
     })
   }
 
@@ -446,7 +474,8 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
     return ''
   }
 
-  const latestAssistantMessageId = [...messages].reverse().find((msg) => msg.role === 'assistant')?.id || null
+  const latestAssistantMessageId =
+    [...messages].reverse().find((msg) => msg.role === 'assistant')?.id || null
 
   const handleRegenerate = (assistantMessageId: string) => {
     if (sending || assistantMessageId !== latestAssistantMessageId) return
@@ -466,19 +495,19 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <div className="flex flex-col gap-4">
-                 <div className="h-12 w-3/4 max-w-sm bg-muted/40 rounded-2xl rounded-bl-none animate-pulse self-start mr-12" />
-                 <div className="h-16 w-2/3 max-w-md bg-primary/20 rounded-2xl rounded-br-none animate-pulse self-end ml-12" />
-                 <div className="h-10 w-1/2 max-w-xs bg-muted/40 rounded-2xl rounded-bl-none animate-pulse self-start mr-12" />
+                <div className="h-12 w-3/4 max-w-sm bg-muted/40 rounded-2xl rounded-bl-none animate-pulse self-start mr-12" />
+                <div className="h-16 w-2/3 max-w-md bg-primary/20 rounded-2xl rounded-br-none animate-pulse self-end ml-12" />
+                <div className="h-10 w-1/2 max-w-xs bg-muted/40 rounded-2xl rounded-bl-none animate-pulse self-start mr-12" />
               </div>
             </CardContent>
           </Card>
           <Card className="shadow-sm border-border overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
             <CardContent className="pt-6">
-               <div className="flex gap-3">
-                 <div className="h-10 w-full bg-muted/30 rounded-xl animate-pulse" />
-                 <div className="h-10 w-12 bg-primary/30 rounded-xl animate-pulse shrink-0" />
-               </div>
+              <div className="flex gap-3">
+                <div className="h-10 w-full bg-muted/30 rounded-xl animate-pulse" />
+                <div className="h-10 w-12 bg-primary/30 rounded-xl animate-pulse shrink-0" />
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -510,7 +539,9 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
           </CardHeader>
           <CardContent className="space-y-3 max-h-[60vh] overflow-y-auto">
             {messages.length === 0 && (
-              <p className="text-sm text-muted-foreground">Ask any question related to linked documents.</p>
+              <p className="text-sm text-muted-foreground">
+                Ask any question related to linked documents.
+              </p>
             )}
             {messages.map((message) => (
               <div key={message.id} className="space-y-1">
@@ -526,31 +557,49 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                     <span className="inline-block animate-pulse ml-0.5">▍</span>
                   )}
 
-                  {message.role === 'assistant' && message.highlights && message.highlights.length > 0 && (
-                    <div className="mt-3 space-y-1.5">
-                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Important Text</p>
-                      {message.highlights.slice(0, 4).map((item, idx) => (
-                        <div key={`${message.id}-h-${idx}`} className="rounded-md border border-amber-300/40 bg-amber-50/70 dark:bg-amber-900/20 px-2.5 py-1.5">
-                          <p className="text-xs leading-relaxed">{item.text}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {message.role === 'assistant' &&
+                    message.highlights &&
+                    message.highlights.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Important Text
+                        </p>
+                        {message.highlights.slice(0, 4).map((item, idx) => (
+                          <div
+                            key={`${message.id}-h-${idx}`}
+                            className="rounded-md border border-amber-300/40 bg-amber-50/70 dark:bg-amber-900/20 px-2.5 py-1.5"
+                          >
+                            <p className="text-xs leading-relaxed">{item.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                  {message.role === 'assistant' && message.references && message.references.length > 0 && (
-                    <div className="mt-3 space-y-1.5">
-                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">References</p>
-                      {message.references.slice(0, 3).map((ref, idx) => (
-                        <div key={`${message.id}-r-${idx}`} className="rounded-md border border-border/70 bg-secondary/30 px-2.5 py-1.5">
-                          <p className="text-[11px] font-medium flex items-center gap-1">
-                            <FileText className="w-3 h-3" />
-                            {ref.documentName}
-                          </p>
-                          {ref.snippet && <p className="text-[11px] text-muted-foreground mt-1">{ref.snippet}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {message.role === 'assistant' &&
+                    message.references &&
+                    message.references.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                          References
+                        </p>
+                        {message.references.slice(0, 3).map((ref, idx) => (
+                          <div
+                            key={`${message.id}-r-${idx}`}
+                            className="rounded-md border border-border/70 bg-secondary/30 px-2.5 py-1.5"
+                          >
+                            <p className="text-[11px] font-medium flex items-center gap-1">
+                              <FileText className="w-3 h-3" />
+                              {ref.documentName}
+                            </p>
+                            {ref.snippet && (
+                              <p className="text-[11px] text-muted-foreground mt-1">
+                                {ref.snippet}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                 </div>
 
                 {message.role === 'assistant' && (
@@ -561,7 +610,11 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                       aria-label="Copy assistant response"
                       title="Copy"
                     >
-                      {copiedMessageId === message.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      {copiedMessageId === message.id ? (
+                        <Check className="w-3 h-3" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
                     </button>
                     <button
                       onClick={() => handleFeedback(message.id, 'up')}
@@ -618,18 +671,20 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                   }
                 }}
               />
-              <Button onClick={() => sending ? stopGenerating() : sendMessage()}>
+              <Button onClick={() => (sending ? stopGenerating() : sendMessage())}>
                 {sending ? <Square className="w-4 h-4" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
             {streamState !== 'idle' && (
-              <p className={`mt-2 text-xs font-medium ${
-                streamState === 'streaming'
-                  ? 'text-primary'
-                  : streamState === 'completed'
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-amber-600 dark:text-amber-400'
-              }`}>
+              <p
+                className={`mt-2 text-xs font-medium ${
+                  streamState === 'streaming'
+                    ? 'text-primary'
+                    : streamState === 'completed'
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-amber-600 dark:text-amber-400'
+                }`}
+              >
                 {streamState === 'streaming'
                   ? 'Generating response...'
                   : streamState === 'completed'
@@ -650,7 +705,8 @@ export function PublicChatbot({ slug }: PublicChatbotProps) {
                   ) : (
                     streamDebugEntries.map((entry) => (
                       <p key={entry.id} className="text-xs text-muted-foreground">
-                        <span className="text-foreground/80">[{entry.timestamp}]</span> {entry.message}
+                        <span className="text-foreground/80">[{entry.timestamp}]</span>{' '}
+                        {entry.message}
                       </p>
                     ))
                   )}

@@ -7,16 +7,16 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Brain, 
-  FileText, 
-  TrendingUp, 
-  AlertTriangle, 
+import {
+  Brain,
+  FileText,
+  TrendingUp,
+  AlertTriangle,
   CheckCircle,
   Lightbulb,
   Target,
   Shield,
-  Zap
+  Zap,
 } from 'lucide-react'
 
 interface AnalysisResult {
@@ -36,7 +36,11 @@ interface SmartAnalysisProps {
   onAnalysisComplete?: (results: AnalysisResult[]) => void
 }
 
-export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComplete }: SmartAnalysisProps) {
+export function SmartDocumentAnalyzer({
+  documentId,
+  documentName,
+  onAnalysisComplete,
+}: SmartAnalysisProps) {
   const [analyzing, setAnalyzing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [results, setResults] = useState<AnalysisResult[]>([])
@@ -52,11 +56,11 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
         'Analyzing structure and patterns...',
         'Identifying key insights...',
         'Checking compliance requirements...',
-        'Generating recommendations...'
+        'Generating recommendations...',
       ]
 
       for (let i = 0; i < steps.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         setProgress((i + 1) * 20)
       }
 
@@ -64,50 +68,52 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
         {
           type: 'insight',
           title: 'Key Performance Indicators Identified',
-          description: 'Document contains 5 measurable KPIs that could be tracked for business improvement.',
+          description:
+            'Document contains 5 measurable KPIs that could be tracked for business improvement.',
           confidence: 92,
           severity: 'medium',
           category: 'Business Intelligence',
           suggestions: [
             'Set up automated tracking for identified KPIs',
             'Create dashboard for real-time monitoring',
-            'Establish baseline measurements'
+            'Establish baseline measurements',
           ],
-          relatedDocuments: ['quarterly-report.pdf', 'metrics-dashboard.xlsx']
+          relatedDocuments: ['quarterly-report.pdf', 'metrics-dashboard.xlsx'],
         },
         {
           type: 'risk',
           title: 'Potential Compliance Gap',
-          description: 'Document references data handling practices that may not align with GDPR requirements.',
+          description:
+            'Document references data handling practices that may not align with GDPR requirements.',
           confidence: 78,
           severity: 'high',
           category: 'Compliance',
           suggestions: [
             'Review data processing procedures',
             'Update privacy policy sections',
-            'Consult with legal team'
+            'Consult with legal team',
           ],
-          relatedDocuments: ['privacy-policy.pdf', 'gdpr-checklist.docx']
+          relatedDocuments: ['privacy-policy.pdf', 'gdpr-checklist.docx'],
         },
         {
           type: 'opportunity',
           title: 'Cost Optimization Potential',
-          description: 'Analysis reveals 3 areas where operational costs could be reduced by 15-20%.',
+          description:
+            'Analysis reveals 3 areas where operational costs could be reduced by 15-20%.',
           confidence: 85,
           severity: 'medium',
           category: 'Financial',
           suggestions: [
             'Implement suggested process improvements',
             'Negotiate better vendor contracts',
-            'Automate manual processes'
+            'Automate manual processes',
           ],
-          relatedDocuments: ['budget-analysis.xlsx', 'vendor-contracts.pdf']
-        }
+          relatedDocuments: ['budget-analysis.xlsx', 'vendor-contracts.pdf'],
+        },
       ]
 
       setResults(mockResults)
       onAnalysisComplete?.(mockResults)
-
     } catch (error) {
       console.error('Analysis failed:', error)
     } finally {
@@ -118,27 +124,38 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
 
   const getTypeIcon = (type: AnalysisResult['type']) => {
     switch (type) {
-      case 'insight': return <Lightbulb className="w-4 h-4" />
-      case 'risk': return <AlertTriangle className="w-4 h-4" />
-      case 'opportunity': return <Target className="w-4 h-4" />
-      case 'compliance': return <Shield className="w-4 h-4" />
+      case 'insight':
+        return <Lightbulb className="w-4 h-4" />
+      case 'risk':
+        return <AlertTriangle className="w-4 h-4" />
+      case 'opportunity':
+        return <Target className="w-4 h-4" />
+      case 'compliance':
+        return <Shield className="w-4 h-4" />
     }
   }
 
   const getTypeColor = (type: AnalysisResult['type']) => {
     switch (type) {
-      case 'insight': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'risk': return 'bg-red-100 text-red-800 border-red-200'
-      case 'opportunity': return 'bg-green-100 text-green-800 border-green-200'
-      case 'compliance': return 'bg-purple-100 text-purple-800 border-purple-200'
+      case 'insight':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'risk':
+        return 'bg-red-100 text-red-800 border-red-200'
+      case 'opportunity':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'compliance':
+        return 'bg-purple-100 text-purple-800 border-purple-200'
     }
   }
 
   const getSeverityColor = (severity: AnalysisResult['severity']) => {
     switch (severity) {
-      case 'low': return 'bg-gray-100 text-gray-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'high': return 'bg-red-100 text-red-800'
+      case 'low':
+        return 'bg-gray-100 text-gray-800'
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'high':
+        return 'bg-red-100 text-red-800'
     }
   }
 
@@ -195,11 +212,13 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
             <TabsContent value="overview" className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {(['insight', 'risk', 'opportunity', 'compliance'] as const).map((type) => {
-                  const count = results.filter(r => r.type === type).length
+                  const count = results.filter((r) => r.type === type).length
                   return (
                     <Card key={type}>
                       <CardContent className="p-4 text-center">
-                        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${getTypeColor(type)} mb-2`}>
+                        <div
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${getTypeColor(type)} mb-2`}
+                        >
                           {getTypeIcon(type)}
                           {type.charAt(0).toUpperCase() + type.slice(1)}
                         </div>
@@ -227,12 +246,13 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
                                 {getTypeIcon(result.type)}
                                 {result.type.charAt(0).toUpperCase() + result.type.slice(1)}
                               </Badge>
-                              <Badge variant="outline" className={getSeverityColor(result.severity)}>
+                              <Badge
+                                variant="outline"
+                                className={getSeverityColor(result.severity)}
+                              >
                                 {result.severity.toUpperCase()}
                               </Badge>
-                              <Badge variant="outline">
-                                {result.confidence}% confidence
-                              </Badge>
+                              <Badge variant="outline">{result.confidence}% confidence</Badge>
                             </div>
                             <h4 className="font-medium text-gray-900 mb-1">{result.title}</h4>
                             <p className="text-sm text-gray-600">{result.description}</p>
@@ -248,7 +268,7 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
             {(['insights', 'risks', 'opportunities'] as const).map((tabType) => (
               <TabsContent key={tabType} value={tabType} className="space-y-4">
                 {results
-                  .filter(r => r.type === tabType.slice(0, -1) as AnalysisResult['type'])
+                  .filter((r) => r.type === (tabType.slice(0, -1) as AnalysisResult['type']))
                   .map((result, index) => (
                     <motion.div
                       key={index}
@@ -265,19 +285,20 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
                                 <Badge className={getSeverityColor(result.severity)}>
                                   {result.severity.toUpperCase()}
                                 </Badge>
-                                <Badge variant="outline">
-                                  {result.confidence}% confidence
-                                </Badge>
+                                <Badge variant="outline">{result.confidence}% confidence</Badge>
                               </div>
                             </div>
-                            
+
                             <p className="text-gray-600">{result.description}</p>
-                            
+
                             <div>
                               <h5 className="font-medium text-gray-900 mb-2">Recommendations:</h5>
                               <ul className="space-y-1">
                                 {result.suggestions.map((suggestion, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
+                                  <li
+                                    key={idx}
+                                    className="flex items-start gap-2 text-sm text-gray-600"
+                                  >
                                     <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                                     {suggestion}
                                   </li>
@@ -287,7 +308,9 @@ export function SmartDocumentAnalyzer({ documentId, documentName, onAnalysisComp
 
                             {result.relatedDocuments.length > 0 && (
                               <div>
-                                <h5 className="font-medium text-gray-900 mb-2">Related Documents:</h5>
+                                <h5 className="font-medium text-gray-900 mb-2">
+                                  Related Documents:
+                                </h5>
                                 <div className="flex flex-wrap gap-2">
                                   {result.relatedDocuments.map((doc, idx) => (
                                     <Badge key={idx} variant="outline" className="gap-1">

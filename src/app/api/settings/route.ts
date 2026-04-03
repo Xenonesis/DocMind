@@ -10,12 +10,14 @@ const providerPayloadSchema = z.object({
   model: z.string().max(256).optional().default(''),
   isActive: z.boolean().optional().default(false),
   baseUrl: z.string().max(2048).optional().nullable(),
-  config: z.object({
-    temperature: z.number().min(0).max(2).optional(),
-    maxTokens: z.number().int().min(1).max(131072).optional(),
-    topP: z.number().min(0).max(1).optional(),
-    costPer1kTokens: z.number().min(0).max(1000000).nullable().optional(),
-  }).optional(),
+  config: z
+    .object({
+      temperature: z.number().min(0).max(2).optional(),
+      maxTokens: z.number().int().min(1).max(131072).optional(),
+      topP: z.number().min(0).max(1).optional(),
+      costPer1kTokens: z.number().min(0).max(1000000).nullable().optional(),
+    })
+    .optional(),
 })
 
 const settingsPayloadSchema = z.object({
@@ -25,7 +27,7 @@ const settingsPayloadSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -47,9 +49,12 @@ export async function GET(request: NextRequest) {
 
       if (testError && testError.code === 'PGRST116') {
         console.error(`User ${user.id} not found in database:`, testError)
-        return NextResponse.json({ 
-          error: 'User session is invalid. Please log out and log back in.' 
-        }, { status: 401 })
+        return NextResponse.json(
+          {
+            error: 'User session is invalid. Please log out and log back in.',
+          },
+          { status: 401 }
+        )
       }
 
       if (testError) {
@@ -63,10 +68,16 @@ export async function GET(request: NextRequest) {
       await ensureUserProfile(user, db)
     } catch (profileError: any) {
       console.error('Error ensuring user profile:', profileError)
-      if (profileError.code === '23503' || profileError.message === 'User not found in authentication system') {
-        return NextResponse.json({ 
-          error: 'User session is invalid. Please log out and log back in.' 
-        }, { status: 401 })
+      if (
+        profileError.code === '23503' ||
+        profileError.message === 'User not found in authentication system'
+      ) {
+        return NextResponse.json(
+          {
+            error: 'User session is invalid. Please log out and log back in.',
+          },
+          { status: 401 }
+        )
       }
       throw profileError
     }
@@ -82,7 +93,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
     }
 
-    const formattedSettings = (settings || []).map(setting => ({
+    const formattedSettings = (settings || []).map((setting) => ({
       id: setting.id,
       provider: setting.provider_name,
       apiKey: '',
@@ -91,15 +102,15 @@ export async function GET(request: NextRequest) {
       model: setting.model_name,
       isActive: setting.is_active,
       baseUrl: setting.base_url || '',
-      costPer1kTokens: setting.cost_per_1k_tokens !== null && setting.cost_per_1k_tokens !== undefined
-        ? Number(setting.cost_per_1k_tokens)
-        : undefined,
+      costPer1kTokens:
+        setting.cost_per_1k_tokens !== null && setting.cost_per_1k_tokens !== undefined
+          ? Number(setting.cost_per_1k_tokens)
+          : undefined,
       createdAt: setting.created_at,
-      updatedAt: setting.updated_at
+      updatedAt: setting.updated_at,
     }))
 
     return NextResponse.json(formattedSettings)
-
   } catch (error) {
     console.error('Error fetching settings:', error)
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
@@ -111,7 +122,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     const user = await getAuthenticatedUser(request)
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -125,7 +136,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    try { await ensureUserProfile(user, db) } catch {}
+    try {
+      await ensureUserProfile(user, db)
+    } catch {}
 
     const parsed = settingsPayloadSchema.safeParse(body)
     if (!parsed.success) {
@@ -159,7 +172,8 @@ export async function POST(request: NextRequest) {
 
 async function upsertProviderSetting(db: any, userId: string, item: any) {
   const { provider, apiKey, model, isActive, config, baseUrl } = item
-  const costPer1kTokens = typeof config?.costPer1kTokens === 'number' ? config.costPer1kTokens : null
+  const costPer1kTokens =
+    typeof config?.costPer1kTokens === 'number' ? config.costPer1kTokens : null
   const looksMaskedKey = typeof apiKey === 'string' && apiKey.includes('*')
 
   const { data: existingSetting, error: fetchError } = await db
@@ -187,7 +201,7 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
       is_active: isActive,
       updated_at: new Date().toISOString(),
       base_url: baseUrl ?? existingSetting.base_url,
-      cost_per_1k_tokens: costPer1kTokens
+      cost_per_1k_tokens: costPer1kTokens,
     }
 
     const { data: updatedSetting, error: updateError } = await db
@@ -212,7 +226,7 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
       model_name: model || '',
       is_active: isActive,
       base_url: baseUrl ?? null,
-      cost_per_1k_tokens: costPer1kTokens
+      cost_per_1k_tokens: costPer1kTokens,
     }
 
     const { data: newSetting, error: createError } = await db
@@ -230,4 +244,3 @@ async function upsertProviderSetting(db: any, userId: string, item: any) {
 
   return result
 }
-

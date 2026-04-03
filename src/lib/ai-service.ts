@@ -1,9 +1,25 @@
-import { encryptApiKey, decryptApiKey, isValidApiKey, maskApiKey, sanitizeError } from './crypto-utils'
+import {
+  encryptApiKey,
+  decryptApiKey,
+  isValidApiKey,
+  maskApiKey,
+  sanitizeError,
+} from './crypto-utils'
 
 export interface AIProvider {
   id?: string
   name: string
-  type: 'google' | 'mistral' | 'lm-studio' | 'ollama' | 'open-router' | 'openai' | 'anthropic' | 'custom' | 'openai-compatible' | 'groq'
+  type:
+    | 'google'
+    | 'mistral'
+    | 'lm-studio'
+    | 'ollama'
+    | 'open-router'
+    | 'openai'
+    | 'anthropic'
+    | 'custom'
+    | 'openai-compatible'
+    | 'groq'
   baseUrl: string
   apiKey: string
   model: string
@@ -50,11 +66,14 @@ export class AIService {
     return AIService.instance
   }
 
-  private async loadProviders() {
-  }
+  private async loadProviders() {}
 
   getActiveProvider(): AIProvider | null {
-    return this.providers.find(p => p.isActive && (p.isConfigured || ['ollama', 'lm-studio'].includes(p.type))) || null
+    return (
+      this.providers.find(
+        (p) => p.isActive && (p.isConfigured || ['ollama', 'lm-studio'].includes(p.type))
+      ) || null
+    )
   }
 
   async loadProvidersFromDatabase(userId?: string) {
@@ -68,7 +87,7 @@ export class AIService {
       }
 
       const { supabaseServer } = await import('./supabase')
-      
+
       if (!supabaseServer) {
         return
       }
@@ -87,49 +106,49 @@ export class AIService {
       if (!settings || settings.length === 0) {
         return
       }
-      
-      this.providers = settings.map(setting => {
+
+      this.providers = settings.map((setting) => {
         const rawName = (setting.provider_name || '').toString()
         const providerName = rawName.trim().toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-')
 
         const typeMapping: Record<string, AIProvider['type']> = {
-          'google': 'google',
+          google: 'google',
           'google-ai': 'google',
-          'googleai': 'google',
+          googleai: 'google',
           'google-llm': 'google',
-          'gemini': 'google',
-          'mistral': 'mistral',
+          gemini: 'google',
+          mistral: 'mistral',
           'lm-studio': 'lm-studio',
-          'lmstudio': 'lm-studio',
-          'ollama': 'ollama',
-          'openrouter': 'open-router',
+          lmstudio: 'lm-studio',
+          ollama: 'ollama',
+          openrouter: 'open-router',
           'open-router': 'open-router',
           'openrouter.ai': 'open-router',
-          'openai': 'openai',
-          'chatgpt': 'openai',
-          'gpt': 'openai',
-          'anthropic': 'anthropic',
-          'claude': 'anthropic',
+          openai: 'openai',
+          chatgpt: 'openai',
+          gpt: 'openai',
+          anthropic: 'anthropic',
+          claude: 'anthropic',
           'openai-compatible': 'openai-compatible',
-          'groq': 'groq',
-          'custom': 'custom'
+          groq: 'groq',
+          custom: 'custom',
         }
 
         const mappedType: AIProvider['type'] =
           typeMapping[providerName] || typeMapping[providerName.replace(/\./g, '')] || 'custom'
-        
+
         const defaultBaseUrls: Record<string, string> = {
-          'google': 'https://generativelanguage.googleapis.com/v1beta',
-          'mistral': 'https://api.mistral.ai/v1',
-          'openai': 'https://api.openai.com/v1',
-          'anthropic': 'https://api.anthropic.com/v1',
+          google: 'https://generativelanguage.googleapis.com/v1beta',
+          mistral: 'https://api.mistral.ai/v1',
+          openai: 'https://api.openai.com/v1',
+          anthropic: 'https://api.anthropic.com/v1',
           'open-router': 'https://openrouter.ai/api/v1',
           'lm-studio': 'http://localhost:1234/v1',
-          'ollama': 'http://localhost:11434/api',
+          ollama: 'http://localhost:11434/api',
           'openai-compatible': 'https://api.your-provider.com/v1',
-          'groq': 'https://api.groq.com/openai/v1'
+          groq: 'https://api.groq.com/openai/v1',
         }
-        
+
         let decryptedApiKey = ''
         if (setting.api_key) {
           try {
@@ -139,7 +158,7 @@ export class AIService {
             decryptedApiKey = ''
           }
         }
-        
+
         return {
           id: setting.id,
           name: `${rawName} (${setting.model_name || ''})`,
@@ -151,10 +170,9 @@ export class AIService {
           isConfigured: !!decryptedApiKey,
           temperature: 0.7,
           maxTokens: 1000,
-          topP: 1.0
+          topP: 1.0,
         } as AIProvider
       })
-      
     } catch (error) {
       console.error('Failed to load AI providers from database:', error)
     }
@@ -166,7 +184,7 @@ export class AIService {
 
   async generateCompletion(config: AIServiceConfig): Promise<AIResponse> {
     const provider = config.provider
-    
+
     if (provider.type === 'groq' && !provider.apiKey && process.env.GROQ_API_KEY) {
       provider.apiKey = process.env.GROQ_API_KEY
     }
@@ -204,19 +222,19 @@ export class AIService {
 
   private async callGoogleAI(config: AIServiceConfig): Promise<AIResponse> {
     const { provider, prompt, systemPrompt, temperature = 0.7, maxTokens = 8192 } = config
-    
+
     const url = `${provider.baseUrl}/models/${provider.model}:generateContent?key=${provider.apiKey}`
-    
+
     const contents: any[] = []
     if (systemPrompt) {
       contents.push({
         role: 'user',
-        parts: [{ text: systemPrompt }]
+        parts: [{ text: systemPrompt }],
       })
     }
     contents.push({
       role: 'user',
-      parts: [{ text: prompt }]
+      parts: [{ text: prompt }],
     })
 
     const response = await fetch(url, {
@@ -229,9 +247,9 @@ export class AIService {
         generationConfig: {
           temperature,
           maxOutputTokens: maxTokens,
-          topP: provider.topP
-        }
-      })
+          topP: provider.topP,
+        },
+      }),
     })
 
     if (!response.ok) {
@@ -249,16 +267,16 @@ export class AIService {
       usage: {
         promptTokens: data.usageMetadata?.promptTokenCount || 0,
         completionTokens: data.usageMetadata?.candidatesTokenCount || 0,
-        totalTokens: data.usageMetadata?.totalTokenCount || 0
-      }
+        totalTokens: data.usageMetadata?.totalTokenCount || 0,
+      },
     }
   }
 
   private async callMistralAI(config: AIServiceConfig): Promise<AIResponse> {
     const { provider, prompt, systemPrompt, temperature = 0.7, maxTokens = 8192 } = config
-    
+
     const url = `${provider.baseUrl}/chat/completions`
-    
+
     const messages: any[] = []
     if (systemPrompt) {
       messages.push({ role: 'system', content: systemPrompt })
@@ -269,15 +287,15 @@ export class AIService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${provider.apiKey}`
+        Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify({
         model: provider.model,
         messages,
         temperature,
         max_tokens: maxTokens,
-        top_p: provider.topP
-      })
+        top_p: provider.topP,
+      }),
     })
 
     if (!response.ok) {
@@ -295,16 +313,16 @@ export class AIService {
       usage: {
         promptTokens: data.usage?.prompt_tokens || 0,
         completionTokens: data.usage?.completion_tokens || 0,
-        totalTokens: data.usage?.total_tokens || 0
-      }
+        totalTokens: data.usage?.total_tokens || 0,
+      },
     }
   }
 
   private async callLMStudio(config: AIServiceConfig): Promise<AIResponse> {
     const { provider, prompt, systemPrompt, temperature = 0.7, maxTokens = 8192 } = config
-    
+
     const url = `${provider.baseUrl}/chat/completions`
-    
+
     const messages: any[] = []
     if (systemPrompt) {
       messages.push({ role: 'system', content: systemPrompt })
@@ -315,15 +333,15 @@ export class AIService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(provider.apiKey && { 'Authorization': `Bearer ${provider.apiKey}` })
+        ...(provider.apiKey && { Authorization: `Bearer ${provider.apiKey}` }),
       },
       body: JSON.stringify({
         model: provider.model,
         messages,
         temperature,
         max_tokens: maxTokens,
-        top_p: provider.topP
-      })
+        top_p: provider.topP,
+      }),
     })
 
     if (!response.ok) {
@@ -341,22 +359,22 @@ export class AIService {
       usage: {
         promptTokens: data.usage?.prompt_tokens || 0,
         completionTokens: data.usage?.completion_tokens || 0,
-        totalTokens: data.usage?.total_tokens || 0
-      }
+        totalTokens: data.usage?.total_tokens || 0,
+      },
     }
   }
 
   private async callOllama(config: AIServiceConfig): Promise<AIResponse> {
     const { provider, prompt, systemPrompt, temperature = 0.7 } = config
-    
+
     const url = `${provider.baseUrl}/generate`
-    
+
     const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: provider.model,
@@ -365,9 +383,9 @@ export class AIService {
         options: {
           temperature,
           top_p: provider.topP,
-          num_predict: provider.maxTokens
-        }
-      })
+          num_predict: provider.maxTokens,
+        },
+      }),
     })
 
     if (!response.ok) {
@@ -385,16 +403,16 @@ export class AIService {
       usage: {
         promptTokens: data.prompt_eval_count || 0,
         completionTokens: data.eval_count || 0,
-        totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0)
-      }
+        totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0),
+      },
     }
   }
 
   private async callOpenRouter(config: AIServiceConfig): Promise<AIResponse> {
     const { provider, prompt, systemPrompt, temperature = 0.7, maxTokens = 8192 } = config
-    
+
     const url = `${provider.baseUrl}/chat/completions`
-    
+
     const messages: any[] = []
     if (systemPrompt) {
       messages.push({ role: 'system', content: systemPrompt })
@@ -405,17 +423,19 @@ export class AIService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${provider.apiKey}`,
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://docmind.app'),
-        'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'DocMind'
+        Authorization: `Bearer ${provider.apiKey}`,
+        'HTTP-Referer':
+          process.env.NEXT_PUBLIC_APP_URL ||
+          (typeof window !== 'undefined' ? window.location.origin : 'https://docmind.app'),
+        'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'DocMind',
       },
       body: JSON.stringify({
         model: provider.model,
         messages,
         temperature,
         max_tokens: maxTokens,
-        top_p: provider.topP
-      })
+        top_p: provider.topP,
+      }),
     })
 
     if (!response.ok) {
@@ -433,8 +453,8 @@ export class AIService {
       usage: {
         promptTokens: data.usage?.prompt_tokens || 0,
         completionTokens: data.usage?.completion_tokens || 0,
-        totalTokens: data.usage?.total_tokens || 0
-      }
+        totalTokens: data.usage?.total_tokens || 0,
+      },
     }
   }
 
@@ -456,23 +476,27 @@ export class AIService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${provider.apiKey}`
+          Authorization: `Bearer ${provider.apiKey}`,
         },
         body: JSON.stringify({
           model: provider.model,
           messages,
           temperature,
           max_tokens: maxTokens,
-          top_p: provider.topP
+          top_p: provider.topP,
         }),
-        signal: controller.signal
+        signal: controller.signal,
       })
     } catch (err: any) {
       clearTimeout(timeoutId)
       if (err?.name === 'AbortError') {
-        throw new Error(`Request timed out after 30s. The AI provider (${provider.name}) is not responding.`)
+        throw new Error(
+          `Request timed out after 30s. The AI provider (${provider.name}) is not responding.`
+        )
       }
-      throw new Error(`Network error connecting to AI provider (${provider.name}): ${err?.message || 'Unknown error'}`)
+      throw new Error(
+        `Network error connecting to AI provider (${provider.name}): ${err?.message || 'Unknown error'}`
+      )
     }
     clearTimeout(timeoutId)
 
@@ -480,7 +504,9 @@ export class AIService {
       const errorText = await response.text().catch(() => response.statusText)
       const isUpstream = errorText.includes('upstream request failed') || response.status === 502
       if (isUpstream) {
-        throw new Error(`The AI provider "${provider.name}" is temporarily unavailable (upstream error). Please try again or switch to a different provider in Settings.`)
+        throw new Error(
+          `The AI provider "${provider.name}" is temporarily unavailable (upstream error). Please try again or switch to a different provider in Settings.`
+        )
       }
       throw new Error(`AI API error (${response.status}): ${errorText}`)
     }
@@ -494,8 +520,8 @@ export class AIService {
       usage: {
         promptTokens: data.usage?.prompt_tokens || 0,
         completionTokens: data.usage?.completion_tokens || 0,
-        totalTokens: data.usage?.total_tokens || 0
-      }
+        totalTokens: data.usage?.total_tokens || 0,
+      },
     }
   }
 
@@ -524,9 +550,9 @@ export class AIService {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': provider.apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     })
 
     if (!response.ok) {
@@ -543,8 +569,8 @@ export class AIService {
       usage: {
         promptTokens: data.usage?.input_tokens || 0,
         completionTokens: data.usage?.output_tokens || 0,
-        totalTokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
-      }
+        totalTokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
+      },
     }
   }
 
@@ -554,7 +580,7 @@ export class AIService {
         provider,
         prompt: 'Hello, this is a test message.',
         systemPrompt: 'You are a helpful assistant.',
-        maxTokens: 10
+        maxTokens: 10,
       })
       return true
     } catch (error) {
@@ -562,8 +588,6 @@ export class AIService {
       return false
     }
   }
-
-  
 
   async fetchModels(provider: AIProvider): Promise<string[]> {
     if (!provider.baseUrl) return provider.models || []
@@ -587,70 +611,78 @@ export class AIService {
 
     if (provider.type === 'ollama') {
       try {
-        const baseUrl = provider.baseUrl.endsWith('/api') ? provider.baseUrl.replace('/api', '') : provider.baseUrl
+        const baseUrl = provider.baseUrl.endsWith('/api')
+          ? provider.baseUrl.replace('/api', '')
+          : provider.baseUrl
         const res = await fetchWithTimeout(`${baseUrl}/api/tags`, {}, 3000)
         if (res.ok) {
           const data = await res.json()
           return data.models?.map((m: any) => m.name) || []
         }
-      } catch {
-      }
+      } catch {}
     } else if (provider.type === 'lm-studio') {
       try {
         const modelsUrl = `${provider.baseUrl}/models`
-        const res = await fetchWithTimeout(modelsUrl, {
-          headers: provider.apiKey ? { 'Authorization': `Bearer ${provider.apiKey}` } : {}
-        }, 3000)
+        const res = await fetchWithTimeout(
+          modelsUrl,
+          {
+            headers: provider.apiKey ? { Authorization: `Bearer ${provider.apiKey}` } : {},
+          },
+          3000
+        )
         if (res.ok) {
           const data = await res.json()
           return data.data?.map((m: any) => m.id) || []
         }
-      } catch {
-      }
+      } catch {}
     } else if (provider.type === 'open-router') {
       try {
         const res = await fetchWithTimeout(`${provider.baseUrl}/models`, {
           headers: {
-            'Authorization': `Bearer ${provider.apiKey}`,
+            Authorization: `Bearer ${provider.apiKey}`,
             'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://docmind.app',
-            'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'DocMind'
-          }
+            'X-Title': process.env.NEXT_PUBLIC_APP_NAME || 'DocMind',
+          },
         })
         if (res.ok) {
           const data = await res.json()
           return data.data?.map((m: any) => m.id) || []
         }
-      } catch {
-      }
+      } catch {}
     } else if (provider.type === 'google') {
       try {
-        const res = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${provider.apiKey}`)
+        const res = await fetchWithTimeout(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${provider.apiKey}`
+        )
         if (res.ok) {
           const data = await res.json()
           return data.models?.map((m: any) => m.name.replace('models/', '')) || []
         }
-      } catch {
-      }
+      } catch {}
     } else if (['openai', 'mistral', 'openai-compatible', 'groq'].includes(provider.type)) {
       try {
         const baseUrl = provider.baseUrl
-        const modelsUrl = baseUrl.endsWith('/chat/completions') 
+        const modelsUrl = baseUrl.endsWith('/chat/completions')
           ? baseUrl.replace('/chat/completions', '/models')
           : `${baseUrl}/models`
 
         const res = await fetchWithTimeout(modelsUrl, {
           headers: {
-            'Authorization': `Bearer ${provider.apiKey}`
-          }
+            Authorization: `Bearer ${provider.apiKey}`,
+          },
         })
         if (res.ok) {
           const data = await res.json()
           return data.data?.map((m: any) => m.id) || []
         }
-      } catch {
-      }
+      } catch {}
     } else if (provider.type === 'anthropic') {
-      return ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest', 'claude-3-sonnet-20240229']
+      return [
+        'claude-3-5-sonnet-latest',
+        'claude-3-opus-latest',
+        'claude-3-haiku-latest',
+        'claude-3-sonnet-20240229',
+      ]
     }
 
     return provider.models || []

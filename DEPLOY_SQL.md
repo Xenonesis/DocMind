@@ -37,6 +37,7 @@ npx supabase db push --db-url "postgresql://postgres:YOUR_DB_PASSWORD@aws-0-us-e
 ```
 
 **Note:** You need to get your database password from:
+
 - Supabase Dashboard → Settings → Database → Connection string → Password
 
 ## Files

@@ -63,35 +63,71 @@ export async function PUT(request: NextRequest, { params }: Params) {
     }
 
     const name = body.name ? String(body.name).trim() : existing.name
-    const slug = body.name && body.name.trim() !== existing.name
-      ? await buildUniqueSlug(ctx.db, ctx.user.id, name)
-      : existing.slug
-    const supportsResponseControls = Object.prototype.hasOwnProperty.call(existing, 'response_style')
+    const slug =
+      body.name && body.name.trim() !== existing.name
+        ? await buildUniqueSlug(ctx.db, ctx.user.id, name)
+        : existing.slug
+    const supportsResponseControls = Object.prototype.hasOwnProperty.call(
+      existing,
+      'response_style'
+    )
 
     const updates = {
       name,
       slug,
-      description: body.description !== undefined ? (body.description?.trim() || null) : existing.description,
-      system_prompt: body.systemPrompt !== undefined ? (body.systemPrompt?.trim() || null) : existing.system_prompt,
-      refusal_message: body.refusalMessage !== undefined ? body.refusalMessage : existing.refusal_message,
-      fallback_message: body.fallbackMessage !== undefined ? body.fallbackMessage : existing.fallback_message,
-      allowed_origins: Array.isArray(body.allowedOrigins) ? body.allowedOrigins : existing.allowed_origins,
+      description:
+        body.description !== undefined ? body.description?.trim() || null : existing.description,
+      system_prompt:
+        body.systemPrompt !== undefined
+          ? body.systemPrompt?.trim() || null
+          : existing.system_prompt,
+      refusal_message:
+        body.refusalMessage !== undefined ? body.refusalMessage : existing.refusal_message,
+      fallback_message:
+        body.fallbackMessage !== undefined ? body.fallbackMessage : existing.fallback_message,
+      allowed_origins: Array.isArray(body.allowedOrigins)
+        ? body.allowedOrigins
+        : existing.allowed_origins,
       is_active: body.isActive !== undefined ? !!body.isActive : existing.is_active,
-      model_override: body.modelOverride !== undefined ? (body.modelOverride?.trim() || null) : existing.model_override,
+      model_override:
+        body.modelOverride !== undefined
+          ? body.modelOverride?.trim() || null
+          : existing.model_override,
       temperature: typeof body.temperature === 'number' ? body.temperature : existing.temperature,
       max_tokens: typeof body.maxTokens === 'number' ? body.maxTokens : existing.max_tokens,
-      requests_per_minute_bot: typeof body.requestsPerMinuteBot === 'number' ? body.requestsPerMinuteBot : existing.requests_per_minute_bot,
-      requests_per_minute_ip: typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : existing.requests_per_minute_ip,
-      requests_per_day_bot: typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : existing.requests_per_day_bot,
+      requests_per_minute_bot:
+        typeof body.requestsPerMinuteBot === 'number'
+          ? body.requestsPerMinuteBot
+          : existing.requests_per_minute_bot,
+      requests_per_minute_ip:
+        typeof body.requestsPerMinuteIp === 'number'
+          ? body.requestsPerMinuteIp
+          : existing.requests_per_minute_ip,
+      requests_per_day_bot:
+        typeof body.requestsPerDayBot === 'number'
+          ? body.requestsPerDayBot
+          : existing.requests_per_day_bot,
       updated_at: new Date().toISOString(),
     } as Record<string, any>
 
     if (supportsResponseControls) {
-      updates.response_style = ['concise', 'balanced', 'detailed'].includes(body.responseStyle) ? body.responseStyle : existing.response_style
-      updates.include_references = body.includeReferences !== undefined ? !!body.includeReferences : existing.include_references
-      updates.include_highlights = body.includeHighlights !== undefined ? !!body.includeHighlights : existing.include_highlights
-      updates.use_chat_memory = body.useChatMemory !== undefined ? !!body.useChatMemory : existing.use_chat_memory
-      updates.auto_regenerate_on_dislike = body.autoRegenerateOnDislike !== undefined ? !!body.autoRegenerateOnDislike : existing.auto_regenerate_on_dislike
+      updates.response_style = ['concise', 'balanced', 'detailed'].includes(body.responseStyle)
+        ? body.responseStyle
+        : existing.response_style
+      updates.include_references =
+        body.includeReferences !== undefined
+          ? !!body.includeReferences
+          : existing.include_references
+      updates.include_highlights =
+        body.includeHighlights !== undefined
+          ? !!body.includeHighlights
+          : existing.include_highlights
+      updates.use_chat_memory =
+        body.useChatMemory !== undefined ? !!body.useChatMemory : existing.use_chat_memory
+      updates.auto_regenerate_on_dislike =
+        body.autoRegenerateOnDislike !== undefined
+          ? !!body.autoRegenerateOnDislike
+          : existing.auto_regenerate_on_dislike
     }
 
     const { data: bot, error: updateError } = await ctx.db
@@ -128,7 +164,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
       hostedUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/bot/${bot.slug}`,
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to update chatbot' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to update chatbot' },
+      { status: 500 }
+    )
   }
 }
 
@@ -141,11 +180,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     const { id } = await params
 
-    const { error } = await ctx.db
-      .from('chatbots')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', ctx.user.id)
+    const { error } = await ctx.db.from('chatbots').delete().eq('id', id).eq('user_id', ctx.user.id)
 
     if (error) {
       return NextResponse.json({ error: 'Failed to delete chatbot' }, { status: 500 })

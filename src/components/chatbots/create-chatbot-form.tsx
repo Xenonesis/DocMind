@@ -45,17 +45,27 @@ export function CreateChatbotForm({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Create Custom Chatbot</CardTitle>
-        <CardDescription>Link one or more processed documents and publish a hosted chatbot URL.</CardDescription>
+        <CardDescription>
+          Link one or more processed documents and publish a hosted chatbot URL.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Chatbot Name</Label>
-            <Input value={name} onChange={(e) => onNameChange(e.target.value)} placeholder="Contract Assistant" />
+            <Input
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="Contract Assistant"
+            />
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
-            <Input value={description} onChange={(e) => onDescriptionChange(e.target.value)} placeholder="Helps users understand contract clauses" />
+            <Input
+              value={description}
+              onChange={(e) => onDescriptionChange(e.target.value)}
+              placeholder="Helps users understand contract clauses"
+            />
           </div>
         </div>
 
@@ -88,7 +98,11 @@ export function CreateChatbotForm({
         </div>
 
         <Button onClick={onCreate} disabled={saving} className="rounded-full px-6">
-          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+          {saving ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4 mr-2" />
+          )}
           Create Chatbot
         </Button>
       </CardContent>

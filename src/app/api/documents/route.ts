@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
 
     const user = await getAuthenticatedUser(request)
-    
+
     if (!user) {
       // Try to get detailed error
       const authHeader = request.headers.get('authorization')
@@ -20,12 +20,17 @@ export async function GET(request: NextRequest) {
       let dbgError = 'No token provided'
       if (token && supabaseServer) {
         const { error } = await supabaseServer.auth.getUser(token)
-        dbgError = error ? `[${error.status}] ${error.message} (${error.name})` : 'User not found in result'
+        dbgError = error
+          ? `[${error.status}] ${error.message} (${error.name})`
+          : 'User not found in result'
       } else if (!supabaseServer) {
         dbgError = 'supabaseServer instance is null'
       }
 
-      return NextResponse.json({ error: 'Authentication required', details: dbgError }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required', details: dbgError },
+        { status: 401 }
+      )
     }
 
     const authHeader = request.headers.get('authorization')
@@ -42,7 +47,11 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
-    console.log(`[API /documents] Fetched user ${user.id} documents:`, documents?.length || 0, error ? `Error: ${error}` : '')
+    console.log(
+      `[API /documents] Fetched user ${user.id} documents:`,
+      documents?.length || 0,
+      error ? `Error: ${error}` : ''
+    )
 
     if (error) {
       console.error('Error fetching documents:', error)
@@ -52,18 +61,19 @@ export async function GET(request: NextRequest) {
     documents = documents || []
 
     if (status && status !== 'all') {
-      documents = documents.filter(doc => doc.status === status)
+      documents = documents.filter((doc) => doc.status === status)
     }
-    
+
     if (type && type !== 'all') {
-      documents = documents.filter(doc => doc.type.toLowerCase().includes(type.toLowerCase()))
+      documents = documents.filter((doc) => doc.type.toLowerCase().includes(type.toLowerCase()))
     }
-    
+
     if (search) {
       const searchLower = search.toLowerCase()
-      documents = documents.filter(doc => 
-        doc.name.toLowerCase().includes(searchLower) ||
-        (doc.category && doc.category.toLowerCase().includes(searchLower))
+      documents = documents.filter(
+        (doc) =>
+          doc.name.toLowerCase().includes(searchLower) ||
+          (doc.category && doc.category.toLowerCase().includes(searchLower))
       )
     }
 
@@ -80,14 +90,15 @@ export async function GET(request: NextRequest) {
           .select('document_ids')
           .eq('user_id', user.id)
 
-        const queryCount = queries?.filter(query => {
-          try {
-            const docIds = JSON.parse(query.document_ids || '[]')
-            return Array.isArray(docIds) && docIds.includes(doc.id)
-          } catch {
-            return false
-          }
-        }).length || 0
+        const queryCount =
+          queries?.filter((query) => {
+            try {
+              const docIds = JSON.parse(query.document_ids || '[]')
+              return Array.isArray(docIds) && docIds.includes(doc.id)
+            } catch {
+              return false
+            }
+          }).length || 0
 
         return {
           id: doc.id,
@@ -100,24 +111,26 @@ export async function GET(request: NextRequest) {
           category: doc.category,
           tags: doc.tags ? (typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags) : [],
           analysisCount: analysisCount || 0,
-          queryCount: queryCount || 0
+          queryCount: queryCount || 0,
         }
       })
     )
 
     return NextResponse.json(formattedDocuments)
-
   } catch (error) {
     console.error('Error fetching documents:', error)
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       code: (error as any)?.code,
       details: (error as any)?.details,
-      hint: (error as any)?.hint
+      hint: (error as any)?.hint,
     })
-    return NextResponse.json({ 
-      error: 'Failed to fetch documents',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch documents',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
   }
 }

@@ -5,7 +5,13 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Eye, EyeOff, Mail, Lock, User, Globe, GitBranch, AlertCircle } from 'lucide-react'
@@ -22,7 +28,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -32,7 +38,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
   const { signup, loginWithProvider } = useAuth()
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,7 +71,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
   const handleSocialSignup = async (provider: 'google' | 'github') => {
     setIsLoading(true)
     setError('')
-    
+
     try {
       await loginWithProvider(provider)
       onOpenChange(false)
@@ -80,7 +86,9 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md mx-4 max-w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto border-border rounded-2xl shadow-lg bg-card p-0">
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="text-xl sm:text-2xl font-semibold text-center tracking-tight">Create an account</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl font-semibold text-center tracking-tight">
+            Create an account
+          </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
             Get started with DocMind today
           </DialogDescription>
@@ -176,11 +184,7 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -204,7 +208,9 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
                   size="icon"
                   className="absolute right-1 top-1.5 h-8 w-8 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  aria-label={
+                    showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+                  }
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -235,13 +241,21 @@ export function SignupModal({ open, onOpenChange, onSwitchToLogin }: SignupModal
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-sm font-medium text-rose-600 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg border border-rose-100 dark:border-rose-900/50 mt-4" role="alert" aria-live="assertive">
+              <div
+                className="flex items-center gap-2 text-sm font-medium text-rose-600 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg border border-rose-100 dark:border-rose-900/50 mt-4"
+                role="alert"
+                aria-live="assertive"
+              >
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <p>{error}</p>
               </div>
             )}
 
-            <Button type="submit" className="w-full rounded-xl shadow-sm h-11 font-medium mt-4" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full rounded-xl shadow-sm h-11 font-medium mt-4"
+              disabled={isLoading}
+            >
               {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
           </form>

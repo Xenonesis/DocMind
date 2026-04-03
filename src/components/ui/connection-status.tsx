@@ -6,15 +6,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2, 
-  Wifi, 
+import {
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Wifi,
   WifiOff,
   Clock,
   Zap,
-  Activity
+  Activity,
 } from 'lucide-react'
 
 interface ConnectionTestResult {
@@ -46,7 +46,11 @@ interface ConnectionStatusProps {
   autoTest?: boolean
 }
 
-export function ConnectionStatus({ provider, onTestComplete, autoTest = false }: ConnectionStatusProps) {
+export function ConnectionStatus({
+  provider,
+  onTestComplete,
+  autoTest = false,
+}: ConnectionStatusProps) {
   const [testing, setTesting] = useState(false)
   const [result, setResult] = useState<ConnectionTestResult | null>(null)
   const [progress, setProgress] = useState(0)
@@ -56,7 +60,7 @@ export function ConnectionStatus({ provider, onTestComplete, autoTest = false }:
       const errorResult = {
         success: false,
         error: 'API key required',
-        details: 'Please enter an API key before testing the connection'
+        details: 'Please enter an API key before testing the connection',
       }
       setResult(errorResult)
       onTestComplete?.(errorResult)
@@ -68,27 +72,26 @@ export function ConnectionStatus({ provider, onTestComplete, autoTest = false }:
     setResult(null)
 
     const progressInterval = setInterval(() => {
-      setProgress(prev => Math.min(prev + 10, 90))
+      setProgress((prev) => Math.min(prev + 10, 90))
     }, 200)
 
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      
+
       const testResult = await authenticatedRequest('/api/test-connection', {
         method: 'POST',
-        body: JSON.stringify({ provider })
+        body: JSON.stringify({ provider }),
       })
 
       setProgress(100)
       setResult(testResult)
       onTestComplete?.(testResult)
-
     } catch (error: any) {
       console.error('Connection test failed:', error)
       const errorResult = {
         success: false,
         error: 'Connection test failed',
-        details: error.message || 'An unexpected error occurred'
+        details: error.message || 'An unexpected error occurred',
       }
       setResult(errorResult)
       onTestComplete?.(errorResult)
@@ -182,7 +185,7 @@ export function ConnectionStatus({ provider, onTestComplete, autoTest = false }:
                     <CheckCircle className="w-4 h-4" />
                     <span className="text-sm font-medium">{result.message}</span>
                   </div>
-                  
+
                   {result.response && (
                     <div className="bg-green-50 border border-green-200 rounded-md p-3">
                       <p className="text-xs text-green-800 font-medium mb-1">AI Response:</p>
@@ -197,7 +200,9 @@ export function ConnectionStatus({ provider, onTestComplete, autoTest = false }:
                         <div className="text-blue-600">Prompt</div>
                       </div>
                       <div className="bg-purple-50 border border-purple-200 rounded p-2 text-center">
-                        <div className="font-medium text-purple-800">{result.usage.completionTokens}</div>
+                        <div className="font-medium text-purple-800">
+                          {result.usage.completionTokens}
+                        </div>
                         <div className="text-purple-600">Response</div>
                       </div>
                       <div className="bg-gray-50 border border-gray-200 rounded p-2 text-center">
@@ -213,7 +218,7 @@ export function ConnectionStatus({ provider, onTestComplete, autoTest = false }:
                     <AlertCircle className="w-4 h-4" />
                     <span className="text-sm font-medium">{result.error}</span>
                   </div>
-                  
+
                   {result.details && (
                     <div className="bg-red-50 border border-red-200 rounded-md p-3">
                       <p className="text-xs text-red-800 font-medium mb-1">Details:</p>

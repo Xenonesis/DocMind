@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
           mimeType: file.type,
           lastModified: new Date(file.lastModified).toISOString(),
           userEmail: user.email,
-          processingStrategy
-        })
+          processingStrategy,
+        }),
       })
       .select()
       .single()
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       .from('documents')
       .upload(storageRef, Buffer.from(fileBuffer), {
         contentType: file.type || undefined,
-        upsert: true
+        upsert: true,
       })
 
     if (uploadError) {
@@ -81,17 +81,19 @@ export async function POST(request: NextRequest) {
 
     const { data: publicUrl } = db.storage.from('documents').getPublicUrl(storageRef)
     const mergedMetadata = {
-      ...(typeof document.metadata === 'string' ? JSON.parse(document.metadata || '{}') : (document.metadata || {})),
+      ...(typeof document.metadata === 'string'
+        ? JSON.parse(document.metadata || '{}')
+        : document.metadata || {}),
       storageRef,
       downloadURL: publicUrl.publicUrl,
-      processingStrategy
+      processingStrategy,
     }
 
     const { error: updateError } = await db
       .from('documents')
       .update({
         status: 'PROCESSING',
-        metadata: JSON.stringify(mergedMetadata)
+        metadata: JSON.stringify(mergedMetadata),
       })
       .eq('id', document.id)
 
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
       uploadDate: document.upload_date,
       downloadURL: publicUrl.publicUrl,
       storageRef,
-      processingStrategy
+      processingStrategy,
     })
   } catch (error) {
     console.error('Upload error:', error)
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
       {
         error: 'Upload failed',
         details: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     )

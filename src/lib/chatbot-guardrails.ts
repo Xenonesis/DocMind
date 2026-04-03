@@ -9,9 +9,10 @@ interface GuardrailInput {
 export const DOCUMENT_SCOPE_FALLBACK = 'OUT_OF_SCOPE_DOCUMENT_QUERY'
 
 export function buildGuardrailedPrompts(input: GuardrailInput) {
-  const historyText = Array.isArray(input.history) && input.history.length > 0
-    ? `Conversation history:\n${input.history.map((m) => `${m.role}: ${m.content}`).join('\n')}`
-    : 'Conversation history: none'
+  const historyText =
+    Array.isArray(input.history) && input.history.length > 0
+      ? `Conversation history:\n${input.history.map((m) => `${m.role}: ${m.content}`).join('\n')}`
+      : 'Conversation history: none'
 
   const docContext = input.documents
     .map((doc, index) => {
@@ -27,7 +28,9 @@ export function buildGuardrailedPrompts(input: GuardrailInput) {
     `If a custom refusal is needed, use exactly: ${input.refusalMessage}`,
     'Never invent facts, links, names, or citations beyond document text.',
     input.systemPrompt ? `Custom instructions: ${input.systemPrompt}` : null,
-  ].filter(Boolean).join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const userPrompt = [
     `User question: ${input.query}`,
@@ -40,7 +43,10 @@ export function buildGuardrailedPrompts(input: GuardrailInput) {
   return { systemPrompt, userPrompt }
 }
 
-export function normalizeGuardrailResponse(answer: string, refusalMessage: string): { answer: string; refused: boolean } {
+export function normalizeGuardrailResponse(
+  answer: string,
+  refusalMessage: string
+): { answer: string; refused: boolean } {
   const trimmed = (answer || '').trim()
   if (!trimmed || trimmed === DOCUMENT_SCOPE_FALLBACK) {
     return { answer: refusalMessage, refused: true }

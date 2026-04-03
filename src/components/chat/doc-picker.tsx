@@ -32,19 +32,22 @@ export function DocPicker({
         >
           <Card className="p-3 border-border bg-secondary/20">
             <p className="text-xs font-medium text-muted-foreground mb-2.5 uppercase tracking-wider">
-              {completedDocs.length === 0 ? 'No processed documents yet' : 'Filter context to specific documents (optional)'}
+              {completedDocs.length === 0
+                ? 'No processed documents yet'
+                : 'Filter context to specific documents (optional)'}
             </p>
             {completedDocs.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {completedDocs.map(doc => (
+                {completedDocs.map((doc) => (
                   <button
                     key={doc.id}
                     onClick={() => onToggleDoc(doc.id)}
                     aria-label={`${selectedDocIds.includes(doc.id) ? 'Deselect' : 'Select'} document ${doc.name}`}
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors
-                      ${selectedDocIds.includes(doc.id)
-                        ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-background border-border text-muted-foreground hover:border-primary/30 hover:text-foreground'
+                      ${
+                        selectedDocIds.includes(doc.id)
+                          ? 'bg-primary/10 border-primary/30 text-primary'
+                          : 'bg-background border-border text-muted-foreground hover:border-primary/30 hover:text-foreground'
                       }`}
                   >
                     <FileText className="w-3 h-3" />
@@ -62,7 +65,9 @@ export function DocPicker({
                 )}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground/60 italic">Upload and process documents first to use them as context.</p>
+              <p className="text-xs text-muted-foreground/60 italic">
+                Upload and process documents first to use them as context.
+              </p>
             )}
           </Card>
         </motion.div>

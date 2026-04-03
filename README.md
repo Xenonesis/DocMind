@@ -55,6 +55,7 @@ DocMind is a modern, intelligent document processing platform built with Next.js
 ### Architecture
 
 DocMind uses a hybrid architecture:
+
 - **Frontend**: Next.js 16 with App Router, React 19, TypeScript
 - **Backend**: Next.js API routes + Go serverless functions for heavy processing
 - **Database**: Supabase (PostgreSQL) with Row Level Security
@@ -68,6 +69,7 @@ DocMind uses a hybrid architecture:
 ### Document Management
 
 **Upload & Processing**
+
 - Drag-and-drop file upload interface
 - Support for PDF, DOCX, TXT, JSON, CSV, XML, JPG, PNG
 - Automatic content extraction with format-specific parsers
@@ -77,6 +79,7 @@ DocMind uses a hybrid architecture:
 - User-specific storage folders in Supabase
 
 **Document Organization**
+
 - Category-based organization (Document, Text, Image, Data, Other)
 - Custom tags and metadata
 - Search and filter by status, type, name
@@ -87,6 +90,7 @@ DocMind uses a hybrid architecture:
 ### AI-Powered Analysis
 
 **Content Intelligence**
+
 - Automatic document summarization
 - Key entity extraction
 - Topic classification
@@ -96,6 +100,7 @@ DocMind uses a hybrid architecture:
 - Sensitive data detection (PII, emails, phone numbers)
 
 **Rule-Based Analysis**
+
 - JSON structure validation
 - CSV column and row analysis
 - TODO/FIXME detection in text files
@@ -106,6 +111,7 @@ DocMind uses a hybrid architecture:
 ### Natural Language Querying
 
 **Chat Interface**
+
 - Conversational AI interface
 - Context-aware responses with conversation history
 - Multi-document querying
@@ -114,6 +120,7 @@ DocMind uses a hybrid architecture:
 - Query history tracking
 
 **Query Capabilities**
+
 - Natural language understanding
 - Intent recognition
 - Contextual answers
@@ -124,6 +131,7 @@ DocMind uses a hybrid architecture:
 ### AI Provider Integration
 
 **Supported Providers**
+
 - **Google Gemini**: Gemini 1.5 Pro, Gemini 1.5 Flash, Gemini Pro
 - **OpenAI**: GPT-4, GPT-4 Turbo, GPT-3.5 Turbo
 - **Anthropic Claude**: Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku
@@ -135,10 +143,12 @@ DocMind uses a hybrid architecture:
 - **Custom OpenAI-Compatible**: Any OpenAI-compatible API endpoint
 
 **Free Built-in Providers**
+
 - **DocScan Free (Glm-5)**: Free via Modal.direct API
 - **DocScan Groq (Llama 3.1 8B)**: Ultra-fast free inference
 
 **Provider Features**
+
 - Per-user provider configuration stored in database
 - XOR-encrypted API key storage
 - Model selection and customization
@@ -150,6 +160,7 @@ DocMind uses a hybrid architecture:
 ### User Experience
 
 **Interface Design**
+
 - Clean, professional B2B SaaS aesthetic
 - Bricolage Grotesque for headings, Space Mono for code
 - Soft color palette with proper contrast ratios
@@ -158,6 +169,7 @@ DocMind uses a hybrid architecture:
 - Dark mode with system preference detection
 
 **Accessibility**
+
 - WCAG 2.1 AA compliance
 - Keyboard navigation support
 - Screen reader compatibility
@@ -172,6 +184,7 @@ DocMind uses a hybrid architecture:
 ### Frontend
 
 **Core Framework**
+
 - **Next.js 16** - React framework with App Router
   - Server-side rendering (SSR)
   - Static site generation (SSG)
@@ -182,10 +195,11 @@ DocMind uses a hybrid architecture:
 - **TypeScript 5** - Type-safe development
   - Strict type checking
   - Enhanced IDE support
-  - Path aliases (@/*)
+  - Path aliases (@/\*)
   - Compile-time error detection
 
 **Styling & UI**
+
 - **Tailwind CSS 4** - Utility-first CSS framework
   - Custom design system with CSS variables
   - Responsive utilities
@@ -205,6 +219,7 @@ DocMind uses a hybrid architecture:
   - Performance optimized
 
 **State Management**
+
 - **Zustand** - Lightweight state management
 - **React Context** - Auth and theme context
 - **TanStack Query** - Server state management
@@ -215,6 +230,7 @@ DocMind uses a hybrid architecture:
 ### Backend & Data
 
 **Database**
+
 - **Supabase** - PostgreSQL backend
   - Real-time subscriptions
   - Row Level Security (RLS)
@@ -223,6 +239,7 @@ DocMind uses a hybrid architecture:
   - Edge functions
 
 **Authentication**
+
 - **Supabase Auth** - Authentication system
   - Email/password authentication
   - OAuth providers (Google, GitHub)
@@ -231,6 +248,7 @@ DocMind uses a hybrid architecture:
   - Session persistence
 
 **API Layer**
+
 - Next.js API routes (TypeScript)
 - Go serverless functions for processing
 - JWT-based authentication
@@ -239,12 +257,14 @@ DocMind uses a hybrid architecture:
 ### Document Processing
 
 **Text Extraction**
+
 - **pdf-parse** - PDF text extraction
 - **mammoth** - DOCX processing
 - Native text reading for TXT, JSON, CSV, XML
 - Sharp for image processing
 
 **AI Service**
+
 - Custom AI service layer
 - Multiple provider support with type safety
 - XOR encryption for API keys
@@ -254,16 +274,19 @@ DocMind uses a hybrid architecture:
 ### Development Tools
 
 **Code Quality**
+
 - **ESLint 9** - Code linting
 - **TypeScript** - Type checking
 - **Prettier** - Code formatting
 
 **Build & Deploy**
+
 - **Turbopack** - Fast bundler (Next.js 16+)
 - **Vercel** - Deployment platform
 - **nodemon** - Development watcher
 
 **Monitoring**
+
 - Console logging with context
 - Error tracking in API routes
 - Vercel Analytics (optional)
@@ -338,12 +361,12 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ### System Requirements
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| Node.js | 18.0 | 20.x LTS |
-| RAM | 4 GB | 8 GB |
-| Storage | 1 GB | 5 GB |
-| Network | Broadband | High-speed |
+| Component | Minimum   | Recommended |
+| --------- | --------- | ----------- |
+| Node.js   | 18.0      | 20.x LTS    |
+| RAM       | 4 GB      | 8 GB        |
+| Storage   | 1 GB      | 5 GB        |
+| Network   | Broadband | High-speed  |
 
 ### Step-by-Step Installation
 
@@ -496,11 +519,13 @@ MAX_FILES_PER_BATCH=10
 **4. Enable OAuth (Optional)**
 
 **Google OAuth:**
+
 1. Google Cloud Console → OAuth 2.0
 2. Redirect URI: `https://your-project.supabase.co/auth/v1/callback`
 3. Copy credentials to Supabase
 
 **GitHub OAuth:**
+
 1. GitHub Settings → OAuth Apps
 2. Callback: `https://your-project.supabase.co/auth/v1/callback`
 3. Copy credentials to Supabase
@@ -533,6 +558,7 @@ supabase db push
 **Tables Created:**
 
 **user_profiles**
+
 ```sql
 - id (UUID, PK, references auth.users)
 - email (TEXT)
@@ -542,6 +568,7 @@ supabase db push
 ```
 
 **ai_provider_settings**
+
 ```sql
 - id (UUID, PK)
 - user_id (UUID, FK)
@@ -554,6 +581,7 @@ supabase db push
 ```
 
 **documents**
+
 ```sql
 - id (UUID, PK)
 - user_id (UUID, FK)
@@ -566,6 +594,7 @@ supabase db push
 ```
 
 **analyses**
+
 ```sql
 - id (UUID, PK)
 - document_id, user_id (UUID, FK)
@@ -576,6 +605,7 @@ supabase db push
 ```
 
 **queries**
+
 ```sql
 - id (UUID, PK)
 - user_id (UUID, FK)
@@ -656,6 +686,7 @@ FOR DELETE USING (
 DocMind uses Supabase Authentication with custom JWT handling.
 
 **Supported Methods:**
+
 - Email/Password
 - Google OAuth
 - GitHub OAuth
@@ -716,11 +747,13 @@ export function ProtectedRoute({ children }) {
 ### Session Management
 
 **Auto-refresh:**
+
 - Sessions auto-refresh before expiry
 - Refresh token rotation
 - PKCE flow for security
 
 **Session Persistence:**
+
 - Stored in localStorage
 - Key: `docmind.auth`
 - Survives page refresh
@@ -762,7 +795,7 @@ export async function getAuthenticatedUser(request: NextRequest) {
   return {
     id: payload.sub,
     email: payload.email || '',
-    name: payload.user_metadata?.name || 'User'
+    name: payload.user_metadata?.name || 'User',
   }
 }
 ```
@@ -810,15 +843,15 @@ export async function getAuthenticatedUser(request: NextRequest) {
 
 **Supported Formats:**
 
-| Format | Extension | Processing Method |
-|--------|-----------|-------------------|
-| PDF | .pdf | pdf-parse |
-| Word | .doc, .docx | mammoth |
-| Plain Text | .txt | Direct read |
-| JSON | .json | Parse and format |
-| CSV | .csv | Parse and analyze |
-| XML | .xml | Parse and extract |
-| Images | .jpg, .png | Metadata only |
+| Format     | Extension   | Processing Method |
+| ---------- | ----------- | ----------------- |
+| PDF        | .pdf        | pdf-parse         |
+| Word       | .doc, .docx | mammoth           |
+| Plain Text | .txt        | Direct read       |
+| JSON       | .json       | Parse and format  |
+| CSV        | .csv        | Parse and analyze |
+| XML        | .xml        | Parse and extract |
+| Images     | .jpg, .png  | Metadata only     |
 
 **Upload Process:**
 
@@ -829,7 +862,7 @@ async function handleUpload(file: File) {
 
   const response = await fetch('/api/documents/upload', {
     method: 'POST',
-    body: formData
+    body: formData,
   })
 
   const document = await response.json()
@@ -838,6 +871,7 @@ async function handleUpload(file: File) {
 ```
 
 **File Size Limits:**
+
 - Default: 10 MB per file
 - Configurable via MAX_FILE_SIZE
 - Batch limit: 10 files
@@ -864,8 +898,8 @@ async function submitQuery(query: string, documentIds: string[]) {
       query,
       documentIds,
       provider: selectedProvider,
-      history: conversationHistory
-    })
+      history: conversationHistory,
+    }),
   })
 
   const result = await response.json()
@@ -889,6 +923,7 @@ async function submitQuery(query: string, documentIds: string[]) {
 **Free Providers:**
 
 No configuration needed if environment variables set:
+
 - Groq: Set `GROQ_API_KEY`
 - DocScan: Set `DOCSCAN_FREE_API_KEY`
 
@@ -897,6 +932,7 @@ No configuration needed if environment variables set:
 **Automatic Analysis:**
 
 On upload:
+
 1. Content extracted
 2. Word/character count
 3. File type identified
@@ -905,6 +941,7 @@ On upload:
 6. Results stored in `analyses` table
 
 **Analysis Types:**
+
 - INSIGHT: Statistics, content analysis
 - OPPORTUNITY: Action items, TODOs
 - COMPLIANCE: Sensitive data detection
@@ -1232,20 +1269,20 @@ Get user's AI provider settings.
 
 ```typescript
 // Request
-GET /api/settings
-
-// Response 200
-[
-  {
-    "id": "uuid",
-    "provider": "GOOGLE_AI",
-    "apiKey": "AIza...xyz",
-    "model": "gemini-1.5-pro",
-    "isActive": true,
-    "baseUrl": "https://...",
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
+GET /
+  api /
+  settings[
+    // Response 200
+    {
+      id: 'uuid',
+      provider: 'GOOGLE_AI',
+      apiKey: 'AIza...xyz',
+      model: 'gemini-1.5-pro',
+      isActive: true,
+      baseUrl: 'https://...',
+      createdAt: '2024-01-15T10:30:00Z',
+    }
+  ]
 ```
 
 **POST /api/settings**
@@ -1290,24 +1327,23 @@ Check available free providers.
 
 ```typescript
 // Request
-GET /api/free-provider
-
-// Response 200
-[
-  {
-    "id": "docscan-free-groq",
-    "name": "DocScan llama-3.1-8b-instant from groq (free)",
-    "type": "groq",
-    "baseUrl": "https://api.groq.com/openai/v1",
-    "model": "llama-3.1-8b-instant",
-    "models": ["llama-3.1-8b-instant", "llama3-70b-8192"],
-    "isActive": false,
-    "isConfigured": true,
-    "description": "Ultra-fast inference powered by Groq",
-    "maxTokens": 4096,
-    "temperature": 0.7
-  }
-]
+GET / api / free -
+  provider[
+    // Response 200
+    {
+      id: 'docscan-free-groq',
+      name: 'DocScan llama-3.1-8b-instant from groq (free)',
+      type: 'groq',
+      baseUrl: 'https://api.groq.com/openai/v1',
+      model: 'llama-3.1-8b-instant',
+      models: ['llama-3.1-8b-instant', 'llama3-70b-8192'],
+      isActive: false,
+      isConfigured: true,
+      description: 'Ultra-fast inference powered by Groq',
+      maxTokens: 4096,
+      temperature: 0.7,
+    }
+  ]
 ```
 
 #### Health Check
@@ -1403,12 +1439,14 @@ Body: {
 51 accessible components built with Radix UI:
 
 **Layout:**
+
 - `Card` - Container with header, content
 - `Separator` - Visual divider
 - `ScrollArea` - Custom scrollbars
 - `Resizable` - Resizable panels
 
 **Forms:**
+
 - `Button` - Variants: default, destructive, outline, ghost, link
 - `Input` - Text input with validation
 - `Textarea` - Multi-line input
@@ -1420,12 +1458,14 @@ Body: {
 - `InputOTP` - OTP input
 
 **Navigation:**
+
 - `NavigationMenu` - Main navigation
 - `Breadcrumb` - Breadcrumb trail
 - `Tabs` - Tabbed interface
 - `Sidebar` - Side navigation
 
 **Overlays:**
+
 - `Dialog` - Modal dialog
 - `AlertDialog` - Confirmation
 - `Sheet` - Slide-out panel
@@ -1436,6 +1476,7 @@ Body: {
 - `HoverCard` - Hover preview
 
 **Data Display:**
+
 - `Table` - Data table
 - `Chart` - Recharts-based charts
 - `Badge` - Status badges
@@ -1444,6 +1485,7 @@ Body: {
 - `Skeleton` - Loading placeholder
 
 **Feedback:**
+
 - `Toast` - Toast notifications
 - `Toaster` - Toast container
 - `Sonner` - Alternative toast
@@ -1572,13 +1614,13 @@ import { useAuth } from '@/lib/auth-context'
 
 function MyComponent() {
   const {
-    user,              // Current user or null
-    isAuthenticated,   // Boolean
-    login,             // (email, password) => Promise<void>
-    signup,            // (email, password, name) => Promise<void>
+    user, // Current user or null
+    isAuthenticated, // Boolean
+    login, // (email, password) => Promise<void>
+    signup, // (email, password, name) => Promise<void>
     loginWithProvider, // ('google' | 'github') => Promise<void>
-    logout,            // () => Promise<void>
-    isLoading          // Boolean
+    logout, // () => Promise<void>
+    isLoading, // Boolean
   } = useAuth()
 }
 ```
@@ -1595,9 +1637,9 @@ function MyComponent() {
 
   const showToast = () => {
     toast({
-      title: "Success",
-      description: "Document uploaded successfully",
-      variant: "default"
+      title: 'Success',
+      description: 'Document uploaded successfully',
+      variant: 'default',
     })
   }
 }
@@ -1658,10 +1700,10 @@ await aiService.loadProvidersFromDatabase(userId)
 // Generate completion
 const response = await aiService.generateCompletion({
   provider: googleProvider,
-  prompt: "Summarize this document",
-  systemPrompt: "You are a helpful assistant",
+  prompt: 'Summarize this document',
+  systemPrompt: 'You are a helpful assistant',
   temperature: 0.7,
-  maxTokens: 4096
+  maxTokens: 4096,
 })
 
 console.log(response.content)
@@ -1669,6 +1711,7 @@ console.log(response.usage.totalTokens)
 ```
 
 **Supported Provider Types:**
+
 - google
 - mistral
 - lm-studio
@@ -1692,7 +1735,7 @@ const documents = await authenticatedRequest('/api/documents')
 // POST request
 const result = await authenticatedRequest('/api/query', {
   method: 'POST',
-  body: JSON.stringify({ query: "What's in this doc?" })
+  body: JSON.stringify({ query: "What's in this doc?" }),
 })
 ```
 
@@ -1726,7 +1769,7 @@ import {
   generateAnalysisFromContent,
   getFileCategory,
   formatFileSize,
-  getProcessingStrategy
+  getProcessingStrategy,
 } from '@/lib/document-processing'
 
 // Extract content
@@ -1750,16 +1793,11 @@ Database operations.
 import { supabase, supabaseServer, createServerClientForToken } from '@/lib/supabase'
 
 // Client-side query
-const { data } = await supabase
-  .from('documents')
-  .select('*')
-  .eq('user_id', userId)
+const { data } = await supabase.from('documents').select('*').eq('user_id', userId)
 
 // Server-side with token
 const db = createServerClientForToken(token)
-const { data } = await db
-  .from('ai_provider_settings')
-  .select('*')
+const { data } = await db.from('ai_provider_settings').select('*')
 ```
 
 ### Auth Server
@@ -1841,29 +1879,32 @@ await ensureUserProfile(user, db)
 
 ### Provider Comparison
 
-| Provider | Speed | Quality | Cost | Privacy | Best For |
-|----------|-------|---------|------|---------|----------|
-| Groq | Very Fast | Good | Free | Medium | Quick queries |
-| Google Gemini | Fast | High | $$ | Medium | Long context |
-| OpenAI GPT-4 | Medium | Very High | $$$ | Medium | General purpose |
-| Claude 3 | Medium | Very High | $$$ | High | Safety, reasoning |
-| Mistral | Fast | High | $$ | High | European data |
-| Ollama | Slow | Medium | Free | Very High | Privacy, offline |
-| LM Studio | Medium | High | Free | Very High | Local inference |
+| Provider      | Speed     | Quality   | Cost | Privacy   | Best For          |
+| ------------- | --------- | --------- | ---- | --------- | ----------------- |
+| Groq          | Very Fast | Good      | Free | Medium    | Quick queries     |
+| Google Gemini | Fast      | High      | $$   | Medium    | Long context      |
+| OpenAI GPT-4  | Medium    | Very High | $$$  | Medium    | General purpose   |
+| Claude 3      | Medium    | Very High | $$$  | High      | Safety, reasoning |
+| Mistral       | Fast      | High      | $$   | High      | European data     |
+| Ollama        | Slow      | Medium    | Free | Very High | Privacy, offline  |
+| LM Studio     | Medium    | High      | Free | Very High | Local inference   |
 
 ### Model Configuration
 
 **Temperature:** Controls randomness (0.0-1.0)
+
 - Low (0.2-0.4): Factual, consistent
 - Medium (0.5-0.7): Balanced
 - High (0.8-1.0): Creative, varied
 
 **Max Tokens:** Response length limit
+
 - Short: 256-512 tokens
 - Medium: 1024-2048 tokens
 - Long: 4096-8192 tokens
 
 **Top P:** Nucleus sampling
+
 - Default: 1.0
 - Lower: More focused
 - Higher: More diverse
@@ -1874,19 +1915,20 @@ await ensureUserProfile(user, db)
 
 ### Supported Formats
 
-| Format | Extension | Library | Notes |
-|--------|-----------|---------|-------|
-| PDF | .pdf | pdf-parse | Text extraction |
-| Word | .doc, .docx | mammoth | Text extraction |
-| Plain Text | .txt | Native | Direct read |
-| JSON | .json | Native | Parse and format |
-| CSV | .csv | Native | Parse and analyze |
-| XML | .xml | Native | Parse and extract |
-| Images | .jpg, .png | sharp | Metadata only |
+| Format     | Extension   | Library   | Notes             |
+| ---------- | ----------- | --------- | ----------------- |
+| PDF        | .pdf        | pdf-parse | Text extraction   |
+| Word       | .doc, .docx | mammoth   | Text extraction   |
+| Plain Text | .txt        | Native    | Direct read       |
+| JSON       | .json       | Native    | Parse and format  |
+| CSV        | .csv        | Native    | Parse and analyze |
+| XML        | .xml        | Native    | Parse and extract |
+| Images     | .jpg, .png  | sharp     | Metadata only     |
 
 ### Processing Pipeline
 
 **1. Upload**
+
 ```
 User selects file
 ↓
@@ -1902,6 +1944,7 @@ Status: PROCESSING
 ```
 
 **2. Processing**
+
 ```
 Download from storage
 ↓
@@ -1917,6 +1960,7 @@ Status: COMPLETED
 ```
 
 **3. Analysis**
+
 ```
 Word/character count
 ↓
@@ -1932,12 +1976,14 @@ Store in analyses table
 ### Processing Strategies
 
 **Node.js (Default)**
+
 - Pure TypeScript
 - No external runtime
 - Serverless compatible
 - All formats supported
 
 **Go (Optional)**
+
 - Faster processing
 - Better for large files
 - Requires Go runtime
@@ -1946,12 +1992,14 @@ Store in analyses table
 ### Error Handling
 
 **Upload Errors:**
+
 - File too large → 400 Bad Request
 - Invalid file type → 400 Bad Request
 - Network error → 500 Internal Server Error
 - Storage error → 500 Internal Server Error
 
 **Processing Errors:**
+
 - Corrupt file → Status: ERROR
 - Unsupported format → Status: ERROR
 - Extraction failure → Status: ERROR
@@ -1964,12 +2012,14 @@ Store in analyses table
 ### Authentication Security
 
 **Session Management**
+
 - JWT tokens with expiry
 - Refresh token rotation
 - Secure cookie storage
 - PKCE flow for OAuth
 
 **Password Security**
+
 - bcrypt hashing (Supabase)
 - Minimum length requirement
 - Strength validation
@@ -1978,18 +2028,21 @@ Store in analyses table
 ### Data Security
 
 **Encryption**
+
 - API keys encrypted with XOR
 - Keys never exposed to client
 - Encrypted database storage
 - HTTPS enforcement
 
 **Row Level Security**
+
 - All tables have RLS policies
 - Users can only access own data
 - Database-level enforcement
 - No bypass possible
 
 **Storage Security**
+
 - User-specific folders
 - Access controlled by policies
 - Signed URLs for downloads
@@ -1998,12 +2051,14 @@ Store in analyses table
 ### API Security
 
 **Authentication Required**
+
 - All API routes protected
 - JWT token verification
 - Session validation
 - CORS configuration
 
 **Input Validation**
+
 - File type checking
 - Size validation
 - Content sanitization
@@ -2012,12 +2067,14 @@ Store in analyses table
 ### Network Security
 
 **HTTPS Enforcement**
+
 - TLS 1.3 recommended
 - Certificate validation
 - HSTS headers
 - Secure cookies
 
 **CORS Configuration**
+
 - Allowed origins
 - Credential handling
 - Method restrictions
@@ -2026,12 +2083,14 @@ Store in analyses table
 ### Compliance
 
 **GDPR**
+
 - Data minimization
 - User consent
 - Right to deletion
 - Data portability
 
 **Data Privacy**
+
 - No third-party tracking
 - Local processing option
 - User data ownership
@@ -2063,6 +2122,7 @@ vercel --prod
 **3. Configure Environment Variables**
 
 In Vercel dashboard:
+
 - Settings → Environment Variables
 - Add all required variables
 - Set for Production and Preview
@@ -2117,6 +2177,7 @@ docker run -p 3000:3000 -e NEXT_PUBLIC_SUPABASE_URL=... docmind
 ### Self-Hosting
 
 **Requirements:**
+
 - Node.js 18+ runtime
 - PostgreSQL database (Supabase)
 - File storage (S3-compatible)
@@ -2181,14 +2242,14 @@ MAX_FILES_PER_BATCH=10
 
 ### Variable Descriptions
 
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Required |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public API key | Required |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key | Required |
-| `GROQ_API_KEY` | Groq API key (free tier) | Optional |
-| `DOCSCAN_FREE_API_KEY` | DocScan API key | Optional |
-| `PORT` | Development port | 3000 |
+| Variable                        | Purpose                  | Default  |
+| ------------------------------- | ------------------------ | -------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL     | Required |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public API key           | Required |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Service role key         | Required |
+| `GROQ_API_KEY`                  | Groq API key (free tier) | Optional |
+| `DOCSCAN_FREE_API_KEY`          | DocScan API key          | Optional |
+| `PORT`                          | Development port         | 3000     |
 
 ### Environment Files
 
@@ -2208,6 +2269,7 @@ MAX_FILES_PER_BATCH=10
 Problem: Can't log in or sign up
 
 Solution:
+
 1. Check Supabase URL and keys
 2. Verify redirect URLs configured
 3. Check browser console for errors
@@ -2219,6 +2281,7 @@ Solution:
 Problem: Documents stuck in PROCESSING
 
 Solution:
+
 1. Check Supabase storage bucket
 2. Verify storage policies
 3. Check file size within limits
@@ -2230,6 +2293,7 @@ Solution:
 Problem: Queries return errors
 
 Solution:
+
 1. Verify API key is valid
 2. Check provider status
 3. Test connection in Settings
@@ -2242,6 +2306,7 @@ Solution:
 Problem: File upload returns error
 
 Solution:
+
 1. Check file type is supported
 2. Verify file size within limit
 3. Check network connection
@@ -2253,6 +2318,7 @@ Solution:
 Problem: `npm run build` fails
 
 Solution:
+
 1. Run `npm run lint` to find issues
 2. Check TypeScript errors: `tsc --noEmit`
 3. Clear `.next` folder
@@ -2283,18 +2349,21 @@ LOG_LEVEL=debug
 ### How to Contribute
 
 **Report Bugs**
+
 1. Search existing issues
 2. Create new issue with details
 3. Include reproduction steps
 4. Add environment information
 
 **Suggest Features**
+
 1. Check existing suggestions
 2. Create feature request
 3. Describe use case
 4. Explain benefits
 
 **Submit Code**
+
 1. Fork repository
 2. Create feature branch
 3. Make changes
@@ -2331,12 +2400,14 @@ npm run dev
 ### Coding Standards
 
 **TypeScript**
+
 - Strict mode enabled
 - No `any` types
 - Proper type definitions
 - Interface over type alias
 
 **Code Style**
+
 - Prettier formatting
 - ESLint rules
 - 2-space indentation

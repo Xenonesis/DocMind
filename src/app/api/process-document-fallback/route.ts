@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       status: result.status,
       category: result.category,
       processedAt: result.processedAt,
-      processor: 'node'
+      processor: 'node',
     })
   } catch (error) {
     console.error('Fallback document processing error:', error)
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Fallback document processing failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

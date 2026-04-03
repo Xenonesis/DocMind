@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
-import { 
-  DocumentUpdate, 
-  QueryUpdate, 
-  AnalysisUpdate 
-} from '@/lib/socket-types'
+import { DocumentUpdate, QueryUpdate, AnalysisUpdate } from '@/lib/socket-types'
 
 interface UseSocketOptions {
   autoConnect?: boolean
@@ -35,13 +31,9 @@ interface SocketState {
 }
 
 export function useSocket(options: UseSocketOptions = {}) {
-  const { 
-    autoConnect = true, 
-    documentId, 
-    joinUpdates: shouldJoinUpdates = true 
-  } = options
+  const { autoConnect = true, documentId, joinUpdates: shouldJoinUpdates = true } = options
   const socketsEnabled = process.env.NEXT_PUBLIC_ENABLE_SOCKETS === 'true'
-  
+
   const socketRef = useRef<Socket | null>(null)
   const [state, setState] = useState<SocketState>({
     isConnected: false,
@@ -49,7 +41,7 @@ export function useSocket(options: UseSocketOptions = {}) {
     queryUpdates: [],
     analysisUpdates: [],
     progressUpdates: [],
-    notifications: []
+    notifications: [],
   })
 
   useEffect(() => {
@@ -59,78 +51,82 @@ export function useSocket(options: UseSocketOptions = {}) {
     const baseUrl = process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin
     const socket = io(baseUrl, {
       path: '/api/socketio',
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
     })
 
     socketRef.current = socket
 
     socket.on('connect', () => {
-      setState(prev => ({ ...prev, isConnected: true }))
+      setState((prev) => ({ ...prev, isConnected: true }))
 
       if (documentId) {
         socket.emit('join-document-room', documentId)
       }
-      
+
       if (shouldJoinUpdates) {
         socket.emit('join-updates')
       }
     })
 
     socket.on('disconnect', () => {
-      setState(prev => ({ ...prev, isConnected: false }))
+      setState((prev) => ({ ...prev, isConnected: false }))
     })
 
     socket.on('document-update', (update: DocumentUpdate) => {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        documentUpdates: [update, ...prev.documentUpdates].slice(0, 50) 
+        documentUpdates: [update, ...prev.documentUpdates].slice(0, 50),
       }))
     })
 
     socket.on('query-update', (update: QueryUpdate) => {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        queryUpdates: [update, ...prev.queryUpdates].slice(0, 50)
+        queryUpdates: [update, ...prev.queryUpdates].slice(0, 50),
       }))
     })
 
     socket.on('analysis-update', (update: AnalysisUpdate) => {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        analysisUpdates: [update, ...prev.analysisUpdates].slice(0, 50)
+        analysisUpdates: [update, ...prev.analysisUpdates].slice(0, 50),
       }))
     })
 
-    socket.on('progress-update', (update: {
-      type: 'document' | 'query' | 'analysis'
-      id: string
-      progress: number
-      message?: string
-      timestamp: string
-    }) => {
-      setState(prev => ({
-        ...prev,
-        progressUpdates: [update, ...prev.progressUpdates].slice(0, 100)
-      }))
-    })
+    socket.on(
+      'progress-update',
+      (update: {
+        type: 'document' | 'query' | 'analysis'
+        id: string
+        progress: number
+        message?: string
+        timestamp: string
+      }) => {
+        setState((prev) => ({
+          ...prev,
+          progressUpdates: [update, ...prev.progressUpdates].slice(0, 100),
+        }))
+      }
+    )
 
-    socket.on('system-notification', (notification: {
-      type: 'info' | 'warning' | 'error' | 'success'
-      title: string
-      message: string
-      timestamp: string
-    }) => {
-      setState(prev => ({
-        ...prev,
-        notifications: [notification, ...prev.notifications].slice(0, 20)
-      }))
-    })
+    socket.on(
+      'system-notification',
+      (notification: {
+        type: 'info' | 'warning' | 'error' | 'success'
+        title: string
+        message: string
+        timestamp: string
+      }) => {
+        setState((prev) => ({
+          ...prev,
+          notifications: [notification, ...prev.notifications].slice(0, 20),
+        }))
+      }
+    )
 
-    socket.on('connected', (data: { socketId: string; timestamp: string; message: string }) => {
-    })
+    socket.on('connected', (data: { socketId: string; timestamp: string; message: string }) => {})
 
-    socket.on('message', (msg: { text: string; senderId: string; timestamp: string }) => {
-    })
+    socket.on('message', (msg: { text: string; senderId: string; timestamp: string }) => {})
 
     if (autoConnect) {
       socket.connect()
@@ -162,8 +158,10 @@ export function useSocket(options: UseSocketOptions = {}) {
     }
   }
 
-  const clearUpdates = (type?: 'document' | 'query' | 'analysis' | 'progress' | 'notifications') => {
-    setState(prev => {
+  const clearUpdates = (
+    type?: 'document' | 'query' | 'analysis' | 'progress' | 'notifications'
+  ) => {
+    setState((prev) => {
       if (!type) {
         return {
           ...prev,
@@ -171,10 +169,10 @@ export function useSocket(options: UseSocketOptions = {}) {
           queryUpdates: [],
           analysisUpdates: [],
           progressUpdates: [],
-          notifications: []
+          notifications: [],
         }
       }
-      
+
       switch (type) {
         case 'document':
           return { ...prev, documentUpdates: [] }
@@ -199,6 +197,6 @@ export function useSocket(options: UseSocketOptions = {}) {
     joinDocumentRoom,
     leaveDocumentRoom,
     joinUpdates,
-    clearUpdates
+    clearUpdates,
   }
 }

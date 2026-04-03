@@ -1,4 +1,3 @@
-
 export interface DocumentUpdate {
   id: string
   type: 'created' | 'updated' | 'deleted' | 'status_changed'

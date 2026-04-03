@@ -32,7 +32,7 @@ export function AnalysisResults() {
       const { authenticatedFetch } = await import('@/lib/api-client')
       const [analysisResponse, documentsResponse] = await Promise.all([
         authenticatedFetch('/api/analysis'),
-        authenticatedFetch('/api/documents')
+        authenticatedFetch('/api/documents'),
       ])
       if (analysisResponse.ok) {
         const analysisData = await analysisResponse.json()
@@ -50,7 +50,9 @@ export function AnalysisResults() {
     }
   }, [])
 
-  useEffect(() => { fetchAnalysisData() }, [fetchAnalysisData])
+  useEffect(() => {
+    fetchAnalysisData()
+  }, [fetchAnalysisData])
 
   const handleGenerateAnalysis = async () => {
     setIsGenerating(true)
@@ -60,7 +62,7 @@ export function AnalysisResults() {
       const resp = await authenticatedFetch('/api/analysis/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({}),
       })
       const data = await resp.json()
       if (resp.ok) {
@@ -80,21 +82,30 @@ export function AnalysisResults() {
   const handleExport = () => {
     const csv = [
       ['Type', 'Title', 'Description', 'Confidence', 'Severity', 'Documents', 'Date'].join(','),
-      ...analysisResults.map(r => [
-        r.type, `"${r.title}"`, `"${r.description.replace(/"/g, '""')}"`,
-        r.confidence + '%', r.severity || 'LOW', `"${r.documents.join('; ')}"`,
-        new Date(r.timestamp).toLocaleDateString()
-      ].join(','))
+      ...analysisResults.map((r) =>
+        [
+          r.type,
+          `"${r.title}"`,
+          `"${r.description.replace(/"/g, '""')}"`,
+          r.confidence + '%',
+          r.severity || 'LOW',
+          `"${r.documents.join('; ')}"`,
+          new Date(r.timestamp).toLocaleDateString(),
+        ].join(',')
+      ),
     ].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url; a.download = 'analysis-export.csv'; a.click()
+    a.href = url
+    a.download = 'analysis-export.csv'
+    a.click()
     URL.revokeObjectURL(url)
   }
 
   const stats = {
-    processedDocuments: analysisStats?.completedDocuments ?? documents.filter(d => d.status === 'COMPLETED').length,
+    processedDocuments:
+      analysisStats?.completedDocuments ?? documents.filter((d) => d.status === 'COMPLETED').length,
     totalDocuments: analysisStats?.totalDocuments ?? documents.length,
     totalInsights: analysisStats?.byType?.INSIGHT || 0,
     risksIdentified: analysisStats?.byType?.RISK || 0,
@@ -113,22 +124,37 @@ export function AnalysisResults() {
         </div>
         <div className="flex items-center gap-2">
           {generateMsg && (
-            <span className="text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-full">{generateMsg}</span>
+            <span className="text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-full">
+              {generateMsg}
+            </span>
           )}
-          <Button variant="outline" size="sm" onClick={fetchAnalysisData} disabled={isLoading} className="rounded-full h-9 px-4 text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchAnalysisData}
+            disabled={isLoading}
+            className="rounded-full h-9 px-4 text-xs"
+          >
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button
             size="sm"
             onClick={handleGenerateAnalysis}
-            disabled={isGenerating || documents.filter(d => d.status === 'COMPLETED').length === 0}
+            disabled={
+              isGenerating || documents.filter((d) => d.status === 'COMPLETED').length === 0
+            }
             className="rounded-full h-9 px-4 text-xs gap-1.5"
           >
-            {isGenerating
-              ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Analyzing...</>
-              : <><Sparkles className="w-3.5 h-3.5" /> Run AI Analysis</>
-            }
+            {isGenerating ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Analyzing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" /> Run AI Analysis
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -137,16 +163,25 @@ export function AnalysisResults() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="shadow-sm border-border bg-card">
           <CardContent className="p-5 flex items-center gap-3">
-            <div className="p-2.5 bg-secondary rounded-xl text-muted-foreground shrink-0"><FileText className="w-5 h-5" /></div>
+            <div className="p-2.5 bg-secondary rounded-xl text-muted-foreground shrink-0">
+              <FileText className="w-5 h-5" />
+            </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Processed</p>
-              <p className="text-xl font-semibold">{stats.processedDocuments}<span className="text-muted-foreground/50 text-sm font-normal">/{stats.totalDocuments}</span></p>
+              <p className="text-xl font-semibold">
+                {stats.processedDocuments}
+                <span className="text-muted-foreground/50 text-sm font-normal">
+                  /{stats.totalDocuments}
+                </span>
+              </p>
             </div>
           </CardContent>
         </Card>
         <Card className="shadow-sm border-border bg-card">
           <CardContent className="p-5 flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-600 dark:text-indigo-400 shrink-0"><Lightbulb className="w-5 h-5" /></div>
+            <div className="p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl text-indigo-600 dark:text-indigo-400 shrink-0">
+              <Lightbulb className="w-5 h-5" />
+            </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Key Insights</p>
               <p className="text-xl font-semibold">{stats.totalInsights}</p>
@@ -155,7 +190,9 @@ export function AnalysisResults() {
         </Card>
         <Card className="shadow-sm border-border bg-card">
           <CardContent className="p-5 flex items-center gap-3">
-            <div className="p-2.5 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-rose-600 dark:text-rose-400 shrink-0"><AlertTriangle className="w-5 h-5" /></div>
+            <div className="p-2.5 bg-rose-50 dark:bg-rose-900/20 rounded-xl text-rose-600 dark:text-rose-400 shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Risks Flagged</p>
               <p className="text-xl font-semibold">{stats.risksIdentified}</p>
@@ -164,7 +201,9 @@ export function AnalysisResults() {
         </Card>
         <Card className="shadow-sm border-border bg-card">
           <CardContent className="p-5 flex items-center gap-3">
-            <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0"><MessageSquare className="w-5 h-5" /></div>
+            <div className="p-2.5 bg-primary/10 rounded-xl text-primary shrink-0">
+              <MessageSquare className="w-5 h-5" />
+            </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">Total Queries</p>
               <p className="text-xl font-semibold">{stats.totalQueries}</p>
@@ -181,8 +220,12 @@ export function AnalysisResults() {
               { value: 'analysis', label: 'Analysis Log' },
               { value: 'documents', label: 'Document Summary' },
               { value: 'trends', label: 'Trends & Patterns' },
-            ].map(tab => (
-              <TabsTrigger key={tab.value} value={tab.value} className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium py-2 px-4 transition-all shadow-none">
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium py-2 px-4 transition-all shadow-none"
+              >
                 {tab.label}
               </TabsTrigger>
             ))}

@@ -15,12 +15,12 @@ export async function GET() {
     try {
       const res = await fetch(`${groqBaseUrl}/models`, {
         headers: { Authorization: `Bearer ${groqApiKey}` },
-        next: { revalidate: 3600 } 
-      });
+        next: { revalidate: 3600 },
+      })
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json()
         if (data && data.data) {
-          groqModels = data.data.map((m: any) => m.id);
+          groqModels = data.data.map((m: any) => m.id)
         }
       }
     } catch (e) {
@@ -28,7 +28,7 @@ export async function GET() {
     }
   }
 
-  const providers: any[] = [];
+  const providers: any[] = []
 
   if (apiKey) {
     providers.push({
@@ -50,9 +50,9 @@ export async function GET() {
   }
 
   if (groqApiKey) {
-    const defaultGroqModel = groqModels.includes('llama-3.1-8b-instant') 
-      ? 'llama-3.1-8b-instant' 
-      : (groqModels.find(m => m.includes('llama') && !m.includes('guard')) || groqModels[0]);
+    const defaultGroqModel = groqModels.includes('llama-3.1-8b-instant')
+      ? 'llama-3.1-8b-instant'
+      : groqModels.find((m) => m.includes('llama') && !m.includes('guard')) || groqModels[0]
 
     providers.push({
       id: 'docscan-free-groq',

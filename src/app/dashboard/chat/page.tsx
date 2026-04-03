@@ -49,11 +49,11 @@ export default function ChatPage() {
         {/* Sidebar skeleton */}
         <div className="w-[300px] bg-background border-r border-border flex flex-col hidden lg:flex shrink-0">
           <div className="p-4 border-b border-border h-[73px] flex items-center">
-             <div className="h-10 w-full bg-muted/30 rounded-xl animate-pulse" />
+            <div className="h-10 w-full bg-muted/30 rounded-xl animate-pulse" />
           </div>
           <div className="flex-1 p-4 space-y-3 mt-4">
             <div className="h-4 w-24 bg-muted/60 mb-6 rounded-md animate-pulse px-2" />
-            {[1, 2, 3, 4, 5].map(i => (
+            {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="h-12 w-full bg-muted/20 rounded-lg animate-pulse" />
             ))}
           </div>
@@ -103,13 +103,19 @@ export default function ChatPage() {
           navItems={
             <>
               <Link href="/dashboard">
-                <Button variant="outline" className="rounded-full text-muted-foreground h-9 px-3 sm:px-5">
+                <Button
+                  variant="outline"
+                  className="rounded-full text-muted-foreground h-9 px-3 sm:px-5"
+                >
                   <LayoutDashboard className="w-4 h-4" />
                   <span className="hidden sm:inline ml-2">Dashboard</span>
                 </Button>
               </Link>
               <Link href="/dashboard/chatbots">
-                <Button variant="outline" className="rounded-full text-muted-foreground h-9 px-3 sm:px-5">
+                <Button
+                  variant="outline"
+                  className="rounded-full text-muted-foreground h-9 px-3 sm:px-5"
+                >
                   <Bot className="w-4 h-4" />
                   <span className="hidden sm:inline ml-2">Chatbots</span>
                 </Button>

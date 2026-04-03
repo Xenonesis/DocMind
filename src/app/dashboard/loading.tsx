@@ -11,8 +11,11 @@ export default function DashboardLoading() {
         <div className="h-10 w-32 bg-muted/30 rounded-xl animate-pulse hidden sm:block" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-32 bg-card border border-border/50 rounded-xl animate-pulse shadow-sm" />
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-32 bg-card border border-border/50 rounded-xl animate-pulse shadow-sm"
+          />
         ))}
       </div>
       <div className="h-96 bg-card border border-border/50 rounded-xl animate-pulse shadow-sm w-full mt-6" />

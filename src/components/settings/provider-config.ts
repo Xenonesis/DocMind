@@ -55,7 +55,12 @@ export const defaultProviders: Omit<AIProvider, 'id'>[] = [
     model: 'claude-3-5-sonnet-latest',
     isActive: false,
     isConfigured: false,
-    models: ['claude-opus-4-0', 'claude-sonnet-4-0', 'claude-3-7-sonnet-latest', 'claude-3-5-haiku-latest'],
+    models: [
+      'claude-opus-4-0',
+      'claude-sonnet-4-0',
+      'claude-3-7-sonnet-latest',
+      'claude-3-5-haiku-latest',
+    ],
     maxTokens: 8192,
     temperature: 0.7,
     topP: 0.9,
@@ -134,7 +139,8 @@ export const defaultProviders: Omit<AIProvider, 'id'>[] = [
     maxTokens: 4096,
     temperature: 0.7,
     topP: 0.9,
-    description: 'Free built-in provider powered by DocScan. No API key needed — just activate and use!',
+    description:
+      'Free built-in provider powered by DocScan. No API key needed — just activate and use!',
     iconType: 'zap',
   },
 ]
@@ -152,16 +158,26 @@ export function mapRawProviderType(raw: string): AIProvider['type'] {
 
 export function mapTypeToServerEnum(type: AIProvider['type']): string {
   switch (type) {
-    case 'open-router': return 'OPENROUTER'
-    case 'lm-studio': return 'LM_STUDIO'
-    case 'google': return 'GOOGLE_AI'
-    case 'mistral': return 'MISTRAL'
-    case 'ollama': return 'OLLAMA'
-    case 'openai': return 'OPENAI'
-    case 'anthropic': return 'ANTHROPIC'
-    case 'openai-compatible': return 'OPENAI_COMPATIBLE'
-    case 'groq': return 'GROQ'
-    default: return type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
+    case 'open-router':
+      return 'OPENROUTER'
+    case 'lm-studio':
+      return 'LM_STUDIO'
+    case 'google':
+      return 'GOOGLE_AI'
+    case 'mistral':
+      return 'MISTRAL'
+    case 'ollama':
+      return 'OLLAMA'
+    case 'openai':
+      return 'OPENAI'
+    case 'anthropic':
+      return 'ANTHROPIC'
+    case 'openai-compatible':
+      return 'OPENAI_COMPATIBLE'
+    case 'groq':
+      return 'GROQ'
+    default:
+      return type?.toUpperCase().replace(/-/g, '_') || 'CUSTOM'
   }
 }
 
@@ -169,9 +185,12 @@ export function buildProviderName(type: string, model: string, id?: string): str
   if (type === 'groq') return `DocScan ${model || 'model name'} from groq (free)`
   if (id?.startsWith('docscan-free-')) {
     switch (id) {
-      case 'docscan-free-glm': return 'DocScan Glm-5 (free)'
-      case 'docscan-free-llama': return 'DocScan Llama-3 (free)'
-      case 'docscan-free-qwen': return 'DocScan Qwen-2.5 (free)'
+      case 'docscan-free-glm':
+        return 'DocScan Glm-5 (free)'
+      case 'docscan-free-llama':
+        return 'DocScan Llama-3 (free)'
+      case 'docscan-free-qwen':
+        return 'DocScan Qwen-2.5 (free)'
     }
   }
   return `${type} (${model || ''})`
@@ -188,11 +207,16 @@ export function getProviderStatus(provider: AIProvider): string {
 
 export function getStatusColor(status: string): string {
   switch (status) {
-    case 'connected': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/50'
-    case 'error': return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800/50'
-    case 'testing': return 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50'
-    case 'needs_test': return 'bg-blue-100/50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/50'
-    default: return 'bg-secondary text-muted-foreground border-transparent'
+    case 'connected':
+      return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/50'
+    case 'error':
+      return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800/50'
+    case 'testing':
+      return 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800/50'
+    case 'needs_test':
+      return 'bg-blue-100/50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/50'
+    default:
+      return 'bg-secondary text-muted-foreground border-transparent'
   }
 }
 
@@ -215,7 +239,7 @@ export function serializeProviderPayload(p: AIProvider) {
 
 export function mapServerDataToProvider(s: any, index: number): AIProvider {
   const mappedType = mapRawProviderType(s.provider || 'custom')
-  const defaults = defaultProviders.find(d => d.type === mappedType)
+  const defaults = defaultProviders.find((d) => d.type === mappedType)
   const pName = buildProviderName(mappedType, s.model, s.id)
 
   return {

@@ -38,7 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
       name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
-      avatar: supabaseUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.email}`
+      avatar:
+        supabaseUser.user_metadata?.avatar_url ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.email}`,
     }
     setUser(userData)
   }
@@ -56,69 +58,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       markLoaded()
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUserFromSupabase(session.user)
-        } else {
-          setUser(null)
-        }
-        markLoaded()
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUserFromSupabase(session.user)
+      } else {
+        setUser(null)
       }
-    )
+      markLoaded()
+    })
 
     return () => subscription.unsubscribe()
   }, [])
 
   const login = async (email: string, password: string) => {
     if (!supabase) throw new Error('Supabase not configured')
-    
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     })
-    
+
     if (error) throw error
     router.push('/dashboard')
   }
 
   const signup = async (email: string, password: string, name: string) => {
     if (!supabase) throw new Error('Supabase not configured')
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          name
+          name,
         },
-        emailRedirectTo: `${window.location.origin}/dashboard`
-      }
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
     })
-    
+
     if (error) throw error
     router.push('/dashboard')
   }
 
   const loginWithProvider = async (provider: 'google' | 'github') => {
     if (!supabase) throw new Error('Supabase not configured')
-    
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
-      }
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+      },
     })
-    
+
     if (error) throw error
   }
 
   const logout = async () => {
     if (!supabase) return
-    
+
     const { error } = await supabase.auth.signOut()
     if (error) throw error
-    
+
     setUser(null)
     router.push('/')
   }
@@ -130,14 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     loginWithProvider,
     logout,
-    isLoading
+    isLoading,
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

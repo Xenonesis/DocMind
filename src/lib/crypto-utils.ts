@@ -1,5 +1,4 @@
-
-const ENCRYPTION_KEY = 'documind-ai-2024-secure-key' 
+const ENCRYPTION_KEY = 'documind-ai-2024-secure-key'
 
 function xorEncrypt(text: string, key: string): string {
   let result: string[] = []
@@ -43,10 +42,10 @@ export function decryptApiKey(encryptedKey: string): string {
 
 export function maskApiKey(apiKey: string): string {
   if (!apiKey || apiKey.length < 8) return '•'.repeat(8)
-  
+
   const visibleChars = 4
   const maskedChars = apiKey.length - visibleChars * 2
-  
+
   return (
     apiKey.substring(0, visibleChars) +
     '•'.repeat(Math.max(maskedChars, 8)) +
@@ -65,11 +64,12 @@ export function isValidApiKey(apiKey: string, providerType: string): boolean {
       return key.length >= 20 && /^[A-Za-z0-9\-_]+$/.test(key)
     },
     mistral: (key: string) => /^[a-zA-Z0-9]{32}$/.test(key),
-    'open-router': (key: string) => /^sk-or-v1-[a-fA-F0-9]{64}$/.test(key) || /^sk-or-[a-zA-Z0-9\-]{48,}$/.test(key),
+    'open-router': (key: string) =>
+      /^sk-or-v1-[a-fA-F0-9]{64}$/.test(key) || /^sk-or-[a-zA-Z0-9\-]{48,}$/.test(key),
     openai: (key: string) => /^sk-[a-zA-Z0-9]{20,}$/.test(key),
     anthropic: (key: string) => /^sk-ant-[a-zA-Z0-9]{20,}$/.test(key),
     'lm-studio': (key: string) => /^[a-zA-Z0-9\-_]{10,}$/.test(key),
-    ollama: (key: string) => /^[a-zA-Z0-9\-_]{1,}$/.test(key) 
+    ollama: (key: string) => /^[a-zA-Z0-9\-_]{1,}$/.test(key),
   }
 
   const pattern = patterns[providerType as keyof typeof patterns]

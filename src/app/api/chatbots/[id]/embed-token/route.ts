@@ -64,9 +64,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
 
     const generated = generateEmbedToken()
-    const expiresAt = typeof body.expiresInDays === 'number'
-      ? new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000).toISOString()
-      : null
+    const expiresAt =
+      typeof body.expiresInDays === 'number'
+        ? new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+        : null
 
     const allowedOrigins = Array.isArray(body.allowedOrigins) ? body.allowedOrigins : []
 

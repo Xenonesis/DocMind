@@ -22,7 +22,9 @@ export default function DashboardError({
           <AlertCircle className="w-6 h-6" />
         </div>
         <h2 className="text-lg font-semibold">Unable to load dashboard</h2>
-        <p className="text-sm text-muted-foreground">Please try again. If the issue continues, refresh the page.</p>
+        <p className="text-sm text-muted-foreground">
+          Please try again. If the issue continues, refresh the page.
+        </p>
         <Button onClick={reset} className="w-full rounded-xl">
           <RefreshCw className="w-4 h-4 mr-2" />
           Retry

@@ -5,7 +5,13 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Eye, EyeOff, Mail, Lock, Globe, GitBranch, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
@@ -42,7 +48,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setIsLoading(true)
     setError('')
-    
+
     try {
       await loginWithProvider(provider)
       onOpenChange(false)
@@ -57,7 +63,9 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md mx-4 max-w-[calc(100vw-2rem)] border-border rounded-2xl shadow-lg bg-card p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="text-xl sm:text-2xl font-semibold text-center tracking-tight">Welcome back</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl font-semibold text-center tracking-tight">
+            Welcome back
+          </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
             Sign in to your DocMind account
           </DialogDescription>
@@ -119,7 +127,10 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <a href="#" className="text-xs font-medium text-primary hover:underline underline-offset-4">
+                <a
+                  href="#"
+                  className="text-xs font-medium text-primary hover:underline underline-offset-4"
+                >
                   Forgot password?
                 </a>
               </div>
@@ -142,23 +153,27 @@ export function LoginModal({ open, onOpenChange, onSwitchToSignup }: LoginModalP
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-sm font-medium text-rose-600 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg border border-rose-100 dark:border-rose-900/50" role="alert" aria-live="assertive">
+              <div
+                className="flex items-center gap-2 text-sm font-medium text-rose-600 bg-rose-50 dark:bg-rose-900/10 p-3 rounded-lg border border-rose-100 dark:border-rose-900/50"
+                role="alert"
+                aria-live="assertive"
+              >
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <p>{error}</p>
               </div>
             )}
 
-            <Button type="submit" className="w-full rounded-xl shadow-sm h-11 font-medium" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full rounded-xl shadow-sm h-11 font-medium"
+              disabled={isLoading}
+            >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>

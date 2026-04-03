@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -40,62 +40,62 @@
 
 :root {
   --radius: 0.75rem;
-  
-  --background: oklch(0.99 0 0); 
-  --foreground: oklch(0.15 0 0);  
-  
+
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.15 0 0);
+
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0 0);
-  
+
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0 0);
-  
-  --primary: oklch(0.2 0.02 240); 
-  --primary-foreground: oklch(0.98 0 0); 
-  
+
+  --primary: oklch(0.2 0.02 240);
+  --primary-foreground: oklch(0.98 0 0);
+
   --secondary: oklch(0.96 0 0);
   --secondary-foreground: oklch(0.2 0.02 240);
-  
+
   --muted: oklch(0.96 0 0);
   --muted-foreground: oklch(0.5 0 0);
-  
-  --accent: oklch(0.95 0.02 240); 
+
+  --accent: oklch(0.95 0.02 240);
   --accent-foreground: oklch(0.2 0.02 240);
-  
+
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.92 0 0); 
+  --border: oklch(0.92 0 0);
   --input: oklch(0.92 0 0);
   --ring: oklch(0.2 0.02 240);
 }
 
 .dark {
-  --background: oklch(0.12 0.01 240); 
-  --foreground: oklch(0.95 0 0); 
-  
+  --background: oklch(0.12 0.01 240);
+  --foreground: oklch(0.95 0 0);
+
   --card: oklch(0.15 0.01 240);
   --card-foreground: oklch(0.95 0 0);
-  
+
   --popover: oklch(0.15 0.01 240);
   --popover-foreground: oklch(0.95 0 0);
-  
-  --primary: oklch(0.95 0 0); 
-  --primary-foreground: oklch(0.12 0.01 240); 
-  
+
+  --primary: oklch(0.95 0 0);
+  --primary-foreground: oklch(0.12 0.01 240);
+
   --secondary: oklch(0.2 0.01 240);
   --secondary-foreground: oklch(0.95 0 0);
-  
+
   --muted: oklch(0.2 0.01 240);
   --muted-foreground: oklch(0.7 0 0);
-  
-  --accent: oklch(0.2 0.01 240); 
+
+  --accent: oklch(0.2 0.01 240);
   --accent-foreground: oklch(0.95 0 0);
-  
+
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(1 0 0);
-  
-  --border: oklch(0.22 0.01 240); 
+
+  --border: oklch(0.22 0.01 240);
   --input: oklch(0.22 0.01 240);
   --ring: oklch(0.8 0 0);
 }
@@ -104,7 +104,7 @@
   * {
     @apply border-border outline-ring/50;
   }
-  
+
   html {
     scroll-behavior: smooth;
     height: 100%;
@@ -120,22 +120,24 @@
 }
 
 @utility brutal-shadow {
-  box-shadow: 0 4px 14px 0 rgba(0,0,0,0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
+  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px 0 rgba(0,0,0,0.08);
+    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.08);
   }
 
   &:active {
     transform: translateY(0);
-    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
   }
 }
 
 @utility brutal-shadow-sm {
-  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
 }
 
 @utility brutal-border {
@@ -145,13 +147,13 @@
 @utility glass {
   background-color: color-mix(in oklch, var(--background) 80%, transparent);
   border: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
   backdrop-filter: blur(12px);
 }
 
 @utility glass-dark {
   background-color: color-mix(in oklch, var(--background) 80%, transparent);
   border: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(12px);
 }

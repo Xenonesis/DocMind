@@ -23,8 +23,12 @@ export function ChatEmptyState({ completedDocs, onSendMessage }: ChatEmptyStateP
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">Start a conversation</h3>
       <p className="text-sm text-muted-foreground mb-8 max-w-sm">
-        Ask questions about your documents and get AI-powered insights instantly. 
-        {completedDocs.length > 0 && <span className="block mt-1 text-primary/80">Using DocScan Glm-5 (free) automatically if no provider is set.</span>}
+        Ask questions about your documents and get AI-powered insights instantly.
+        {completedDocs.length > 0 && (
+          <span className="block mt-1 text-primary/80">
+            Using DocScan Glm-5 (free) automatically if no provider is set.
+          </span>
+        )}
         {completedDocs.length === 0 && ' Upload a document first to get started.'}
       </p>
 
@@ -37,7 +41,9 @@ export function ChatEmptyState({ completedDocs, onSendMessage }: ChatEmptyStateP
             className="flex items-start gap-3 p-3.5 rounded-xl border border-border bg-background hover:bg-secondary/40 hover:border-primary/30 transition-all text-left group disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <p.icon className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{p.text}</span>
+            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+              {p.text}
+            </span>
           </button>
         ))}
       </div>

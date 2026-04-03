@@ -6,7 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Loader2, ShieldX } from 'lucide-react'
 import type { ChatbotDetails, SecretItem } from '@/types'
 
@@ -53,48 +59,89 @@ export function ChatbotEditor({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Edit Chatbot: {details.name}</CardTitle>
-        <CardDescription>Update guardrails, limits, documents, and credential lifecycle from one place.</CardDescription>
+        <CardDescription>
+          Update guardrails, limits, documents, and credential lifecycle from one place.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input value={details.name} onChange={(e) => onDetailsChange({ ...details, name: e.target.value })} />
+            <Input
+              value={details.name}
+              onChange={(e) => onDetailsChange({ ...details, name: e.target.value })}
+            />
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
-            <Input value={details.description || ''} onChange={(e) => onDetailsChange({ ...details, description: e.target.value })} />
+            <Input
+              value={details.description || ''}
+              onChange={(e) => onDetailsChange({ ...details, description: e.target.value })}
+            />
           </div>
         </div>
 
         <div className="space-y-2">
           <Label>System Prompt</Label>
-          <Textarea value={details.system_prompt || ''} onChange={(e) => onDetailsChange({ ...details, system_prompt: e.target.value })} rows={3} />
+          <Textarea
+            value={details.system_prompt || ''}
+            onChange={(e) => onDetailsChange({ ...details, system_prompt: e.target.value })}
+            rows={3}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Refusal Message</Label>
-            <Textarea value={details.refusal_message || ''} onChange={(e) => onDetailsChange({ ...details, refusal_message: e.target.value })} rows={2} />
+            <Textarea
+              value={details.refusal_message || ''}
+              onChange={(e) => onDetailsChange({ ...details, refusal_message: e.target.value })}
+              rows={2}
+            />
           </div>
           <div className="space-y-2">
             <Label>Fallback Message</Label>
-            <Textarea value={details.fallback_message || ''} onChange={(e) => onDetailsChange({ ...details, fallback_message: e.target.value })} rows={2} />
+            <Textarea
+              value={details.fallback_message || ''}
+              onChange={(e) => onDetailsChange({ ...details, fallback_message: e.target.value })}
+              rows={2}
+            />
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label>Bot requests/min</Label>
-            <Input type="number" value={details.requests_per_minute_bot} onChange={(e) => onDetailsChange({ ...details, requests_per_minute_bot: Number(e.target.value || 0) })} />
+            <Input
+              type="number"
+              value={details.requests_per_minute_bot}
+              onChange={(e) =>
+                onDetailsChange({
+                  ...details,
+                  requests_per_minute_bot: Number(e.target.value || 0),
+                })
+              }
+            />
           </div>
           <div className="space-y-2">
             <Label>Per IP requests/min</Label>
-            <Input type="number" value={details.requests_per_minute_ip} onChange={(e) => onDetailsChange({ ...details, requests_per_minute_ip: Number(e.target.value || 0) })} />
+            <Input
+              type="number"
+              value={details.requests_per_minute_ip}
+              onChange={(e) =>
+                onDetailsChange({ ...details, requests_per_minute_ip: Number(e.target.value || 0) })
+              }
+            />
           </div>
           <div className="space-y-2">
             <Label>Bot requests/day</Label>
-            <Input type="number" value={details.requests_per_day_bot} onChange={(e) => onDetailsChange({ ...details, requests_per_day_bot: Number(e.target.value || 0) })} />
+            <Input
+              type="number"
+              value={details.requests_per_day_bot}
+              onChange={(e) =>
+                onDetailsChange({ ...details, requests_per_day_bot: Number(e.target.value || 0) })
+              }
+            />
           </div>
         </div>
 
@@ -105,7 +152,9 @@ export function ChatbotEditor({
               <Label>Response Style</Label>
               <Select
                 value={details.response_style}
-                onValueChange={(value: 'concise' | 'balanced' | 'detailed') => onDetailsChange({ ...details, response_style: value })}
+                onValueChange={(value: 'concise' | 'balanced' | 'detailed') =>
+                  onDetailsChange({ ...details, response_style: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -122,28 +171,36 @@ export function ChatbotEditor({
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={details.include_references}
-                onCheckedChange={(checked) => onDetailsChange({ ...details, include_references: checked === true })}
+                onCheckedChange={(checked) =>
+                  onDetailsChange({ ...details, include_references: checked === true })
+                }
               />
               Show references in answers
             </label>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={details.include_highlights}
-                onCheckedChange={(checked) => onDetailsChange({ ...details, include_highlights: checked === true })}
+                onCheckedChange={(checked) =>
+                  onDetailsChange({ ...details, include_highlights: checked === true })
+                }
               />
               Show important text highlights
             </label>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={details.use_chat_memory}
-                onCheckedChange={(checked) => onDetailsChange({ ...details, use_chat_memory: checked === true })}
+                onCheckedChange={(checked) =>
+                  onDetailsChange({ ...details, use_chat_memory: checked === true })
+                }
               />
               Use conversation memory while answering
             </label>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={details.auto_regenerate_on_dislike}
-                onCheckedChange={(checked) => onDetailsChange({ ...details, auto_regenerate_on_dislike: checked === true })}
+                onCheckedChange={(checked) =>
+                  onDetailsChange({ ...details, auto_regenerate_on_dislike: checked === true })
+                }
               />
               Auto-improve answer after dislike feedback
             </label>
@@ -152,7 +209,12 @@ export function ChatbotEditor({
 
         <div className="space-y-2">
           <Label>Allowed Origins (one per line)</Label>
-          <Textarea value={allowedOriginsInput} onChange={(e) => onAllowedOriginsChange(e.target.value)} rows={3} placeholder="https://your-site.com" />
+          <Textarea
+            value={allowedOriginsInput}
+            onChange={(e) => onAllowedOriginsChange(e.target.value)}
+            rows={3}
+            placeholder="https://your-site.com"
+          />
         </div>
 
         <div className="space-y-2">
@@ -173,7 +235,9 @@ export function ChatbotEditor({
         <div className="flex items-center gap-2">
           <Checkbox
             checked={details.is_active}
-            onCheckedChange={(checked) => onDetailsChange({ ...details, is_active: checked === true })}
+            onCheckedChange={(checked) =>
+              onDetailsChange({ ...details, is_active: checked === true })
+            }
           />
           <span className="text-sm">Bot is active</span>
         </div>
@@ -183,22 +247,37 @@ export function ChatbotEditor({
             {updatingBot ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Save Changes
           </Button>
-          <Button variant="outline" onClick={onClose}>Close</Button>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Issued API Keys</Label>
             <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-              {apiKeys.length === 0 && <p className="text-xs text-muted-foreground">No API keys issued yet.</p>}
+              {apiKeys.length === 0 && (
+                <p className="text-xs text-muted-foreground">No API keys issued yet.</p>
+              )}
               {apiKeys.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-2 border rounded p-2">
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 border rounded p-2"
+                >
                   <div className="text-xs">
-                    <div>{item.key_name || 'default'} ({item.key_prefix || 'n/a'})</div>
-                    <div className="text-muted-foreground">{item.is_active ? 'active' : 'revoked'}</div>
+                    <div>
+                      {item.key_name || 'default'} ({item.key_prefix || 'n/a'})
+                    </div>
+                    <div className="text-muted-foreground">
+                      {item.is_active ? 'active' : 'revoked'}
+                    </div>
                   </div>
                   {item.is_active && (
-                    <Button size="sm" variant="outline" onClick={() => onRevokeApiKey(editingBotId, item.id)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onRevokeApiKey(editingBotId, item.id)}
+                    >
                       <ShieldX className="w-3.5 h-3.5 mr-1" /> Revoke
                     </Button>
                   )}
@@ -210,15 +289,28 @@ export function ChatbotEditor({
           <div className="space-y-2">
             <Label>Issued Embed Tokens</Label>
             <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-              {embedTokens.length === 0 && <p className="text-xs text-muted-foreground">No embed tokens issued yet.</p>}
+              {embedTokens.length === 0 && (
+                <p className="text-xs text-muted-foreground">No embed tokens issued yet.</p>
+              )}
               {embedTokens.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-2 border rounded p-2">
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 border rounded p-2"
+                >
                   <div className="text-xs">
-                    <div>{item.token_name || 'default'} ({item.token_prefix || 'n/a'})</div>
-                    <div className="text-muted-foreground">{item.is_active ? 'active' : 'revoked'}</div>
+                    <div>
+                      {item.token_name || 'default'} ({item.token_prefix || 'n/a'})
+                    </div>
+                    <div className="text-muted-foreground">
+                      {item.is_active ? 'active' : 'revoked'}
+                    </div>
                   </div>
                   {item.is_active && (
-                    <Button size="sm" variant="outline" onClick={() => onRevokeEmbedToken(editingBotId, item.id)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onRevokeEmbedToken(editingBotId, item.id)}
+                    >
                       <ShieldX className="w-3.5 h-3.5 mr-1" /> Revoke
                     </Button>
                   )}

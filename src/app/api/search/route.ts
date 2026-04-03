@@ -26,10 +26,10 @@ async function callBasicSearch(request: NextRequest, body: Record<string, unknow
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: request.headers.get('authorization') || ''
+      Authorization: request.headers.get('authorization') || '',
     },
     body: JSON.stringify(body),
-    cache: 'no-store'
+    cache: 'no-store',
   })
 
   const payload = await response.json()
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         results: [],
         query: query.trim(),
         total: 0,
-        message: 'No documents available for search'
+        message: 'No documents available for search',
       })
     }
 
@@ -118,23 +118,29 @@ export async function POST(request: NextRequest) {
         category: doc.category || '',
         type: doc.type,
         metadata: doc.metadata
-          ? (typeof doc.metadata === 'string' ? JSON.parse(doc.metadata) : doc.metadata)
+          ? typeof doc.metadata === 'string'
+            ? JSON.parse(doc.metadata)
+            : doc.metadata
           : {},
-        uploadDate: doc.upload_date
+        uploadDate: doc.upload_date,
       }))
 
       const searchPrompt = `You are performing semantic search on a collection of documents.
 Search Query: "${query}"
 
 Available Documents:
-${documentContexts.map((doc) => `
+${documentContexts
+  .map(
+    (doc) => `
 Document ID: ${doc.id}
 Name: ${doc.name}
 Type: ${doc.type}
 Category: ${doc.category}
 Content: ${String(doc.content).slice(0, 4000)}
 Upload Date: ${doc.uploadDate}
-`).join('\n---\n')}
+`
+  )
+  .join('\n---\n')}
 
 Return JSON in this shape:
 {
@@ -154,9 +160,10 @@ Return JSON in this shape:
       const completion = await aiService.generateCompletion({
         provider: activeProvider,
         prompt: searchPrompt,
-        systemPrompt: 'You are an expert semantic search engine specialized in document analysis. Always return valid JSON.',
+        systemPrompt:
+          'You are an expert semantic search engine specialized in document analysis. Always return valid JSON.',
         temperature: 0.1,
-        maxTokens: 2000
+        maxTokens: 2000,
       })
 
       let searchResults: any
@@ -180,8 +187,8 @@ Return JSON in this shape:
               size: document.size,
               category: document.category,
               uploadDate: document.upload_date,
-              processedAt: document.processed_at
-            }
+              processedAt: document.processed_at,
+            },
           }
         })
         .filter(Boolean)
@@ -195,7 +202,7 @@ Return JSON in this shape:
         summary: searchResults.summary,
         searchType: 'semantic',
         provider: activeProvider.name,
-        usage: completion.usage
+        usage: completion.usage,
       })
     } catch (error) {
       console.error('AI semantic search error:', error)
@@ -223,9 +230,9 @@ export async function GET(request: NextRequest) {
       query,
       filters: {
         ...(type ? { type } : {}),
-        ...(category ? { category } : {})
+        ...(category ? { category } : {}),
       },
-      limit
+      limit,
     })
   } catch (error) {
     console.error('GET search error:', error)

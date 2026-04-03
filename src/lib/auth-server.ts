@@ -8,7 +8,9 @@ export interface AuthenticatedUser {
   avatar_url?: string
 }
 
-export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
+export async function getAuthenticatedUser(
+  request: NextRequest
+): Promise<AuthenticatedUser | null> {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     console.warn('[auth-server] Missing or invalid Authorization header')
@@ -18,12 +20,17 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
   const token = authHeader.substring(7)
 
   if (!supabaseServer) {
-    console.error('[auth-server] supabaseServer is null. Check NEXT_PUBLIC_SUPABASE_URL and Anon Key env variables.')
+    console.error(
+      '[auth-server] supabaseServer is null. Check NEXT_PUBLIC_SUPABASE_URL and Anon Key env variables.'
+    )
     return null
   }
 
   try {
-    const { data: { user }, error } = await supabaseServer.auth.getUser(token)
+    const {
+      data: { user },
+      error,
+    } = await supabaseServer.auth.getUser(token)
     if (error) {
       console.error('[auth-server] Supabase getUser error:', error.message, error.status)
       return null
@@ -45,14 +52,14 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
 
 export async function requireAuth(request: NextRequest): Promise<AuthenticatedUser> {
   const user = await getAuthenticatedUser(request)
-  
+
   if (!user) {
-    throw new Response(
-      JSON.stringify({ error: 'Authentication required' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    )
+    throw new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
-  
+
   return user
 }
 
@@ -68,7 +75,7 @@ export async function ensureUserProfile(user: AuthenticatedUser, dbClient?: any)
     .eq('id', user.id)
     .single()
 
-  if (fetchError && fetchError.code !== 'PGRST116') { 
+  if (fetchError && fetchError.code !== 'PGRST116') {
     if (fetchError.code === '23503') {
       const error = new Error('User not found in authentication system')
       ;(error as any).code = '23503'
@@ -87,7 +94,7 @@ export async function ensureUserProfile(user: AuthenticatedUser, dbClient?: any)
       id: user.id,
       email: user.email,
       name: user.name,
-      avatar_url: user.avatar_url
+      avatar_url: user.avatar_url,
     })
     .select()
     .single()

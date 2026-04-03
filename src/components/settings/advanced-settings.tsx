@@ -6,20 +6,25 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import {
-  Save,
-  Brain,
-  Shield,
-  Activity,
-  CheckCircle,
-} from 'lucide-react'
+import { Save, Brain, Shield, Activity, CheckCircle } from 'lucide-react'
 
 export function AdvancedSettings() {
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+    >
       <Card className="shadow-sm border-border bg-card">
         <CardHeader className="p-6 border-b border-border/50 bg-background/50">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -29,21 +34,39 @@ export function AdvancedSettings() {
         </CardHeader>
         <CardContent className="p-6 space-y-5">
           <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Base Persona</Label>
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Base Persona
+            </Label>
             <Textarea
               placeholder="You are a helpful AI assistant that analyzes documents..."
               className="min-h-[120px] bg-background shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-primary resize-none"
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timeout (sec)</Label>
-              <Input type="number" defaultValue="30" min="5" max="300" className="bg-background rounded-xl shadow-sm" />
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Timeout (sec)
+              </Label>
+              <Input
+                type="number"
+                defaultValue="30"
+                min="5"
+                max="300"
+                className="bg-background rounded-xl shadow-sm"
+              />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Retries</Label>
-              <Input type="number" defaultValue="3" min="1" max="10" className="bg-background rounded-xl shadow-sm" />
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Retries
+              </Label>
+              <Input
+                type="number"
+                defaultValue="3"
+                min="1"
+                max="10"
+                className="bg-background rounded-xl shadow-sm"
+              />
             </div>
           </div>
 
@@ -79,7 +102,10 @@ export function AdvancedSettings() {
               <Label className="text-sm font-medium">At-Rest Encryption</Label>
               <p className="text-xs text-muted-foreground">Keys undergo AES-256 wrapping</p>
             </div>
-            <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none shadow-sm gap-1.5 font-normal">
+            <Badge
+              variant="outline"
+              className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-none shadow-sm gap-1.5 font-normal"
+            >
               <CheckCircle className="w-3.5 h-3.5" /> Enforced
             </Badge>
           </div>
@@ -121,15 +147,25 @@ export function AdvancedSettings() {
         </CardHeader>
         <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Concurrency Cap</Label>
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Concurrency Cap
+            </Label>
             <div className="flex items-center gap-3">
-              <Input type="number" defaultValue="5" min="1" max="20" className="w-24 bg-background rounded-xl shadow-sm" />
+              <Input
+                type="number"
+                defaultValue="5"
+                min="1"
+                max="20"
+                className="w-24 bg-background rounded-xl shadow-sm"
+              />
               <span className="text-sm text-muted-foreground">req/min</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Traffic Shaping</Label>
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Traffic Shaping
+            </Label>
             <Select defaultValue="balanced">
               <SelectTrigger className="bg-background rounded-xl shadow-sm">
                 <SelectValue />
@@ -141,11 +177,13 @@ export function AdvancedSettings() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="md:col-span-2 flex items-center justify-between p-4 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/30 transition-colors">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Event Stream (SSE)</Label>
-              <p className="text-xs text-muted-foreground">Deliver chunks organically as generated</p>
+              <p className="text-xs text-muted-foreground">
+                Deliver chunks organically as generated
+              </p>
             </div>
             <Switch defaultChecked />
           </div>

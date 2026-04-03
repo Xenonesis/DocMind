@@ -1,7 +1,13 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -32,13 +38,18 @@ export function DashboardHeader({
     <header className="bg-background border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sticky top-0 z-50 shadow-sm">
       <div className="flex items-center gap-3">
         <div className="relative w-9 h-9 rounded-lg overflow-hidden shadow-sm shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
-          <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
+          <Image
+            src="/logo.png"
+            alt="DocMind Logo"
+            fill
+            sizes="40px"
+            className="object-cover"
+            priority
+          />
         </div>
         <div>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight">{title}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Welcome back, {userName}
-          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Welcome back, {userName}</p>
         </div>
       </div>
 
@@ -49,8 +60,10 @@ export function DashboardHeader({
               <SelectValue placeholder="Select Model" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              {configuredProviders.map(p => (
-                <SelectItem key={p.id} value={p.id} className="text-xs py-2">{p.name}</SelectItem>
+              {configuredProviders.map((p) => (
+                <SelectItem key={p.id} value={p.id} className="text-xs py-2">
+                  {p.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

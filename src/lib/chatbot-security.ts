@@ -32,8 +32,10 @@ interface SecretRecord {
   }
 }
 
-const chatbotSelectWithControls = 'chatbots!inner(id, user_id, slug, name, system_prompt, refusal_message, fallback_message, is_active, model_override, temperature, max_tokens, requests_per_minute_bot, requests_per_minute_ip, requests_per_day_bot, response_style, include_references, include_highlights, use_chat_memory, auto_regenerate_on_dislike)'
-const chatbotSelectLegacy = 'chatbots!inner(id, user_id, slug, name, system_prompt, refusal_message, fallback_message, is_active, model_override, temperature, max_tokens, requests_per_minute_bot, requests_per_minute_ip, requests_per_day_bot)'
+const chatbotSelectWithControls =
+  'chatbots!inner(id, user_id, slug, name, system_prompt, refusal_message, fallback_message, is_active, model_override, temperature, max_tokens, requests_per_minute_bot, requests_per_minute_ip, requests_per_day_bot, response_style, include_references, include_highlights, use_chat_memory, auto_regenerate_on_dislike)'
+const chatbotSelectLegacy =
+  'chatbots!inner(id, user_id, slug, name, system_prompt, refusal_message, fallback_message, is_active, model_override, temperature, max_tokens, requests_per_minute_bot, requests_per_minute_ip, requests_per_day_bot)'
 
 function isMissingColumnError(error: any): boolean {
   const code = error?.code || error?.details?.code
@@ -91,7 +93,9 @@ export async function verifyApiKey(db: any, rawApiKey: string): Promise<SecretRe
   const keyHash = hashSecret(rawApiKey)
   let { data, error } = await db
     .from('chatbot_api_keys')
-    .select(`id, chatbot_id, expires_at, is_active, key_name, allowed_origins, ${chatbotSelectWithControls}`)
+    .select(
+      `id, chatbot_id, expires_at, is_active, key_name, allowed_origins, ${chatbotSelectWithControls}`
+    )
     .eq('key_hash', keyHash)
     .eq('is_active', true)
     .maybeSingle()
@@ -99,7 +103,9 @@ export async function verifyApiKey(db: any, rawApiKey: string): Promise<SecretRe
   if (error && isMissingColumnError(error)) {
     const fallback = await db
       .from('chatbot_api_keys')
-      .select(`id, chatbot_id, expires_at, is_active, key_name, allowed_origins, ${chatbotSelectLegacy}`)
+      .select(
+        `id, chatbot_id, expires_at, is_active, key_name, allowed_origins, ${chatbotSelectLegacy}`
+      )
       .eq('key_hash', keyHash)
       .eq('is_active', true)
       .maybeSingle()
@@ -116,7 +122,9 @@ export async function verifyEmbedToken(db: any, rawToken: string): Promise<Secre
   const tokenHash = hashSecret(rawToken)
   let { data, error } = await db
     .from('chatbot_embed_tokens')
-    .select(`id, chatbot_id, expires_at, is_active, token_name, allowed_origins, ${chatbotSelectWithControls}`)
+    .select(
+      `id, chatbot_id, expires_at, is_active, token_name, allowed_origins, ${chatbotSelectWithControls}`
+    )
     .eq('token_hash', tokenHash)
     .eq('is_active', true)
     .maybeSingle()
@@ -124,7 +132,9 @@ export async function verifyEmbedToken(db: any, rawToken: string): Promise<Secre
   if (error && isMissingColumnError(error)) {
     const fallback = await db
       .from('chatbot_embed_tokens')
-      .select(`id, chatbot_id, expires_at, is_active, token_name, allowed_origins, ${chatbotSelectLegacy}`)
+      .select(
+        `id, chatbot_id, expires_at, is_active, token_name, allowed_origins, ${chatbotSelectLegacy}`
+      )
       .eq('token_hash', tokenHash)
       .eq('is_active', true)
       .maybeSingle()

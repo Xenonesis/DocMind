@@ -23,7 +23,9 @@ export function ChatbotManager() {
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [systemPrompt, setSystemPrompt] = useState('Answer only using linked documents. Keep responses concise and clear.')
+  const [systemPrompt, setSystemPrompt] = useState(
+    'Answer only using linked documents. Keep responses concise and clear.'
+  )
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
   const [generatedToken, setGeneratedToken] = useState('')
   const [generatedApiKey, setGeneratedApiKey] = useState('')
@@ -54,32 +56,72 @@ export function ChatbotManager() {
       setChatbots(bots || [])
       setDocuments(docs || [])
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Failed to load chatbot data', description: error?.message || 'Please refresh and try again.' })
+      toast({
+        variant: 'destructive',
+        title: 'Failed to load chatbot data',
+        description: error?.message || 'Please refresh and try again.',
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => {
+    loadData()
+  }, [])
 
   // ── Create / Delete ───────────────────────────────────────────────────────
   const toggleDocSelection = (id: string) => {
-    setSelectedDocumentIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
+    setSelectedDocumentIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    )
   }
 
   const handleCreate = async () => {
-    if (!name.trim()) { toast({ variant: 'destructive', title: 'Name required', description: 'Please enter chatbot name.' }); return }
-    if (selectedDocumentIds.length === 0) { toast({ variant: 'destructive', title: 'Documents required', description: 'Select at least one document.' }); return }
+    if (!name.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Name required',
+        description: 'Please enter chatbot name.',
+      })
+      return
+    }
+    if (selectedDocumentIds.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Documents required',
+        description: 'Select at least one document.',
+      })
+      return
+    }
     setSaving(true)
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      await authenticatedRequest('/api/chatbots', { method: 'POST', body: JSON.stringify({ name, description, systemPrompt, documentIds: selectedDocumentIds }) })
-      setName(''); setDescription(''); setSelectedDocumentIds([]); setGeneratedToken(''); setGeneratedApiKey(''); setPreviewUrl(''); setPreviewName('')
+      await authenticatedRequest('/api/chatbots', {
+        method: 'POST',
+        body: JSON.stringify({ name, description, systemPrompt, documentIds: selectedDocumentIds }),
+      })
+      setName('')
+      setDescription('')
+      setSelectedDocumentIds([])
+      setGeneratedToken('')
+      setGeneratedApiKey('')
+      setPreviewUrl('')
+      setPreviewName('')
       await loadData()
-      toast({ title: 'Chatbot created', description: 'Your hosted URL and credentials can now be generated.' })
+      toast({
+        title: 'Chatbot created',
+        description: 'Your hosted URL and credentials can now be generated.',
+      })
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Failed to create chatbot', description: error?.message || 'Try again.' })
-    } finally { setSaving(false) }
+      toast({
+        variant: 'destructive',
+        title: 'Failed to create chatbot',
+        description: error?.message || 'Try again.',
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -89,7 +131,11 @@ export function ChatbotManager() {
       await loadData()
       toast({ title: 'Chatbot deleted' })
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Delete failed', description: error?.message || 'Try again.' })
+      toast({
+        variant: 'destructive',
+        title: 'Delete failed',
+        description: error?.message || 'Try again.',
+      })
     }
   }
 
@@ -113,29 +159,65 @@ export function ChatbotManager() {
       })
       setApiKeys(keysData || [])
       setEmbedTokens(tokensData || [])
-      setAllowedOriginsInput(Array.isArray(botData.allowed_origins) ? botData.allowed_origins.join('\n') : '')
+      setAllowedOriginsInput(
+        Array.isArray(botData.allowed_origins) ? botData.allowed_origins.join('\n') : ''
+      )
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Failed to load chatbot details', description: error?.message || 'Try again.' })
+      toast({
+        variant: 'destructive',
+        title: 'Failed to load chatbot details',
+        description: error?.message || 'Try again.',
+      })
     }
   }
 
-  const closeEditor = () => { setEditingBotId(null); setDetails(null); setApiKeys([]); setEmbedTokens([]); setAllowedOriginsInput('') }
+  const closeEditor = () => {
+    setEditingBotId(null)
+    setDetails(null)
+    setApiKeys([])
+    setEmbedTokens([])
+    setAllowedOriginsInput('')
+  }
 
   const handleSaveBot = async () => {
     if (!editingBotId || !details) return
-    if (!details.name.trim()) { toast({ variant: 'destructive', title: 'Name required', description: 'Please enter chatbot name.' }); return }
-    if (!Array.isArray(details.documentIds) || details.documentIds.length === 0) { toast({ variant: 'destructive', title: 'Documents required', description: 'Select at least one document.' }); return }
+    if (!details.name.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Name required',
+        description: 'Please enter chatbot name.',
+      })
+      return
+    }
+    if (!Array.isArray(details.documentIds) || details.documentIds.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Documents required',
+        description: 'Select at least one document.',
+      })
+      return
+    }
     setUpdatingBot(true)
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      const parsedOrigins = allowedOriginsInput.split('\n').map((v) => v.trim()).filter(Boolean)
+      const parsedOrigins = allowedOriginsInput
+        .split('\n')
+        .map((v) => v.trim())
+        .filter(Boolean)
       await authenticatedRequest(`/api/chatbots/${editingBotId}`, {
         method: 'PUT',
         body: JSON.stringify({
-          name: details.name, description: details.description || '', systemPrompt: details.system_prompt || '',
-          refusalMessage: details.refusal_message, fallbackMessage: details.fallback_message, isActive: details.is_active,
-          requestsPerMinuteBot: details.requests_per_minute_bot, requestsPerMinuteIp: details.requests_per_minute_ip,
-          requestsPerDayBot: details.requests_per_day_bot, allowedOrigins: parsedOrigins, documentIds: details.documentIds,
+          name: details.name,
+          description: details.description || '',
+          systemPrompt: details.system_prompt || '',
+          refusalMessage: details.refusal_message,
+          fallbackMessage: details.fallback_message,
+          isActive: details.is_active,
+          requestsPerMinuteBot: details.requests_per_minute_bot,
+          requestsPerMinuteIp: details.requests_per_minute_ip,
+          requestsPerDayBot: details.requests_per_day_bot,
+          allowedOrigins: parsedOrigins,
+          documentIds: details.documentIds,
           responseStyle: details.response_style,
           includeReferences: details.include_references,
           includeHighlights: details.include_highlights,
@@ -143,58 +225,123 @@ export function ChatbotManager() {
           autoRegenerateOnDislike: details.auto_regenerate_on_dislike,
         }),
       })
-      await loadData(); await openEditor(editingBotId)
+      await loadData()
+      await openEditor(editingBotId)
       toast({ title: 'Chatbot updated' })
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Failed to update chatbot', description: error?.message || 'Try again.' })
-    } finally { setUpdatingBot(false) }
+      toast({
+        variant: 'destructive',
+        title: 'Failed to update chatbot',
+        description: error?.message || 'Try again.',
+      })
+    } finally {
+      setUpdatingBot(false)
+    }
   }
 
   // ── Credentials ───────────────────────────────────────────────────────────
   const revokeApiKey = async (botId: string, keyId: string) => {
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      await authenticatedRequest(`/api/chatbots/${botId}/credentials?keyId=${encodeURIComponent(keyId)}`, { method: 'DELETE' })
-      await openEditor(botId); toast({ title: 'API key revoked' })
-    } catch (error: any) { toast({ variant: 'destructive', title: 'Failed to revoke API key', description: error?.message || 'Try again.' }) }
+      await authenticatedRequest(
+        `/api/chatbots/${botId}/credentials?keyId=${encodeURIComponent(keyId)}`,
+        { method: 'DELETE' }
+      )
+      await openEditor(botId)
+      toast({ title: 'API key revoked' })
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to revoke API key',
+        description: error?.message || 'Try again.',
+      })
+    }
   }
 
   const revokeEmbedToken = async (botId: string, tokenId: string) => {
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      await authenticatedRequest(`/api/chatbots/${botId}/embed-token?tokenId=${encodeURIComponent(tokenId)}`, { method: 'DELETE' })
-      await openEditor(botId); toast({ title: 'Embed token revoked' })
-    } catch (error: any) { toast({ variant: 'destructive', title: 'Failed to revoke token', description: error?.message || 'Try again.' }) }
+      await authenticatedRequest(
+        `/api/chatbots/${botId}/embed-token?tokenId=${encodeURIComponent(tokenId)}`,
+        { method: 'DELETE' }
+      )
+      await openEditor(botId)
+      toast({ title: 'Embed token revoked' })
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to revoke token',
+        description: error?.message || 'Try again.',
+      })
+    }
   }
 
   const handleGenerateToken = async (id: string, slug: string) => {
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      const data = await authenticatedRequest<{ token: string }>(`/api/chatbots/${id}/embed-token`, { method: 'POST', body: JSON.stringify({ name: 'dashboard-generated', expiresInDays: 30 }) })
+      const data = await authenticatedRequest<{ token: string }>(
+        `/api/chatbots/${id}/embed-token`,
+        { method: 'POST', body: JSON.stringify({ name: 'dashboard-generated', expiresInDays: 30 }) }
+      )
       const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
-      setGeneratedToken(`${appUrl}/bot/${slug}#token=${encodeURIComponent(data.token)}`); setGeneratedSlug(slug)
+      setGeneratedToken(`${appUrl}/bot/${slug}#token=${encodeURIComponent(data.token)}`)
+      setGeneratedSlug(slug)
       toast({ title: 'Embed token generated', description: 'Share URL copied from panel below.' })
-    } catch (error: any) { toast({ variant: 'destructive', title: 'Token generation failed', description: error?.message || 'Try again.' }) }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Token generation failed',
+        description: error?.message || 'Try again.',
+      })
+    }
   }
 
   const handleTryLive = async (id: string, slug: string, botName: string) => {
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      const data = await authenticatedRequest<{ token: string }>(`/api/chatbots/${id}/embed-token`, { method: 'POST', body: JSON.stringify({ name: 'dashboard-live-preview', expiresInDays: 30 }) })
+      const data = await authenticatedRequest<{ token: string }>(
+        `/api/chatbots/${id}/embed-token`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ name: 'dashboard-live-preview', expiresInDays: 30 }),
+        }
+      )
       const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
       const url = `${appUrl}/bot/${slug}#token=${encodeURIComponent(data.token)}`
-      setGeneratedToken(url); setGeneratedSlug(slug); setPreviewUrl(url); setPreviewName(botName)
-      toast({ title: 'Live preview ready', description: 'Test the chatbot below before embedding it on your website.' })
-    } catch (error: any) { toast({ variant: 'destructive', title: 'Live preview failed', description: error?.message || 'Try again.' }) }
+      setGeneratedToken(url)
+      setGeneratedSlug(slug)
+      setPreviewUrl(url)
+      setPreviewName(botName)
+      toast({
+        title: 'Live preview ready',
+        description: 'Test the chatbot below before embedding it on your website.',
+      })
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Live preview failed',
+        description: error?.message || 'Try again.',
+      })
+    }
   }
 
   const handleGenerateApiKey = async (id: string, slug: string) => {
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
-      const data = await authenticatedRequest<{ apiKey: string }>(`/api/chatbots/${id}/credentials`, { method: 'POST', body: JSON.stringify({ name: 'dashboard-generated', rotate: false }) })
-      setGeneratedApiKey(data.apiKey); setGeneratedSlug(slug)
+      const data = await authenticatedRequest<{ apiKey: string }>(
+        `/api/chatbots/${id}/credentials`,
+        { method: 'POST', body: JSON.stringify({ name: 'dashboard-generated', rotate: false }) }
+      )
+      setGeneratedApiKey(data.apiKey)
+      setGeneratedSlug(slug)
       toast({ title: 'API key generated', description: 'Store it safely. It is shown once.' })
-    } catch (error: any) { toast({ variant: 'destructive', title: 'API key generation failed', description: error?.message || 'Try again.' }) }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'API key generation failed',
+        description: error?.message || 'Try again.',
+      })
+    }
   }
 
   const copyText = async (value: string, label: string) => {
@@ -205,7 +352,8 @@ export function ChatbotManager() {
   const toggleEditDocumentSelection = (id: string) => {
     if (!details) return
     const set = new Set(details.documentIds || [])
-    if (set.has(id)) set.delete(id); else set.add(id)
+    if (set.has(id)) set.delete(id)
+    else set.add(id)
     setDetails({ ...details, documentIds: Array.from(set) })
   }
 

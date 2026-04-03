@@ -56,19 +56,22 @@ export function ChatInput({
         <div className="flex items-center gap-1.5 mb-2">
           <Paperclip className="w-3 h-3 text-primary" />
           <span className="text-xs text-primary font-medium">
-            Searching in {selectedDocIds.length} selected document{selectedDocIds.length > 1 ? 's' : ''}
+            Searching in {selectedDocIds.length} selected document
+            {selectedDocIds.length > 1 ? 's' : ''}
           </span>
         </div>
       )}
       {streamState !== 'idle' && (
         <div className="mb-2">
-          <p className={`text-xs font-medium ${
-            streamState === 'streaming'
-              ? 'text-primary'
-              : streamState === 'completed'
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-amber-600 dark:text-amber-400'
-          }`}>
+          <p
+            className={`text-xs font-medium ${
+              streamState === 'streaming'
+                ? 'text-primary'
+                : streamState === 'completed'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-600 dark:text-amber-400'
+            }`}
+          >
             {streamState === 'streaming'
               ? 'Generating response...'
               : streamState === 'completed'
@@ -90,20 +93,24 @@ export function ChatInput({
           <Textarea
             ref={textareaRef}
             value={input}
-            onChange={e => onInputChange(e.target.value)}
+            onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={completedDocs.length === 0 ? 'Upload a document first to start chatting...' : 'Ask anything about your documents… (Enter to send)'}
+            placeholder={
+              completedDocs.length === 0
+                ? 'Upload a document first to start chatting...'
+                : 'Ask anything about your documents… (Enter to send)'
+            }
             disabled={isStreaming || completedDocs.length === 0}
             aria-label="Ask a question about your documents"
             aria-busy={isStreaming}
             className="resize-none min-h-[56px] max-h-[200px] rounded-2xl bg-secondary/30 border-border/50 shadow-inner pl-14 pr-14 py-4 text-sm leading-relaxed focus-visible:ring-1 focus-visible:ring-primary focus-visible:bg-background transition-all"
             rows={1}
             style={{ height: 'auto' }}
-            onInput={e => {
+            onInput={(e) => {
               const t = e.currentTarget
               t.style.height = 'auto'
               t.style.height = Math.min(t.scrollHeight, 200) + 'px'
-              }}
+            }}
           />
           <Button
             onClick={openUploadPicker}
@@ -113,7 +120,11 @@ export function ChatInput({
             className="absolute left-2 bottom-2 h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary"
             aria-label="Upload documents"
           >
-            {isUploadingFiles ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+            {isUploadingFiles ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Paperclip className="w-4 h-4" />
+            )}
           </Button>
           <Button
             onClick={isStreaming ? onStopGenerating : onSendMessage}
@@ -146,7 +157,7 @@ export function ChatInput({
             {streamDebugEntries.length === 0 ? (
               <p className="text-xs text-muted-foreground">No stream events yet.</p>
             ) : (
-              streamDebugEntries.map(entry => (
+              streamDebugEntries.map((entry) => (
                 <p key={entry.id} className="text-xs text-muted-foreground">
                   <span className="text-foreground/80">[{entry.timestamp}]</span> {entry.message}
                 </p>

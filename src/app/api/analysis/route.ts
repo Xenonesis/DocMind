@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     // Add stored analyses
     analyses.forEach((a: any) => {
-      const doc = docs.find(d => d.id === a.document_id)
+      const doc = docs.find((d) => d.id === a.document_id)
       analysisResults.push({
         id: a.id,
         type: a.analysis_type || 'INSIGHT',
@@ -59,9 +59,11 @@ export async function GET(request: NextRequest) {
         confidence: a.result?.confidence || 85,
         severity: a.result?.severity || 'LOW',
         documents: doc ? [doc.name] : [],
-        document: doc ? { id: doc.id, name: doc.name, type: doc.type, category: doc.category } : null,
+        document: doc
+          ? { id: doc.id, name: doc.name, type: doc.type, category: doc.category }
+          : null,
         timestamp: a.created_at,
-        metadata: a.result || {}
+        metadata: a.result || {},
       })
     })
 
@@ -72,11 +74,19 @@ export async function GET(request: NextRequest) {
         try {
           const resp = typeof q.response === 'string' ? JSON.parse(q.response) : q.response
           answer = resp?.answer || ''
-        } catch { answer = '' }
+        } catch {
+          answer = ''
+        }
 
         if (answer.length > 50) {
-          const docIds: string[] = (() => { try { return JSON.parse(q.document_ids || '[]') } catch { return [] } })()
-          const relatedDocs = docs.filter(d => docIds.includes(d.id)).map(d => d.name)
+          const docIds: string[] = (() => {
+            try {
+              return JSON.parse(q.document_ids || '[]')
+            } catch {
+              return []
+            }
+          })()
+          const relatedDocs = docs.filter((d) => docIds.includes(d.id)).map((d) => d.name)
           analysisResults.push({
             id: `query-derived-${q.id}`,
             type: 'INSIGHT',
@@ -87,7 +97,7 @@ export async function GET(request: NextRequest) {
             documents: relatedDocs,
             document: null,
             timestamp: q.created_at,
-            metadata: {}
+            metadata: {},
           })
         }
       })
@@ -95,20 +105,28 @@ export async function GET(request: NextRequest) {
 
     // Stats
     const totalDocs = docs.length
-    const completedDocs = docs.filter(d => d.status === 'COMPLETED').length
+    const completedDocs = docs.filter((d) => d.status === 'COMPLETED').length
     const totalQueries = qs.length
     const totalAnalyses = analysisResults.length
 
     // Query frequency per document
     const docQueryCounts: Record<string, number> = {}
     qs.forEach((q: any) => {
-      const ids: string[] = (() => { try { return JSON.parse(q.document_ids || '[]') } catch { return [] } })()
-      ids.forEach(id => { docQueryCounts[id] = (docQueryCounts[id] || 0) + 1 })
+      const ids: string[] = (() => {
+        try {
+          return JSON.parse(q.document_ids || '[]')
+        } catch {
+          return []
+        }
+      })()
+      ids.forEach((id) => {
+        docQueryCounts[id] = (docQueryCounts[id] || 0) + 1
+      })
     })
 
     // Most queried docs
     const topDocuments = docs
-      .map(d => ({ id: d.id, name: d.name, queries: docQueryCounts[d.id] || 0 }))
+      .map((d) => ({ id: d.id, name: d.name, queries: docQueryCounts[d.id] || 0 }))
       .sort((a, b) => b.queries - a.queries)
       .slice(0, 5)
 
@@ -127,21 +145,24 @@ export async function GET(request: NextRequest) {
     const stats = {
       total: totalAnalyses,
       byType: {
-        INSIGHT: analysisResults.filter(a => a.type === 'INSIGHT').length,
-        RISK: analysisResults.filter(a => a.type === 'RISK').length,
-        OPPORTUNITY: analysisResults.filter(a => a.type === 'OPPORTUNITY').length,
-        COMPLIANCE: analysisResults.filter(a => a.type === 'COMPLIANCE').length,
+        INSIGHT: analysisResults.filter((a) => a.type === 'INSIGHT').length,
+        RISK: analysisResults.filter((a) => a.type === 'RISK').length,
+        OPPORTUNITY: analysisResults.filter((a) => a.type === 'OPPORTUNITY').length,
+        COMPLIANCE: analysisResults.filter((a) => a.type === 'COMPLIANCE').length,
       },
       bySeverity: {
-        LOW: analysisResults.filter(a => a.severity === 'LOW').length,
-        MEDIUM: analysisResults.filter(a => a.severity === 'MEDIUM').length,
-        HIGH: analysisResults.filter(a => a.severity === 'HIGH').length,
+        LOW: analysisResults.filter((a) => a.severity === 'LOW').length,
+        MEDIUM: analysisResults.filter((a) => a.severity === 'MEDIUM').length,
+        HIGH: analysisResults.filter((a) => a.severity === 'HIGH').length,
       },
-      averageConfidence: analysisResults.length > 0
-        ? Math.round(analysisResults.reduce((s, a) => s + (a.confidence || 0), 0) / analysisResults.length)
-        : 0,
-      recentCount: analysisResults.filter(a =>
-        a.timestamp && a.timestamp >= new Date(Date.now() - 7 * 86400000).toISOString()
+      averageConfidence:
+        analysisResults.length > 0
+          ? Math.round(
+              analysisResults.reduce((s, a) => s + (a.confidence || 0), 0) / analysisResults.length
+            )
+          : 0,
+      recentCount: analysisResults.filter(
+        (a) => a.timestamp && a.timestamp >= new Date(Date.now() - 7 * 86400000).toISOString()
       ).length,
       totalDocuments: totalDocs,
       completedDocuments: completedDocs,
@@ -151,7 +172,6 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ analyses: analysisResults, stats })
-
   } catch (error) {
     console.error('Error fetching analyses:', error)
     return NextResponse.json({ error: 'Failed to fetch analyses' }, { status: 500 })

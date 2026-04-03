@@ -6,15 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/lib/auth-context'
-import { 
-  Upload, 
-  FileText, 
-  CheckCircle, 
+import {
+  Upload,
+  FileText,
+  CheckCircle,
   AlertCircle,
   File,
   Image as ImageIcon,
   FileCode,
-  Loader2
+  Loader2,
 } from 'lucide-react'
 
 interface Document {
@@ -51,17 +51,23 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase()
     switch (extension) {
-      case 'pdf': return <FileText className="w-8 h-8 text-rose-500" />
+      case 'pdf':
+        return <FileText className="w-8 h-8 text-rose-500" />
       case 'doc':
-      case 'docx': return <FileText className="w-8 h-8 text-blue-500" />
-      case 'txt': return <FileText className="w-8 h-8 text-slate-500" />
+      case 'docx':
+        return <FileText className="w-8 h-8 text-blue-500" />
+      case 'txt':
+        return <FileText className="w-8 h-8 text-slate-500" />
       case 'jpg':
       case 'jpeg':
-      case 'png': return <ImageIcon className="w-8 h-8 text-emerald-500" />
+      case 'png':
+        return <ImageIcon className="w-8 h-8 text-emerald-500" />
       case 'json':
       case 'xml':
-      case 'csv': return <FileCode className="w-8 h-8 text-violet-500" />
-      default: return <File className="w-8 h-8 text-slate-500" />
+      case 'csv':
+        return <FileCode className="w-8 h-8 text-violet-500" />
+      default:
+        return <File className="w-8 h-8 text-slate-500" />
     }
   }
 
@@ -81,24 +87,26 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
       status: 'UPLOADING' as const,
       uploadDate: new Date().toISOString(),
       size: formatFileSize(file.size),
-      progress: 0
+      progress: 0,
     }))
 
-    setUploadingFiles(prev => [...prev, ...newDocuments])
+    setUploadingFiles((prev) => [...prev, ...newDocuments])
 
     for (const doc of newDocuments) {
       try {
-        const file = Array.from(files).find(f => f.name === doc.name)
+        const file = Array.from(files).find((f) => f.name === doc.name)
         if (!file) continue
 
         const progressInterval = setInterval(() => {
-          setUploadingFiles(prev => prev.map(d => {
-            if (d.id === doc.id && d.progress !== undefined && d.progress < 90) {
-              const increment = Math.random() * 15 + 5
-               return { ...d, progress: Math.min(90, d.progress + increment) }
-            }
-            return d
-          }))
+          setUploadingFiles((prev) =>
+            prev.map((d) => {
+              if (d.id === doc.id && d.progress !== undefined && d.progress < 90) {
+                const increment = Math.random() * 15 + 5
+                return { ...d, progress: Math.min(90, d.progress + increment) }
+              }
+              return d
+            })
+          )
         }, 200)
 
         const formData = new FormData()
@@ -108,71 +116,77 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
         const response = await authenticatedFetch('/api/documents/upload', {
           method: 'POST',
           body: formData,
-          headers: {} 
+          headers: {},
         })
 
         clearInterval(progressInterval)
 
         if (response.ok) {
-          const result = await response.json() as UploadResponse
-          
-          setUploadingFiles(prev => prev.map(d => 
-            d.id === doc.id ? { ...d, progress: 100 } : d
-          ))
+          const result = (await response.json()) as UploadResponse
+
+          setUploadingFiles((prev) =>
+            prev.map((d) => (d.id === doc.id ? { ...d, progress: 100 } : d))
+          )
 
           setTimeout(() => {
             const updatedDocument = {
               ...doc,
               id: result.id,
-              status: 'PROCESSING' as const
+              status: 'PROCESSING' as const,
             }
 
-            setUploadingFiles(prev => prev.map(d => 
-              d.id === doc.id ? { 
-                ...d, 
-                id: result.id,
-                status: 'PROCESSING'
-              } : d
-            ))
+            setUploadingFiles((prev) =>
+              prev.map((d) =>
+                d.id === doc.id
+                  ? {
+                      ...d,
+                      id: result.id,
+                      status: 'PROCESSING',
+                    }
+                  : d
+              )
+            )
 
             onUpload([updatedDocument])
 
-            const processorEndpoint = result.processingStrategy === 'node'
-              ? '/api/process-document-fallback'
-              : '/api/process-document'
+            const processorEndpoint =
+              result.processingStrategy === 'node'
+                ? '/api/process-document-fallback'
+                : '/api/process-document'
 
             authenticatedFetch(processorEndpoint, {
               method: 'POST',
-              body: JSON.stringify({ documentId: result.id })
-            }).then(async (processorResponse) => {
-              if (!processorResponse.ok) {
-                const errorText = await processorResponse.text()
-                throw new Error(errorText || 'Processing failed')
-              }
-              onUpload([updatedDocument])
-            }).catch((error) => {
-              console.error('Document processing error:', error)
-              setUploadingFiles(prev => prev.map(d =>
-                d.id === result.id ? { ...d, status: 'ERROR' } : d
-              ))
-              onUpload([{ ...updatedDocument, status: 'ERROR' }])
+              body: JSON.stringify({ documentId: result.id }),
             })
+              .then(async (processorResponse) => {
+                if (!processorResponse.ok) {
+                  const errorText = await processorResponse.text()
+                  throw new Error(errorText || 'Processing failed')
+                }
+                onUpload([updatedDocument])
+              })
+              .catch((error) => {
+                console.error('Document processing error:', error)
+                setUploadingFiles((prev) =>
+                  prev.map((d) => (d.id === result.id ? { ...d, status: 'ERROR' } : d))
+                )
+                onUpload([{ ...updatedDocument, status: 'ERROR' }])
+              })
 
             setTimeout(() => {
-              setUploadingFiles(prev => prev.filter(d => d.id !== result.id))
+              setUploadingFiles((prev) => prev.filter((d) => d.id !== result.id))
             }, 2000)
           }, 500)
-
         } else {
-          setUploadingFiles(prev => prev.map(d => 
-            d.id === doc.id ? { ...d, status: 'ERROR' } : d
-          ))
+          setUploadingFiles((prev) =>
+            prev.map((d) => (d.id === doc.id ? { ...d, status: 'ERROR' } : d))
+          )
         }
       } catch (error) {
         console.error('Upload error:', error)
-        setUploadingFiles(prev => prev.map(d => 
-          d.id === doc.id ? { ...d, status: 'ERROR' } : d
-        ))
+        setUploadingFiles((prev) =>
+          prev.map((d) => (d.id === doc.id ? { ...d, status: 'ERROR' } : d))
+        )
       }
     }
   }
@@ -201,19 +215,27 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
 
   const getStatusColor = (status: Document['status']) => {
     switch (status) {
-      case 'UPLOADING': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-      case 'PROCESSING': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-      case 'COMPLETED': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-      case 'ERROR': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+      case 'UPLOADING':
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+      case 'PROCESSING':
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+      case 'ERROR':
+        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
     }
   }
 
   const getStatusIcon = (status: Document['status']) => {
     switch (status) {
-      case 'UPLOADING': return <Loader2 className="w-3.5 h-3.5 animate-spin" />
-      case 'PROCESSING': return <Loader2 className="w-3.5 h-3.5 animate-spin" />
-      case 'COMPLETED': return <CheckCircle className="w-3.5 h-3.5" />
-      case 'ERROR': return <AlertCircle className="w-3.5 h-3.5" />
+      case 'UPLOADING':
+        return <Loader2 className="w-3.5 h-3.5 animate-spin" />
+      case 'PROCESSING':
+        return <Loader2 className="w-3.5 h-3.5 animate-spin" />
+      case 'COMPLETED':
+        return <CheckCircle className="w-3.5 h-3.5" />
+      case 'ERROR':
+        return <AlertCircle className="w-3.5 h-3.5" />
     }
   }
 
@@ -230,8 +252,8 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
 
       <div
         className={`relative flex-1 group border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center transition-all min-h-[400px] ${
-          isDragOver 
-            ? 'border-primary bg-primary/5' 
+          isDragOver
+            ? 'border-primary bg-primary/5'
             : 'border-border bg-card/50 hover:bg-card hover:border-border/80'
         }`}
         onDrop={handleDrop}
@@ -242,13 +264,12 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
           <div className="w-20 h-20 bg-background shadow-sm rounded-full flex items-center justify-center mb-6 text-muted-foreground group-hover:scale-105 transition-transform group-hover:text-primary">
             <Upload className="w-10 h-10" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">
-            Drag & drop files here
-          </h3>
+          <h3 className="text-xl font-semibold mb-2">Drag & drop files here</h3>
           <p className="text-muted-foreground mb-8">
-            or select files from your computer. Supports PDF, Word, TXT, Images, and structured data formats.
+            or select files from your computer. Supports PDF, Word, TXT, Images, and structured data
+            formats.
           </p>
-          
+
           <input
             type="file"
             multiple
@@ -258,9 +279,7 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
             id="file-upload"
           />
           <Button asChild size="lg" className="rounded-full px-8 shadow-sm cursor-pointer">
-            <label htmlFor="file-upload">
-              Browse Files
-            </label>
+            <label htmlFor="file-upload">Browse Files</label>
           </Button>
         </div>
       </div>
@@ -285,7 +304,10 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <h4 className="font-medium text-sm truncate">{doc.name}</h4>
-                      <Badge variant="secondary" className={`capitalize shadow-none border-none font-medium gap-1.5 ${getStatusColor(doc.status)}`}>
+                      <Badge
+                        variant="secondary"
+                        className={`capitalize shadow-none border-none font-medium gap-1.5 ${getStatusColor(doc.status)}`}
+                      >
                         {getStatusIcon(doc.status)}
                         {doc.status.toLowerCase()}
                       </Badge>
@@ -293,7 +315,10 @@ export function DocumentUpload({ onUpload }: DocumentUploadProps) {
                     {doc.status === 'UPLOADING' && doc.progress !== undefined ? (
                       <div className="mt-2 flex items-center gap-3">
                         <div className="h-1.5 rounded-full bg-secondary w-full overflow-hidden">
-                          <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${doc.progress}%` }} />
+                          <div
+                            className="h-full bg-primary transition-all duration-300 ease-out"
+                            style={{ width: `${doc.progress}%` }}
+                          />
                         </div>
                         <span className="text-xs font-medium text-muted-foreground min-w-[3ch]">
                           {Math.round(doc.progress)}%

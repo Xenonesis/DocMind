@@ -1,4 +1,3 @@
-
 export interface User {
   id: string
   email: string
@@ -28,7 +27,7 @@ export enum AiProvider {
   OPENROUTER = 'OPENROUTER',
   OPENAI = 'OPENAI',
   ANTHROPIC = 'ANTHROPIC',
-  CUSTOM = 'CUSTOM'
+  CUSTOM = 'CUSTOM',
 }
 
 export interface Document {
@@ -44,7 +43,7 @@ export interface Document {
   processedAt?: Date
   category?: string
   tags?: string
-  progress?: number 
+  progress?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -81,26 +80,24 @@ export enum DocumentStatus {
   UPLOADING = 'UPLOADING',
   PROCESSING = 'PROCESSING',
   COMPLETED = 'COMPLETED',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
 }
 
 export enum AnalysisType {
   INSIGHT = 'INSIGHT',
   RISK = 'RISK',
   OPPORTUNITY = 'OPPORTUNITY',
-  COMPLIANCE = 'COMPLIANCE'
+  COMPLIANCE = 'COMPLIANCE',
 }
 
 export enum Severity {
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH'
+  HIGH = 'HIGH',
 }
 
 export enum QueryStatus {
   PROCESSING = 'PROCESSING',
   COMPLETED = 'COMPLETED',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
 }
-
-

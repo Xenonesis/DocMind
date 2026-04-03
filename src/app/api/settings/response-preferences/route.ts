@@ -45,11 +45,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    try { await ensureUserProfile(user, db) } catch {}
+    try {
+      await ensureUserProfile(user, db)
+    } catch {}
 
     let { data, error }: { data: any; error: any } = await db
       .from('user_response_preferences')
-      .select('response_style, highlight_enabled, reference_enabled, memory_learning_enabled, auto_regenerate_on_dislike, preview_selection_enabled')
+      .select(
+        'response_style, highlight_enabled, reference_enabled, memory_learning_enabled, auto_regenerate_on_dislike, preview_selection_enabled'
+      )
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -69,7 +73,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ...defaultPreferences, ...(data || {}) })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to fetch preferences' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to fetch preferences' },
+      { status: 500 }
+    )
   }
 }
 
@@ -85,7 +92,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
-    try { await ensureUserProfile(user, db) } catch {}
+    try {
+      await ensureUserProfile(user, db)
+    } catch {}
 
     const body = await request.json()
     const parsed = payloadSchema.safeParse(body)
@@ -99,28 +108,36 @@ export async function POST(request: NextRequest) {
       response_style: parsed.data.response_style ?? defaultPreferences.response_style,
       highlight_enabled: parsed.data.highlight_enabled ?? defaultPreferences.highlight_enabled,
       reference_enabled: parsed.data.reference_enabled ?? defaultPreferences.reference_enabled,
-      memory_learning_enabled: parsed.data.memory_learning_enabled ?? defaultPreferences.memory_learning_enabled,
-      auto_regenerate_on_dislike: parsed.data.auto_regenerate_on_dislike ?? defaultPreferences.auto_regenerate_on_dislike,
-      preview_selection_enabled: parsed.data.preview_selection_enabled ?? defaultPreferences.preview_selection_enabled,
+      memory_learning_enabled:
+        parsed.data.memory_learning_enabled ?? defaultPreferences.memory_learning_enabled,
+      auto_regenerate_on_dislike:
+        parsed.data.auto_regenerate_on_dislike ?? defaultPreferences.auto_regenerate_on_dislike,
+      preview_selection_enabled:
+        parsed.data.preview_selection_enabled ?? defaultPreferences.preview_selection_enabled,
       updated_at: new Date().toISOString(),
     }
 
     let { data, error }: { data: any; error: any } = await db
       .from('user_response_preferences')
       .upsert(updates, { onConflict: 'user_id' })
-      .select('response_style, highlight_enabled, reference_enabled, memory_learning_enabled, auto_regenerate_on_dislike, preview_selection_enabled')
+      .select(
+        'response_style, highlight_enabled, reference_enabled, memory_learning_enabled, auto_regenerate_on_dislike, preview_selection_enabled'
+      )
       .single()
 
     if (error && isMissingColumnError(error)) {
       const fallback = await db
         .from('user_response_preferences')
-        .upsert({
-          user_id: user.id,
-          response_style: updates.response_style,
-          highlight_enabled: updates.highlight_enabled,
-          reference_enabled: updates.reference_enabled,
-          updated_at: updates.updated_at,
-        }, { onConflict: 'user_id' })
+        .upsert(
+          {
+            user_id: user.id,
+            response_style: updates.response_style,
+            highlight_enabled: updates.highlight_enabled,
+            reference_enabled: updates.reference_enabled,
+            updated_at: updates.updated_at,
+          },
+          { onConflict: 'user_id' }
+        )
         .select('response_style, highlight_enabled, reference_enabled')
         .single()
       data = fallback.data
@@ -133,6 +150,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ...defaultPreferences, ...(data || {}) })
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to save preferences' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to save preferences' },
+      { status: 500 }
+    )
   }
 }

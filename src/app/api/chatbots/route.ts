@@ -32,11 +32,14 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       const status = isMissingTableError(error) ? 503 : 500
-      return NextResponse.json({
-        error: 'Failed to fetch chatbots',
-        details: error.message,
-        hint: isMissingTableError(error) ? migrationHint() : undefined,
-      }, { status })
+      return NextResponse.json(
+        {
+          error: 'Failed to fetch chatbots',
+          details: error.message,
+          hint: isMissingTableError(error) ? migrationHint() : undefined,
+        },
+        { status }
+      )
     }
 
     const chatbotIds = (bots || []).map((bot: { id: string }) => bot.id)
@@ -48,22 +51,30 @@ export async function GET(request: NextRequest) {
         .select('chatbot_id')
         .in('chatbot_id', chatbotIds)
 
-      linkCountMap = (links || []).reduce((acc: Record<string, number>, row: { chatbot_id: string }) => {
-        acc[row.chatbot_id] = (acc[row.chatbot_id] || 0) + 1
-        return acc
-      }, {})
+      linkCountMap = (links || []).reduce(
+        (acc: Record<string, number>, row: { chatbot_id: string }) => {
+          acc[row.chatbot_id] = (acc[row.chatbot_id] || 0) + 1
+          return acc
+        },
+        {}
+      )
     }
 
-    return NextResponse.json((bots || []).map((bot: any) => ({
-      ...bot,
-      linkedDocumentCount: linkCountMap[bot.id] || 0,
-      hostedUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/bot/${bot.slug}`,
-    })))
+    return NextResponse.json(
+      (bots || []).map((bot: any) => ({
+        ...bot,
+        linkedDocumentCount: linkCountMap[bot.id] || 0,
+        hostedUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/bot/${bot.slug}`,
+      }))
+    )
   } catch (error: any) {
-    return NextResponse.json({
-      error: 'Failed to fetch chatbots',
-      details: error?.message || 'Unknown error',
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch chatbots',
+        details: error?.message || 'Unknown error',
+      },
+      { status: 500 }
+    )
   }
 }
 
@@ -108,10 +119,15 @@ export async function POST(request: NextRequest) {
       model_override: body.modelOverride?.trim() || null,
       temperature: typeof body.temperature === 'number' ? body.temperature : 0.2,
       max_tokens: typeof body.maxTokens === 'number' ? body.maxTokens : 1024,
-      requests_per_minute_bot: typeof body.requestsPerMinuteBot === 'number' ? body.requestsPerMinuteBot : 60,
-      requests_per_minute_ip: typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : 20,
-      requests_per_day_bot: typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : 2000,
-      response_style: ['concise', 'balanced', 'detailed'].includes(body.responseStyle) ? body.responseStyle : 'balanced',
+      requests_per_minute_bot:
+        typeof body.requestsPerMinuteBot === 'number' ? body.requestsPerMinuteBot : 60,
+      requests_per_minute_ip:
+        typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : 20,
+      requests_per_day_bot:
+        typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : 2000,
+      response_style: ['concise', 'balanced', 'detailed'].includes(body.responseStyle)
+        ? body.responseStyle
+        : 'balanced',
       include_references: body.includeReferences !== false,
       include_highlights: body.includeHighlights !== false,
       use_chat_memory: body.useChatMemory !== false,
@@ -131,9 +147,12 @@ export async function POST(request: NextRequest) {
       model_override: body.modelOverride?.trim() || null,
       temperature: typeof body.temperature === 'number' ? body.temperature : 0.2,
       max_tokens: typeof body.maxTokens === 'number' ? body.maxTokens : 1024,
-      requests_per_minute_bot: typeof body.requestsPerMinuteBot === 'number' ? body.requestsPerMinuteBot : 60,
-      requests_per_minute_ip: typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : 20,
-      requests_per_day_bot: typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : 2000,
+      requests_per_minute_bot:
+        typeof body.requestsPerMinuteBot === 'number' ? body.requestsPerMinuteBot : 60,
+      requests_per_minute_ip:
+        typeof body.requestsPerMinuteIp === 'number' ? body.requestsPerMinuteIp : 20,
+      requests_per_day_bot:
+        typeof body.requestsPerDayBot === 'number' ? body.requestsPerDayBot : 2000,
     }
 
     step = 'insert-chatbot'
@@ -155,11 +174,14 @@ export async function POST(request: NextRequest) {
 
     if (insertError || !bot) {
       const status = isMissingTableError(insertError) ? 503 : 500
-      return NextResponse.json({
-        error: 'Failed to create chatbot',
-        details: insertError?.message || 'Insert failed',
-        hint: isMissingTableError(insertError) ? migrationHint() : undefined,
-      }, { status })
+      return NextResponse.json(
+        {
+          error: 'Failed to create chatbot',
+          details: insertError?.message || 'Insert failed',
+          hint: isMissingTableError(insertError) ? migrationHint() : undefined,
+        },
+        { status }
+      )
     }
 
     step = 'attach-documents'
@@ -173,11 +195,14 @@ export async function POST(request: NextRequest) {
     if (linkError) {
       await ctx.db.from('chatbots').delete().eq('id', bot.id)
       const status = isMissingTableError(linkError) ? 503 : 500
-      return NextResponse.json({
-        error: 'Failed to attach documents',
-        details: linkError.message,
-        hint: isMissingTableError(linkError) ? migrationHint() : undefined,
-      }, { status })
+      return NextResponse.json(
+        {
+          error: 'Failed to attach documents',
+          details: linkError.message,
+          hint: isMissingTableError(linkError) ? migrationHint() : undefined,
+        },
+        { status }
+      )
     }
 
     return NextResponse.json({
@@ -187,13 +212,17 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('[POST /api/chatbots] failed at step:', step, error)
-    return NextResponse.json({
-      error: error?.message || 'Failed to create chatbot',
-      details: error?.details || error?.hint || null,
-      step,
-      hint: step === 'validate-documents'
-        ? 'Ensure selected documents are COMPLETED and belong to the logged-in user.'
-        : undefined,
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: error?.message || 'Failed to create chatbot',
+        details: error?.details || error?.hint || null,
+        step,
+        hint:
+          step === 'validate-documents'
+            ? 'Ensure selected documents are COMPLETED and belong to the logged-in user.'
+            : undefined,
+      },
+      { status: 500 }
+    )
   }
 }

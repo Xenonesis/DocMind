@@ -32,7 +32,9 @@ export function ChatbotList({
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-lg">Your Chatbots</CardTitle>
-          <CardDescription>Generate hosted URL, embed token, and API key for integrations.</CardDescription>
+          <CardDescription>
+            Generate hosted URL, embed token, and API key for integrations.
+          </CardDescription>
         </div>
         <Button variant="outline" onClick={onRefresh} className="rounded-full">
           <RefreshCw className="w-4 h-4 mr-2" /> Refresh
@@ -50,7 +52,9 @@ export function ChatbotList({
                 <h3 className="font-semibold">{bot.name}</h3>
                 <p className="text-xs text-muted-foreground">/bot/{bot.slug}</p>
                 <div className="mt-2 flex items-center gap-2">
-                  <Badge variant={bot.is_active ? 'default' : 'outline'}>{bot.is_active ? 'Active' : 'Inactive'}</Badge>
+                  <Badge variant={bot.is_active ? 'default' : 'outline'}>
+                    {bot.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
                   <Badge variant="outline">{bot.linkedDocumentCount} docs</Badge>
                 </div>
               </div>

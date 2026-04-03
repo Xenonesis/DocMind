@@ -17,12 +17,47 @@ export type AnswerHighlight = {
 }
 
 const STOP_WORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'for', 'to', 'in', 'on', 'of', 'with', 'is', 'are', 'was', 'were', 'that', 'this',
-  'be', 'as', 'at', 'by', 'from', 'it', 'its', 'if', 'then', 'than', 'into', 'about', 'can', 'could', 'should', 'would',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'for',
+  'to',
+  'in',
+  'on',
+  'of',
+  'with',
+  'is',
+  'are',
+  'was',
+  'were',
+  'that',
+  'this',
+  'be',
+  'as',
+  'at',
+  'by',
+  'from',
+  'it',
+  'its',
+  'if',
+  'then',
+  'than',
+  'into',
+  'about',
+  'can',
+  'could',
+  'should',
+  'would',
 ])
 
 function normalizeText(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function tokenize(value: string) {
@@ -57,7 +92,12 @@ export function deriveHighlights(answer: string, maxItems = 3): AnswerHighlight[
   }))
 }
 
-export function deriveReferences(query: string, answer: string, docs: SourceDoc[], maxItems = 3): AnswerReference[] {
+export function deriveReferences(
+  query: string,
+  answer: string,
+  docs: SourceDoc[],
+  maxItems = 3
+): AnswerReference[] {
   const terms = Array.from(new Set([...tokenize(query), ...tokenize(answer).slice(0, 20)]))
   if (terms.length === 0 || docs.length === 0) return []
 
@@ -105,8 +145,8 @@ export function buildMemoryInstruction(style: string | null | undefined, feedbac
     responseStyle === 'concise'
       ? 'Prefer concise, high-signal responses.'
       : responseStyle === 'detailed'
-      ? 'Prefer detailed and structured responses.'
-      : 'Prefer balanced responses with clear structure.'
+        ? 'Prefer detailed and structured responses.'
+        : 'Prefer balanced responses with clear structure.'
 
   const feedbackInstruction =
     dislikes > likes

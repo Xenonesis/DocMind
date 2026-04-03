@@ -41,7 +41,10 @@ function normalizeProviderName(provider: string | null, model: string | null): s
 }
 
 function normalizeKey(value: string | null): string {
-  return (value || '').toLowerCase().trim().replace(/[_\s]+/g, '-')
+  return (value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[_\s]+/g, '-')
 }
 
 function isSuccessfulResponse(row: UsageRow): boolean {
@@ -61,7 +64,12 @@ function isSuccessfulResponse(row: UsageRow): boolean {
   }
 }
 
-function estimateCostUSD(provider: string | null, model: string | null, tokens: number, pricingMap: Map<string, number>): number {
+function estimateCostUSD(
+  provider: string | null,
+  model: string | null,
+  tokens: number,
+  pricingMap: Map<string, number>
+): number {
   const providerKey = normalizeKey(provider)
   const modelKey = normalizeKey(model)
 
@@ -90,7 +98,8 @@ function estimateCostUSD(provider: string | null, model: string | null, tokens: 
   else if (key.includes('claude') && key.includes('haiku')) usdPer1kTokens = 0.0012
   else if (key.includes('claude')) usdPer1kTokens = 0.006
   else if (key.includes('mistral')) usdPer1kTokens = 0.002
-  else if (key.includes('groq') || key.includes('llama-3.1-8b') || key.includes('docscan-free')) usdPer1kTokens = 0
+  else if (key.includes('groq') || key.includes('llama-3.1-8b') || key.includes('docscan-free'))
+    usdPer1kTokens = 0
 
   return (tokens / 1000) * usdPer1kTokens
 }
@@ -197,17 +206,24 @@ export async function GET(request: NextRequest) {
         requests: values.requests,
         tokens: values.tokens,
         cost: Number(values.cost.toFixed(4)),
-        percentage: totalRequests > 0 ? Number(((values.requests / totalRequests) * 100).toFixed(1)) : 0,
+        percentage:
+          totalRequests > 0 ? Number(((values.requests / totalRequests) * 100).toFixed(1)) : 0,
       }))
       .sort((a, b) => b.requests - a.requests)
 
     const topProvider = providerBreakdown[0]?.provider || 'N/A'
-    const successRate = totalRequests > 0 ? Number(((successCount / totalRequests) * 100).toFixed(1)) : 0
-    const averageResponseTime = responseTimeCount > 0
-      ? Number((responseTimeSum / responseTimeCount / 1000).toFixed(2))
-      : 0
+    const successRate =
+      totalRequests > 0 ? Number(((successCount / totalRequests) * 100).toFixed(1)) : 0
+    const averageResponseTime =
+      responseTimeCount > 0 ? Number((responseTimeSum / responseTimeCount / 1000).toFixed(2)) : 0
 
-    const dailyUsage: Array<{ date: string; label: string; requests: number; tokens: number; cost: number }> = []
+    const dailyUsage: Array<{
+      date: string
+      label: string
+      requests: number
+      tokens: number
+      cost: number
+    }> = []
 
     if (range === '24h') {
       const now = new Date()

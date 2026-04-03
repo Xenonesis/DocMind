@@ -5,12 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  Search, 
-  Download, 
-  Eye, 
+import {
+  Search,
+  Download,
+  Eye,
   FileText,
   Image as ImageIcon,
   File,
@@ -21,7 +27,7 @@ import {
   Clock,
   AlertCircle,
   Brain,
-  Inbox
+  Inbox,
 } from 'lucide-react'
 
 import { DocumentPreview } from './document-preview'
@@ -55,39 +61,53 @@ export function DocumentList({ documents }: DocumentListProps) {
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase()
     switch (extension) {
-      case 'pdf': return <FileText className="w-5 h-5 text-rose-500" />
+      case 'pdf':
+        return <FileText className="w-5 h-5 text-rose-500" />
       case 'doc':
-      case 'docx': return <FileText className="w-5 h-5 text-blue-500" />
-      case 'txt': return <FileText className="w-5 h-5 text-slate-500" />
+      case 'docx':
+        return <FileText className="w-5 h-5 text-blue-500" />
+      case 'txt':
+        return <FileText className="w-5 h-5 text-slate-500" />
       case 'jpg':
       case 'jpeg':
-      case 'png': return <ImageIcon className="w-5 h-5 text-emerald-500" />
+      case 'png':
+        return <ImageIcon className="w-5 h-5 text-emerald-500" />
       case 'json':
       case 'xml':
-      case 'csv': return <FileCode className="w-5 h-5 text-violet-500" />
-      default: return <File className="w-5 h-5 text-slate-500" />
+      case 'csv':
+        return <FileCode className="w-5 h-5 text-violet-500" />
+      default:
+        return <File className="w-5 h-5 text-slate-500" />
     }
   }
 
   const getStatusColor = (status: Document['status']) => {
     switch (status) {
-      case 'UPLOADING': return 'bg-amber-100/50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
-      case 'PROCESSING': return 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-      case 'COMPLETED': return 'bg-green-100/50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-      case 'ERROR': return 'bg-red-100/50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+      case 'UPLOADING':
+        return 'bg-amber-100/50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+      case 'PROCESSING':
+        return 'bg-blue-100/50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+      case 'COMPLETED':
+        return 'bg-green-100/50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+      case 'ERROR':
+        return 'bg-red-100/50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
     }
   }
 
   const getStatusIcon = (status: Document['status']) => {
     switch (status) {
-      case 'UPLOADING': return <Clock className="w-3.5 h-3.5" />
-      case 'PROCESSING': return <Brain className="w-3.5 h-3.5 animate-pulse" />
-      case 'COMPLETED': return <CheckCircle className="w-3.5 h-3.5" />
-      case 'ERROR': return <AlertCircle className="w-3.5 h-3.5" />
+      case 'UPLOADING':
+        return <Clock className="w-3.5 h-3.5" />
+      case 'PROCESSING':
+        return <Brain className="w-3.5 h-3.5 animate-pulse" />
+      case 'COMPLETED':
+        return <CheckCircle className="w-3.5 h-3.5" />
+      case 'ERROR':
+        return <AlertCircle className="w-3.5 h-3.5" />
     }
   }
 
-  const filteredDocuments = documents.filter(doc => {
+  const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || doc.status === statusFilter
     const matchesType = typeFilter === 'all' || doc.type.includes(typeFilter)
@@ -98,11 +118,11 @@ export function DocumentList({ documents }: DocumentListProps) {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     })
   }
 
-  const documentTypes = Array.from(new Set(documents.map(doc => doc.type)))
+  const documentTypes = Array.from(new Set(documents.map((doc) => doc.type)))
 
   const handlePreview = (document: Document) => {
     setPreviewDocument(document)
@@ -155,7 +175,10 @@ export function DocumentList({ documents }: DocumentListProps) {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10" aria-label="Filter documents by status">
+          <SelectTrigger
+            className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10"
+            aria-label="Filter documents by status"
+          >
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent className="rounded-xl border-border">
@@ -167,13 +190,18 @@ export function DocumentList({ documents }: DocumentListProps) {
           </SelectContent>
         </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10" aria-label="Filter documents by type">
+          <SelectTrigger
+            className="w-full sm:w-[180px] bg-background border-border shadow-sm rounded-xl h-10"
+            aria-label="Filter documents by type"
+          >
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent className="rounded-xl border-border">
             <SelectItem value="all">All Types</SelectItem>
-            {documentTypes.map(type => (
-              <SelectItem key={type} value={type} className="uppercase">{type}</SelectItem>
+            {documentTypes.map((type) => (
+              <SelectItem key={type} value={type} className="uppercase">
+                {type}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -194,14 +222,22 @@ export function DocumentList({ documents }: DocumentListProps) {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground truncate mb-1">{doc.name}</h3>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1.5"><HardDrive className="w-3.5 h-3.5" /> {doc.size}</span>
+                        <span className="flex items-center gap-1.5">
+                          <HardDrive className="w-3.5 h-3.5" /> {doc.size}
+                        </span>
                         <span className="text-border">•</span>
-                        <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formatDate(doc.uploadDate)}</span>
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5" /> {formatDate(doc.uploadDate)}
+                        </span>
                       </div>
                       {doc.tags && doc.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2.5">
                           {doc.tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary" className="text-[10px] px-2 py-0 font-medium">
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-[10px] px-2 py-0 font-medium"
+                            >
                               {tag}
                             </Badge>
                           ))}
@@ -209,16 +245,18 @@ export function DocumentList({ documents }: DocumentListProps) {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
-                    <Badge className={`${getStatusColor(doc.status)} px-3 py-1 shadow-none border-0 gap-1.5 capitalize font-medium`}>
+                    <Badge
+                      className={`${getStatusColor(doc.status)} px-3 py-1 shadow-none border-0 gap-1.5 capitalize font-medium`}
+                    >
                       {getStatusIcon(doc.status)}
                       {doc.status.toLowerCase()}
                     </Badge>
-                    
+
                     <div className="flex items-center gap-1.5">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => handlePreview(doc)}
                         className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
@@ -227,8 +265,8 @@ export function DocumentList({ documents }: DocumentListProps) {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => handleDownload(doc)}
                         className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
@@ -243,15 +281,13 @@ export function DocumentList({ documents }: DocumentListProps) {
               )}
             </div>
           ))}
-          
+
           {filteredDocuments.length === 0 && (
             <div className="text-center py-20 bg-background/50 h-full flex flex-col items-center justify-center">
               <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mb-4 text-muted-foreground">
                 <Inbox className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">
-                No documents found
-              </h3>
+              <h3 className="text-lg font-semibold mb-2">No documents found</h3>
               <p className="text-muted-foreground text-sm max-w-[250px] mx-auto">
                 Adjust your filters or query to find what you are looking for.
               </p>

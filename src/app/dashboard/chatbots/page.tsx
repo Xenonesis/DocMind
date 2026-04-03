@@ -18,14 +18,23 @@ export default function ChatbotsPage() {
         <header className="bg-background border-b border-border px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-sm shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
-              <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
+              <Image
+                src="/logo.png"
+                alt="DocMind Logo"
+                fill
+                sizes="40px"
+                className="object-cover"
+                priority
+              />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
                 <Bot className="w-5 h-5" />
                 Chatbots
               </h1>
-              <p className="text-sm text-muted-foreground">Manage chatbot creation, credentials, and integration setup.</p>
+              <p className="text-sm text-muted-foreground">
+                Manage chatbot creation, credentials, and integration setup.
+              </p>
             </div>
           </div>
 

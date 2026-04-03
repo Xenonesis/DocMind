@@ -35,7 +35,14 @@ export function LandingPage() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-sm border border-primary/20 bg-background/50 flex items-center justify-center">
-              <Image src="/logo.png" alt="DocMind Logo" fill sizes="40px" className="object-cover" priority />
+              <Image
+                src="/logo.png"
+                alt="DocMind Logo"
+                fill
+                sizes="40px"
+                className="object-cover"
+                priority
+              />
             </div>
             <span className="text-xl font-bold tracking-tight">DocMind</span>
           </div>
@@ -64,7 +71,7 @@ export function LandingPage() {
           <div className="flex sm:hidden items-center gap-2">
             <ThemeToggle />
             <button
-              onClick={() => setMobileMenuOpen(o => !o)}
+              onClick={() => setMobileMenuOpen((o) => !o)}
               className="p-2 rounded-lg text-foreground hover:bg-secondary transition-colors"
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
@@ -87,7 +94,10 @@ export function LandingPage() {
                 {!user && (
                   <Button
                     variant="ghost"
-                    onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      setShowLoginModal(true)
+                    }}
                     className="w-full justify-center font-medium rounded-xl"
                   >
                     Log in
@@ -138,7 +148,8 @@ export function LandingPage() {
             transition={{ delay: 0.2 }}
             className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl text-balance px-2"
           >
-            Unlock the intelligence hidden within your files. Seamlessly extract data, summarize content, and query complex documents using advanced AI.
+            Unlock the intelligence hidden within your files. Seamlessly extract data, summarize
+            content, and query complex documents using advanced AI.
           </motion.p>
 
           <motion.div
@@ -168,10 +179,26 @@ export function LandingPage() {
         {/* Feature cards */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 pt-4 sm:pt-16">
           {[
-            { icon: FileText, title: 'Universal Support', desc: 'Securely upload PDFs, Word documents, text files, and images.' },
-            { icon: Database, title: 'Semantic Querying', desc: 'Find exact answers within complex documents instantly using natural language.' },
-            { icon: Zap, title: 'High Performance', desc: 'Powered by highly optimized state-of-the-art vector processing.' },
-            { icon: Shield, title: 'Enterprise Security', desc: 'Your data is encrypted and strictly isolated within your workspace.' }
+            {
+              icon: FileText,
+              title: 'Universal Support',
+              desc: 'Securely upload PDFs, Word documents, text files, and images.',
+            },
+            {
+              icon: Database,
+              title: 'Semantic Querying',
+              desc: 'Find exact answers within complex documents instantly using natural language.',
+            },
+            {
+              icon: Zap,
+              title: 'High Performance',
+              desc: 'Powered by highly optimized state-of-the-art vector processing.',
+            },
+            {
+              icon: Shield,
+              title: 'Enterprise Security',
+              desc: 'Your data is encrypted and strictly isolated within your workspace.',
+            },
           ].map((feature, i) => (
             <motion.div
               key={i}
@@ -196,7 +223,13 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="relative w-5 h-5 rounded overflow-hidden shrink-0 border border-primary/20 bg-background/50 flex items-center justify-center">
-              <Image src="/logo.png" alt="DocMind Logo" fill sizes="48px" className="object-cover" />
+              <Image
+                src="/logo.png"
+                alt="DocMind Logo"
+                fill
+                sizes="48px"
+                className="object-cover"
+              />
             </div>
             <span className="font-medium text-foreground">DocMind</span>
           </div>

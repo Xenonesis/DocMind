@@ -36,9 +36,12 @@ export async function POST(request: NextRequest) {
     const { data: documents, error: docsError } = await docsQuery
 
     if (docsError || !documents || documents.length === 0) {
-      return NextResponse.json({
-        error: 'No completed documents found to analyze.'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'No completed documents found to analyze.',
+        },
+        { status: 400 }
+      )
     }
 
     // Setup AI provider
@@ -59,12 +62,15 @@ export async function POST(request: NextRequest) {
           maxTokens: 2048,
           temperature: 0.3,
           isActive: true,
-          isConfigured: true
+          isConfigured: true,
         }
       } else {
-        return NextResponse.json({
-          error: 'No AI provider configured. Please configure an AI provider in Settings.'
-        }, { status: 400 })
+        return NextResponse.json(
+          {
+            error: 'No AI provider configured. Please configure an AI provider in Settings.',
+          },
+          { status: 400 }
+        )
       }
     }
 
@@ -94,9 +100,10 @@ Respond with ONLY a valid JSON array, no extra text.`
         const completion = await aiService.generateCompletion({
           provider: activeProvider,
           prompt,
-          systemPrompt: 'You are a document analysis expert. Extract clear, actionable insights from documents. Always respond with valid JSON only.',
+          systemPrompt:
+            'You are a document analysis expert. Extract clear, actionable insights from documents. Always respond with valid JSON only.',
           temperature: 0.3,
-          maxTokens: 1024
+          maxTokens: 1024,
         })
 
         let items: any[] = []
@@ -108,13 +115,15 @@ Respond with ONLY a valid JSON array, no extra text.`
           }
         } catch {
           // If JSON parse fails, create a basic insight
-          items = [{
-            type: 'INSIGHT',
-            title: `Analysis of ${doc.name}`,
-            description: completion.content.slice(0, 200),
-            confidence: 75,
-            severity: 'LOW'
-          }]
+          items = [
+            {
+              type: 'INSIGHT',
+              title: `Analysis of ${doc.name}`,
+              description: completion.content.slice(0, 200),
+              confidence: 75,
+              severity: 'LOW',
+            },
+          ]
         }
 
         for (const item of items) {
@@ -133,12 +142,12 @@ Respond with ONLY a valid JSON array, no extra text.`
                 description: item.description,
                 confidence: item.confidence || 80,
                 severity: item.severity || 'LOW',
-                summary: item.description
+                summary: item.description,
               },
               ai_provider: activeProvider.name,
               ai_model: activeProvider.model,
               tokens_used: completion.usage?.totalTokens || 0,
-              processing_time_ms: 0
+              processing_time_ms: 0,
             })
             .select()
             .single()
@@ -154,7 +163,7 @@ Respond with ONLY a valid JSON array, no extra text.`
               documents: [doc.name],
               document: { id: doc.id, name: doc.name, type: doc.type, category: doc.category },
               timestamp: saved.created_at,
-              metadata: {}
+              metadata: {},
             })
           }
         }
@@ -166,9 +175,8 @@ Respond with ONLY a valid JSON array, no extra text.`
     return NextResponse.json({
       success: true,
       count: generatedAnalyses.length,
-      analyses: generatedAnalyses
+      analyses: generatedAnalyses,
     })
-
   } catch (error) {
     console.error('Error generating analysis:', error)
     return NextResponse.json({ error: 'Failed to generate analysis' }, { status: 500 })

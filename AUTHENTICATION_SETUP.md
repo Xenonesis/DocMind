@@ -43,11 +43,13 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ## Step 4: Configure Authentication Providers
 
 ### Email/Password Authentication (Default)
+
 Email/password authentication is enabled by default. Users can sign up and sign in with their email.
 
 ### Social Authentication (Optional)
 
 #### Google OAuth
+
 1. Go to Settings > Authentication > Providers
 2. Enable Google provider
 3. Add your Google OAuth credentials:
@@ -59,6 +61,7 @@ Email/password authentication is enabled by default. Users can sign up and sign 
    - Copy Client ID and Client Secret to Supabase
 
 #### GitHub OAuth
+
 1. Go to Settings > Authentication > Providers
 2. Enable GitHub provider
 3. Add your GitHub OAuth credentials:
@@ -94,14 +97,14 @@ Email/password authentication is enabled by default. Users can sign up and sign 
 -- Allow users to upload files to their own folder
 CREATE POLICY "Users can upload own files" ON storage.objects
 FOR INSERT WITH CHECK (
-  bucket_id = 'documents' AND 
+  bucket_id = 'documents' AND
   auth.uid()::text = (storage.foldername(name))[1]
 );
 
 -- Allow users to view their own files
 CREATE POLICY "Users can view own files" ON storage.objects
 FOR SELECT USING (
-  bucket_id = 'documents' AND 
+  bucket_id = 'documents' AND
   auth.uid()::text = (storage.foldername(name))[1]
 );
 ```
@@ -124,17 +127,20 @@ FOR SELECT USING (
 ## Troubleshooting
 
 ### Authentication Not Working
+
 - Check that environment variables are correctly set
 - Verify Supabase project URL and keys
 - Check browser console for errors
 - Ensure redirect URLs are configured correctly
 
 ### Database Errors
+
 - Verify the schema was applied correctly
 - Check RLS policies are in place
 - Ensure user profiles are being created automatically
 
 ### File Upload Issues
+
 - Check storage bucket exists and is configured
 - Verify storage policies allow user access
 - Check file size limits in Supabase settings
@@ -155,7 +161,7 @@ formData.append('file', file)
 const result = await authenticatedRequest('/api/documents/upload', {
   method: 'POST',
   body: formData,
-  headers: {} // Don't set Content-Type for FormData
+  headers: {}, // Don't set Content-Type for FormData
 })
 ```
 

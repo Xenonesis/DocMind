@@ -5,14 +5,16 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
     throw new Error('Supabase not configured')
   }
 
-  const { data: { session } } = await supabase.auth.getSession()
-  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
   if (!session?.access_token) {
     throw new Error('No authentication token available')
   }
 
   const headers: Record<string, string> = {
-    'Authorization': `Bearer ${session.access_token}`,
+    Authorization: `Bearer ${session.access_token}`,
   }
 
   if (options.headers) {
@@ -31,17 +33,20 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
 
   return fetch(url, {
     ...options,
-    headers
+    headers,
   })
 }
 
-export async function authenticatedRequest<T = any>(url: string, options: RequestInit = {}): Promise<T> {
+export async function authenticatedRequest<T = any>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> {
   const response = await authenticatedFetch(url, options)
-  
+
   if (!response.ok) {
     const errorText = await response.text()
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`
-    
+
     try {
       const errorData = JSON.parse(errorText)
       const parts = [errorData.error, errorData.details, errorData.hint].filter(Boolean)
@@ -49,9 +54,9 @@ export async function authenticatedRequest<T = any>(url: string, options: Reques
     } catch {
       errorMessage = errorText || errorMessage
     }
-    
+
     throw new Error(errorMessage)
   }
-  
+
   return response.json()
 }

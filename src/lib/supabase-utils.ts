@@ -1,18 +1,12 @@
 import { isSupabaseConfigured, supabaseServer } from './supabase'
-import {
-  User,
-  AiProviderSetting,
-  Document,
-  Analysis,
-  Query as QueryType
-} from './supabase-types'
+import { User, AiProviderSetting, Document, Analysis, Query as QueryType } from './supabase-types'
 
 export const TABLES = {
   USERS: 'users',
   AI_PROVIDER_SETTINGS: 'ai_provider_settings',
   DOCUMENTS: 'documents',
   ANALYSES: 'analyses',
-  QUERIES: 'queries'
+  QUERIES: 'queries',
 } as const
 
 function assertSupabase() {
@@ -104,7 +98,7 @@ export class SupabaseService<T extends { id: string }> {
       .eq('id', id)
       .maybeSingle()
     if (error) throw error
-    return (data ? (reviveDates(toCamel(data)) as any) : null)
+    return data ? (reviveDates(toCamel(data)) as any) : null
   }
 
   async update(id: string, data: Partial<Omit<T, 'id'>>): Promise<void> {
@@ -118,10 +112,7 @@ export class SupabaseService<T extends { id: string }> {
 
   async delete(id: string): Promise<void> {
     assertSupabase()
-    const { error } = await supabaseServer!
-      .from(this.tableName)
-      .delete()
-      .eq('id', id)
+    const { error } = await supabaseServer!.from(this.tableName).delete().eq('id', id)
     if (error) throw error
   }
 
@@ -190,7 +181,9 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
   return rows[0] || null
 }
 
-export const getAiProviderSettingsByUserId = async (userId: string): Promise<AiProviderSetting[]> => {
+export const getAiProviderSettingsByUserId = async (
+  userId: string
+): Promise<AiProviderSetting[]> => {
   return aiProviderService.getWhere('userId', '==', userId)
 }
 
@@ -205,5 +198,3 @@ export const getAnalysesByDocumentId = async (documentId: string): Promise<Analy
 export const getDocumentsByUserId = async (userId: string): Promise<Document[]> => {
   return documentService.getWhere('userId', '==', userId)
 }
-
-

@@ -5,7 +5,7 @@ import { AIService } from '@/lib/ai-service'
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
@@ -14,10 +14,13 @@ export async function POST(request: NextRequest) {
     const { provider } = body
 
     if (!provider || !provider.type || !provider.apiKey) {
-      return NextResponse.json({ 
-        error: 'Provider configuration is incomplete',
-        details: 'Provider type and API key are required'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Provider configuration is incomplete',
+          details: 'Provider type and API key are required',
+        },
+        { status: 400 }
+      )
     }
 
     const aiService = AIService.getInstance()
@@ -27,12 +30,13 @@ export async function POST(request: NextRequest) {
         provider: {
           ...provider,
           isActive: true,
-          isConfigured: true
+          isConfigured: true,
         },
-        prompt: 'Hello! Please respond with just "Connection successful" to confirm the API is working.',
+        prompt:
+          'Hello! Please respond with just "Connection successful" to confirm the API is working.',
         systemPrompt: 'You are a helpful assistant. Respond concisely.',
         maxTokens: 50,
-        temperature: 0.1
+        temperature: 0.1,
       })
 
       if (testResult && testResult.content) {
@@ -42,22 +46,24 @@ export async function POST(request: NextRequest) {
           response: testResult.content.trim(),
           usage: testResult.usage,
           model: testResult.model,
-          provider: testResult.provider
+          provider: testResult.provider,
         })
       } else {
-        return NextResponse.json({
-          success: false,
-          error: 'No response received from AI provider',
-          details: 'The API call completed but returned no content'
-        }, { status: 500 })
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'No response received from AI provider',
+            details: 'The API call completed but returned no content',
+          },
+          { status: 500 }
+        )
       }
-
     } catch (aiError: any) {
       console.error('AI Service error during connection test:', aiError)
-      
+
       let errorMessage = 'Connection test failed'
       let errorDetails = aiError.message || 'Unknown error'
-      
+
       if (aiError.message?.includes('API key')) {
         errorMessage = 'Invalid API key'
         errorDetails = 'The provided API key is invalid or has insufficient permissions'
@@ -72,19 +78,24 @@ export async function POST(request: NextRequest) {
         errorDetails = 'The specified model is not available or not supported'
       }
 
-      return NextResponse.json({
-        success: false,
-        error: errorMessage,
-        details: errorDetails,
-        originalError: aiError.message
-      }, { status: 500 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: errorMessage,
+          details: errorDetails,
+          originalError: aiError.message,
+        },
+        { status: 500 }
+      )
     }
-
   } catch (error: any) {
     console.error('Error in connection test:', error)
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error.message 
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error.message,
+      },
+      { status: 500 }
+    )
   }
 }

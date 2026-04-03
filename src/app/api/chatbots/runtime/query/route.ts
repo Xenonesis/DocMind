@@ -168,17 +168,28 @@ export async function POST(request: NextRequest) {
       .join('\n\n')
 
     if (slug && slug !== chatbot.slug) {
-      return NextResponse.json({ error: 'Invalid chatbot slug for this credential' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Invalid chatbot slug for this credential' },
+        { status: 401 }
+      )
     }
 
     const origin = request.headers.get('origin')
     const allowedOrigins = Array.isArray(verified.allowed_origins)
       ? verified.allowed_origins
-          .map((value: unknown) => String(value || '').trim().toLowerCase())
+          .map((value: unknown) =>
+            String(value || '')
+              .trim()
+              .toLowerCase()
+          )
           .filter(Boolean)
       : []
 
-    if (origin && allowedOrigins.length > 0 && !allowedOrigins.includes(origin.trim().toLowerCase())) {
+    if (
+      origin &&
+      allowedOrigins.length > 0 &&
+      !allowedOrigins.includes(origin.trim().toLowerCase())
+    ) {
       return NextResponse.json({ error: 'Origin is not allowed' }, { status: 403 })
     }
 
@@ -202,7 +213,10 @@ export async function POST(request: NextRequest) {
         decision_reason: rateResult.reason || 'rate limit exceeded',
       })
 
-      return NextResponse.json({ error: 'Rate limit exceeded. Please try again later.' }, { status: 429 })
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      )
     }
 
     const { data: links, error: docsError } = await db
@@ -216,10 +230,18 @@ export async function POST(request: NextRequest) {
 
     const docs = (links || [])
       .map((item: any) => item.documents)
-      .filter((doc: any) => doc?.status === 'COMPLETED' && typeof doc.content === 'string' && doc.content.trim().length > 0)
+      .filter(
+        (doc: any) =>
+          doc?.status === 'COMPLETED' &&
+          typeof doc.content === 'string' &&
+          doc.content.trim().length > 0
+      )
 
     if (docs.length === 0) {
-      return NextResponse.json({ error: 'No completed documents linked to this chatbot' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'No completed documents linked to this chatbot' },
+        { status: 400 }
+      )
     }
 
     const history = useChatMemory ? parseHistory(body.history) : []
@@ -278,17 +300,21 @@ export async function POST(request: NextRequest) {
 
     const aiService = AIService.getInstance()
     await aiService.loadProvidersFromDatabase(chatbot.user_id)
-    const provider = aiService.getActiveProvider() || await getFallbackProvider()
+    const provider = aiService.getActiveProvider() || (await getFallbackProvider())
 
     if (!provider) {
-      return NextResponse.json({ error: 'No AI provider configured for bot owner' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'No AI provider configured for bot owner' },
+        { status: 400 }
+      )
     }
 
-    const styleInstruction = responseStyle === 'concise'
-      ? 'Keep responses concise, direct, and short.'
-      : responseStyle === 'detailed'
-        ? 'Provide detailed explanations with complete context and rationale.'
-        : 'Keep a balanced response style: clear, moderately detailed, and practical.'
+    const styleInstruction =
+      responseStyle === 'concise'
+        ? 'Keep responses concise, direct, and short.'
+        : responseStyle === 'detailed'
+          ? 'Provide detailed explanations with complete context and rationale.'
+          : 'Keep a balanced response style: clear, moderately detailed, and practical.'
 
     const completion = await aiService.generateCompletion({
       provider,
@@ -301,27 +327,35 @@ export async function POST(request: NextRequest) {
     const normalized = normalizeGuardrailResponse(completion.content, chatbot.refusal_message)
 
     if (canPersistSession) {
-      const { data: assistantMessage } = await db.from('chatbot_messages').insert({
-        session_id: sessionId,
-        chatbot_id: chatbot.id,
-        role: 'assistant',
-        content: normalized.answer,
-        tokens_used: completion.usage?.totalTokens || 0,
-      })
-      .select('id')
-      .single()
+      const { data: assistantMessage } = await db
+        .from('chatbot_messages')
+        .insert({
+          session_id: sessionId,
+          chatbot_id: chatbot.id,
+          role: 'assistant',
+          content: normalized.answer,
+          tokens_used: completion.usage?.totalTokens || 0,
+        })
+        .select('id')
+        .single()
 
       assistantMessageId = assistantMessage?.id || null
     }
 
-    const references = normalized.refused || !includeReferences
-      ? []
-      : deriveReferences(query, normalized.answer, docs.map((doc: any) => ({
-          id: doc.id,
-          name: doc.name,
-          content: doc.content,
-        })))
-    const highlights = normalized.refused || !includeHighlights ? [] : deriveHighlights(normalized.answer)
+    const references =
+      normalized.refused || !includeReferences
+        ? []
+        : deriveReferences(
+            query,
+            normalized.answer,
+            docs.map((doc: any) => ({
+              id: doc.id,
+              name: doc.name,
+              content: doc.content,
+            }))
+          )
+    const highlights =
+      normalized.refused || !includeHighlights ? [] : deriveHighlights(normalized.answer)
 
     try {
       await db.from('chatbot_audit_logs').insert({
@@ -365,7 +399,10 @@ export async function POST(request: NextRequest) {
       messageId: assistantMessageId,
       answer: normalized.answer,
       refused: normalized.refused,
-      relevantDocuments: references.length > 0 ? references.map((ref: any) => ref.documentName) : docs.map((doc: any) => doc.name),
+      relevantDocuments:
+        references.length > 0
+          ? references.map((ref: any) => ref.documentName)
+          : docs.map((doc: any) => doc.name),
       references,
       highlights,
       provider: provider.name,
@@ -378,6 +415,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(responsePayload)
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to process chatbot query' }, { status: 500 })
+    return NextResponse.json(
+      { error: error?.message || 'Failed to process chatbot query' },
+      { status: 500 }
+    )
   }
 }

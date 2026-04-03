@@ -1,5 +1,5 @@
 {
-    "CodeGPT.apiKey": "Anthropic",
-    "snyk.advanced.organization": "642b7278-4452-4eed-bd06-dfbccbff90af",
-    "snyk.advanced.autoSelectOrganization": true
+  "CodeGPT.apiKey": "Anthropic",
+  "snyk.advanced.organization": "642b7278-4452-4eed-bd06-dfbccbff90af",
+  "snyk.advanced.autoSelectOrganization": true
 }

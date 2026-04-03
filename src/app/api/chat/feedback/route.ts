@@ -48,9 +48,8 @@ export async function POST(request: NextRequest) {
     const likes = Number(summary.likes || 0) + (feedbackType === 'up' ? 1 : 0)
     const dislikes = Number(summary.dislikes || 0) + (feedbackType === 'down' ? 1 : 0)
 
-    await db
-      .from('user_memory_profiles')
-      .upsert({
+    await db.from('user_memory_profiles').upsert(
+      {
         user_id: user.id,
         feedback_summary: {
           ...summary,
@@ -60,7 +59,9 @@ export async function POST(request: NextRequest) {
         },
         last_learned_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id' })
+      },
+      { onConflict: 'user_id' }
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {

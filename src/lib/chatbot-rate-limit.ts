@@ -17,7 +17,9 @@ function toMinuteWindow(date: Date): string {
 }
 
 function toDayWindow(date: Date): string {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString()
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  ).toISOString()
 }
 
 async function incrementBucket(
@@ -47,15 +49,13 @@ async function incrementBucket(
   }
 
   if (!existing) {
-    const { error: insertError } = await db
-      .from('chatbot_rate_limits')
-      .insert({
-        chatbot_id: chatbotId,
-        ip_address: ipAddress,
-        bucket,
-        window_start: windowStart,
-        request_count: 1,
-      })
+    const { error: insertError } = await db.from('chatbot_rate_limits').insert({
+      chatbot_id: chatbotId,
+      ip_address: ipAddress,
+      bucket,
+      window_start: windowStart,
+      request_count: 1,
+    })
 
     if (insertError) {
       return { allowed: true, reason: 'Rate-limit storage unavailable (insert)' }
@@ -83,7 +83,10 @@ async function incrementBucket(
   return { allowed: true }
 }
 
-export async function enforceStandardRateLimit(db: any, config: RateLimitConfig): Promise<RateLimitResult> {
+export async function enforceStandardRateLimit(
+  db: any,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
   const now = new Date()
   const minuteWindow = toMinuteWindow(now)
   const dayWindow = toDayWindow(now)

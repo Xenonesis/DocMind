@@ -5,15 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Link from 'next/link'
-import {
-  Upload,
-  FileText,
-  BarChart3,
-  Settings,
-  Loader2,
-  MessageSquare,
-  Bot
-} from 'lucide-react'
+import { Upload, FileText, BarChart3, Settings, Loader2, MessageSquare, Bot } from 'lucide-react'
 import { DocumentUpload } from '@/components/document-upload'
 import { DocumentList } from '@/components/document-list'
 import { DocumentSkeleton } from '@/components/document-skeleton'
@@ -50,11 +42,13 @@ export default function Dashboard() {
   }, [user])
 
   useEffect(() => {
-    const hasProcessingDocuments = documents.some(doc =>
-      doc.status === 'UPLOADING' || doc.status === 'PROCESSING'
+    const hasProcessingDocuments = documents.some(
+      (doc) => doc.status === 'UPLOADING' || doc.status === 'PROCESSING'
     )
     if (!hasProcessingDocuments) return
-    const interval = setInterval(() => { fetchDocuments() }, 2500)
+    const interval = setInterval(() => {
+      fetchDocuments()
+    }, 2500)
     return () => clearInterval(interval)
   }, [documents])
 
@@ -93,7 +87,10 @@ export default function Dashboard() {
                 </Button>
               </Link>
               <Link href="/dashboard/chatbots">
-                <Button variant="outline" className="rounded-full shadow-sm gap-2 text-muted-foreground h-9 px-3 sm:px-5">
+                <Button
+                  variant="outline"
+                  className="rounded-full shadow-sm gap-2 text-muted-foreground h-9 px-3 sm:px-5"
+                >
                   <Bot className="w-4 h-4" />
                   <span className="hidden sm:inline">Manage Chatbots</span>
                 </Button>
@@ -110,7 +107,7 @@ export default function Dashboard() {
                   { id: 'upload', icon: Upload, label: 'Upload' },
                   { id: 'documents', icon: FileText, label: 'Documents' },
                   { id: 'results', icon: BarChart3, label: 'Analysis' },
-                  { id: 'settings', icon: Settings, label: 'Settings' }
+                  { id: 'settings', icon: Settings, label: 'Settings' },
                 ].map((tab) => (
                   <TabsTrigger
                     key={tab.id}
@@ -140,11 +137,17 @@ export default function Dashboard() {
                       <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center shadow-sm mb-4 text-muted-foreground">
                         <FileText className="w-8 h-8" />
                       </div>
-                      <h3 className="text-xl font-semibold mb-2 text-foreground">No documents found</h3>
+                      <h3 className="text-xl font-semibold mb-2 text-foreground">
+                        No documents found
+                      </h3>
                       <p className="text-muted-foreground text-center max-w-sm mb-6">
-                        Your workspace is empty. Upload your first document to begin processing and querying data.
+                        Your workspace is empty. Upload your first document to begin processing and
+                        querying data.
                       </p>
-                      <Button onClick={() => setActiveTab('upload')} className="rounded-full px-8 shadow-sm">
+                      <Button
+                        onClick={() => setActiveTab('upload')}
+                        className="rounded-full px-8 shadow-sm"
+                      >
                         Upload Document
                       </Button>
                     </div>

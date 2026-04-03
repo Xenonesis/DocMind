@@ -42,9 +42,10 @@ function createStreamResponse(payload: {
   usage?: { promptTokens: number; completionTokens: number; totalTokens: number }
 }) {
   const encoder = new TextEncoder()
-  const answerText = typeof payload.response?.answer === 'string'
-    ? payload.response.answer
-    : JSON.stringify(payload.response || {}, null, 2)
+  const answerText =
+    typeof payload.response?.answer === 'string'
+      ? payload.response.answer
+      : JSON.stringify(payload.response || {}, null, 2)
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -174,7 +175,9 @@ export async function POST(request: NextRequest) {
     const [{ data: preferenceRow }, { data: memoryProfileRow }] = await Promise.all([
       db
         .from('user_response_preferences')
-        .select('response_style, highlight_enabled, reference_enabled, memory_learning_enabled, auto_regenerate_on_dislike, preview_selection_enabled')
+        .select(
+          'response_style, highlight_enabled, reference_enabled, memory_learning_enabled, auto_regenerate_on_dislike, preview_selection_enabled'
+        )
         .eq('user_id', user.id)
         .maybeSingle(),
       db
@@ -193,7 +196,7 @@ export async function POST(request: NextRequest) {
 
     const memoryInstruction = buildMemoryInstruction(
       responseStyle,
-      allowMemoryLearning ? (memoryProfileRow?.feedback_summary || {}) : {}
+      allowMemoryLearning ? memoryProfileRow?.feedback_summary || {} : {}
     )
     const selectedTextForPrompt = allowPreviewSelection ? selectedText : ''
 
@@ -205,7 +208,7 @@ export async function POST(request: NextRequest) {
         document_ids: documentIds ? JSON.stringify(documentIds) : '[]',
         response: '',
         ai_provider: provider || 'unknown',
-        ai_model: 'unknown'
+        ai_model: 'unknown',
       })
       .select()
       .single()
@@ -221,9 +224,10 @@ export async function POST(request: NextRequest) {
       await aiService.loadProvidersFromDatabase(user.id)
 
       const allProviders = aiService.getProviders()
-      let activeProvider = (provider
-        ? allProviders.find(p => p.id === provider) || allProviders.find(p => p.name === provider)
-        : aiService.getActiveProvider())
+      let activeProvider = provider
+        ? allProviders.find((p) => p.id === provider) ||
+          allProviders.find((p) => p.name === provider)
+        : aiService.getActiveProvider()
 
       if (!activeProvider) {
         // Priority: Groq (reliable & available) > Modal.direct (may be down)
@@ -238,7 +242,7 @@ export async function POST(request: NextRequest) {
             maxTokens: 4096,
             temperature: 0.7,
             isActive: true,
-            isConfigured: true
+            isConfigured: true,
           } as any
         } else if (process.env.DOCSCAN_FREE_API_KEY) {
           activeProvider = {
@@ -251,12 +255,15 @@ export async function POST(request: NextRequest) {
             maxTokens: 4096,
             temperature: 0.7,
             isActive: true,
-            isConfigured: true
+            isConfigured: true,
           } as any
         } else {
-          return NextResponse.json({
-            error: 'No AI provider configured. Please configure an AI provider in Settings.'
-          }, { status: 400 })
+          return NextResponse.json(
+            {
+              error: 'No AI provider configured. Please configure an AI provider in Settings.',
+            },
+            { status: 400 }
+          )
         }
       }
 
@@ -281,34 +288,47 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 })
       }
 
-      const context = (documents || []).map(doc => ({
+      const context = (documents || []).map((doc) => ({
         id: doc.id,
         name: doc.name,
         content: doc.content || '',
         category: doc.category || '',
-        metadata: parseJsonSafely(doc.metadata, {})
+        metadata: parseJsonSafely(doc.metadata, {}),
       }))
 
       const systemPrompt = `You are an expert document analysis assistant. Answer the user's question clearly and concisely based on the provided document context. If asked for summaries, key points, comparisons, or analysis provide them helpfully. Always mention which document you're referencing. If the answer is not found in the documents, say so clearly. ${memoryInstruction}`
 
-      const historyText = Array.isArray(history) && history.length > 0
-        ? `\n\nConversation history (for context):\n${history.map((m: any) => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`).join('\n')}\n`
-        : ''
+      const historyText =
+        Array.isArray(history) && history.length > 0
+          ? `\n\nConversation history (for context):\n${history.map((m: any) => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`).join('\n')}\n`
+          : ''
 
       const userPrompt = `
         Query: ${query}
 ${historyText}
-        ${selectedTextForPrompt ? `Selected text focus:
+        ${
+          selectedTextForPrompt
+            ? `Selected text focus:
         ${selectedTextForPrompt}
-      ` : ''}
-        ${allowAutoRegenerate && improveFromFeedback?.feedbackReason ? `User disliked a previous answer. Improve this response specifically by addressing: ${String(improveFromFeedback.feedbackReason).slice(0, 300)}
-      ` : ''}
+      `
+            : ''
+        }
+        ${
+          allowAutoRegenerate && improveFromFeedback?.feedbackReason
+            ? `User disliked a previous answer. Improve this response specifically by addressing: ${String(improveFromFeedback.feedbackReason).slice(0, 300)}
+      `
+            : ''
+        }
         Document Context:
-        ${context.map((doc, index) => `
+        ${context
+          .map(
+            (doc, index) => `
         Document ${index + 1}: ${doc.name}
         Category: ${doc.category}
         Content: ${doc.content.slice(0, 4000)}
-        `).join('\n')}
+        `
+          )
+          .join('\n')}
 
         Please provide a comprehensive but concise answer. If possible, provide structured references and key highlights.
       `
@@ -321,11 +341,15 @@ ${historyText}
           prompt: userPrompt,
           systemPrompt,
           temperature: providerConfig.temperature || 0.3,
-          maxTokens: providerConfig.maxTokens || 4096
+          maxTokens: providerConfig.maxTokens || 4096,
         })
       } catch (primaryErr: any) {
         const isUpstreamErr = /upstream|timed out|network error/i.test(primaryErr?.message || '')
-        if (isUpstreamErr && process.env.GROQ_API_KEY && providerConfig.id !== 'docscan-free-groq') {
+        if (
+          isUpstreamErr &&
+          process.env.GROQ_API_KEY &&
+          providerConfig.id !== 'docscan-free-groq'
+        ) {
           console.warn('Primary provider failed, falling back to Groq:', primaryErr.message)
           const groqFallback = {
             id: 'docscan-free-groq',
@@ -337,14 +361,14 @@ ${historyText}
             maxTokens: 4096,
             temperature: 0.7,
             isActive: true,
-            isConfigured: true
+            isConfigured: true,
           }
           completion = await aiService.generateCompletion({
             provider: groqFallback,
             prompt: userPrompt,
             systemPrompt,
             temperature: 0.3,
-            maxTokens: 4096
+            maxTokens: 4096,
           })
         } else {
           throw primaryErr
@@ -360,46 +384,54 @@ ${historyText}
         parsedContent = null
       }
 
-      const answerText = typeof parsedContent?.answer === 'string' ? parsedContent.answer : rawContent
+      const answerText =
+        typeof parsedContent?.answer === 'string' ? parsedContent.answer : rawContent
 
-      const referencesFromModel = allowReferences && Array.isArray(parsedContent?.references)
-        ? parsedContent.references
-            .filter((ref: any) => ref && typeof ref.documentName === 'string')
-            .map((ref: any) => ({
-              documentId:
-                typeof ref.documentId === 'string'
-                  ? ref.documentId
-                  : context.find(doc => doc.name === ref.documentName)?.id || '',
-              documentName: ref.documentName,
-              snippet: typeof ref.snippet === 'string' ? ref.snippet.slice(0, 280) : '',
-              score: Number(ref.score || 1),
-            }))
-        : []
+      const referencesFromModel =
+        allowReferences && Array.isArray(parsedContent?.references)
+          ? parsedContent.references
+              .filter((ref: any) => ref && typeof ref.documentName === 'string')
+              .map((ref: any) => ({
+                documentId:
+                  typeof ref.documentId === 'string'
+                    ? ref.documentId
+                    : context.find((doc) => doc.name === ref.documentName)?.id || '',
+                documentName: ref.documentName,
+                snippet: typeof ref.snippet === 'string' ? ref.snippet.slice(0, 280) : '',
+                score: Number(ref.score || 1),
+              }))
+          : []
 
       const derivedReferences = allowReferences ? deriveReferences(query, answerText, context) : []
       const references = allowReferences
-        ? (referencesFromModel.length > 0 ? referencesFromModel : derivedReferences)
+        ? referencesFromModel.length > 0
+          ? referencesFromModel
+          : derivedReferences
         : []
 
-      const highlightsFromModel = allowHighlights && Array.isArray(parsedContent?.highlights)
-        ? parsedContent.highlights
-            .filter((item: any) => item && typeof item.text === 'string')
-            .slice(0, 5)
-            .map((item: any) => ({
-              text: item.text.slice(0, 260),
-              reason: typeof item.reason === 'string' ? item.reason.slice(0, 80) : 'Key point',
-            }))
-        : []
+      const highlightsFromModel =
+        allowHighlights && Array.isArray(parsedContent?.highlights)
+          ? parsedContent.highlights
+              .filter((item: any) => item && typeof item.text === 'string')
+              .slice(0, 5)
+              .map((item: any) => ({
+                text: item.text.slice(0, 260),
+                reason: typeof item.reason === 'string' ? item.reason.slice(0, 80) : 'Key point',
+              }))
+          : []
 
       const highlights = allowHighlights
-        ? (highlightsFromModel.length > 0 ? highlightsFromModel : deriveHighlights(answerText))
+        ? highlightsFromModel.length > 0
+          ? highlightsFromModel
+          : deriveHighlights(answerText)
         : []
 
       aiResponse = {
         answer: answerText,
-        relevantDocuments: references.length > 0
-          ? references.map((ref: any) => ref.documentName)
-          : (documents || []).map(doc => doc.name),
+        relevantDocuments:
+          references.length > 0
+            ? references.map((ref: any) => ref.documentName)
+            : (documents || []).map((doc) => doc.name),
         references,
         highlights,
       }
@@ -441,7 +473,7 @@ ${historyText}
           ai_provider: providerConfig.name,
           ai_model: providerConfig.model || 'unknown',
           tokens_used: completion.usage?.totalTokens || 0,
-          processing_time_ms: Date.now() - new Date(queryRecord.created_at).getTime()
+          processing_time_ms: Date.now() - new Date(queryRecord.created_at).getTime(),
         })
         .eq('id', queryRecord.id)
 
@@ -466,30 +498,33 @@ ${historyText}
       }
 
       return NextResponse.json(responsePayload)
-
     } catch (aiError: any) {
       console.error('AI processing error:', aiError)
 
-      const message = typeof aiError?.message === 'string' ? aiError.message : 'AI processing failed'
-      const isConfigError = /api key not configured|no ai provider configured|unsupported provider/i.test(message)
+      const message =
+        typeof aiError?.message === 'string' ? aiError.message : 'AI processing failed'
+      const isConfigError =
+        /api key not configured|no ai provider configured|unsupported provider/i.test(message)
 
       await db
         .from('queries')
         .update({
           response: JSON.stringify({ error: message }),
           ai_provider: 'error',
-          ai_model: 'error'
+          ai_model: 'error',
         })
         .eq('id', queryRecord.id)
 
-      return NextResponse.json({
-        id: queryRecord.id,
-        query: queryRecord.query_text,
-        status: 'ERROR',
-        error: message
-      }, { status: isConfigError ? 400 : 500 })
+      return NextResponse.json(
+        {
+          id: queryRecord.id,
+          query: queryRecord.query_text,
+          status: 'ERROR',
+          error: message,
+        },
+        { status: isConfigError ? 400 : 500 }
+      )
     }
-
   } catch (error) {
     console.error('Query processing error:', error)
     return NextResponse.json({ error: 'Failed to process query' }, { status: 500 })
@@ -528,7 +563,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch queries' }, { status: 500 })
     }
 
-    const formattedQueries = (queries || []).map(query => ({
+    const formattedQueries = (queries || []).map((query) => ({
       id: query.id,
       query: query.query_text,
       status: 'COMPLETED',
@@ -538,11 +573,10 @@ export async function GET(request: NextRequest) {
       provider: query.ai_provider,
       model: query.ai_model,
       tokensUsed: query.tokens_used,
-      processingTime: query.processing_time_ms
+      processingTime: query.processing_time_ms,
     }))
 
     return NextResponse.json(formattedQueries)
-
   } catch (error) {
     console.error('Error fetching queries:', error)
     return NextResponse.json({ error: 'Failed to fetch queries' }, { status: 500 })

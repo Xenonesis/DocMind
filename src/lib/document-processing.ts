@@ -134,7 +134,7 @@ export async function generateAnalysisFromContent(
     type: 'INSIGHT',
     title: 'Document Statistics',
     description: `Document contains ${wordCount} words, ${charCount} characters, and ${lineCount} lines.`,
-    confidence: 100
+    confidence: 100,
   })
 
   const extension = fileName.split('.').pop()?.toLowerCase()
@@ -164,7 +164,7 @@ export async function generateAnalysisFromContent(
           title: 'Action Items Found',
           description: 'Document contains TODO or FIXME items that may require attention.',
           confidence: 90,
-          severity: 'MEDIUM'
+          severity: 'MEDIUM',
         })
       }
       contentAnalysis = 'Plain text document processed successfully.'
@@ -187,13 +187,13 @@ export async function generateAnalysisFromContent(
     type: 'INSIGHT',
     title: 'Content Analysis',
     description: contentAnalysis,
-    confidence: 95
+    confidence: 95,
   })
 
   const sensitivePatterns = [
     /\b\d{3}-\d{2}-\d{4}\b/,
     /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/,
-    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
   ]
 
   const sensitiveDataFound = sensitivePatterns.some((pattern) => pattern.test(content))
@@ -203,16 +203,17 @@ export async function generateAnalysisFromContent(
       ? {
           type: 'COMPLIANCE',
           title: 'Sensitive Data Detected',
-          description: 'Document may contain sensitive information such as email addresses, phone numbers, or other PII.',
+          description:
+            'Document may contain sensitive information such as email addresses, phone numbers, or other PII.',
           confidence: 85,
-          severity: 'HIGH'
+          severity: 'HIGH',
         }
       : {
           type: 'COMPLIANCE',
           title: 'No Sensitive Data Detected',
           description: 'Initial scan found no obvious sensitive data patterns.',
           confidence: 80,
-          severity: 'LOW'
+          severity: 'LOW',
         }
   )
 
@@ -233,10 +234,10 @@ export async function generateAnalysisFromContent(
         title: analysis.title,
         description: analysis.description,
         confidence: analysis.confidence,
-        severity: analysis.severity
+        severity: analysis.severity,
       },
       ai_provider: 'system',
-      ai_model: 'rule-based'
+      ai_model: 'rule-based',
     }))
   )
 }
@@ -258,13 +259,14 @@ export async function processStoredDocumentWithNode(documentId: string, userId: 
       id: document.id,
       status: document.status,
       category: document.category,
-      processedAt: document.processed_at
+      processedAt: document.processed_at,
     }
   }
 
-  const rawMetadata = typeof document.metadata === 'string'
-    ? JSON.parse(document.metadata || '{}')
-    : (document.metadata || {})
+  const rawMetadata =
+    typeof document.metadata === 'string'
+      ? JSON.parse(document.metadata || '{}')
+      : document.metadata || {}
 
   const storageRef = rawMetadata.storageRef
   if (!storageRef) {
@@ -284,7 +286,7 @@ export async function processStoredDocumentWithNode(documentId: string, userId: 
     {
       name: document.name,
       size: Number(fileData.size || 0) || fileBuffer.byteLength,
-      type: document.type
+      type: document.type,
     },
     fileBuffer
   )
@@ -293,7 +295,7 @@ export async function processStoredDocumentWithNode(documentId: string, userId: 
     status: 'COMPLETED',
     processed_at: new Date().toISOString(),
     content: content || `File uploaded: ${document.name} (${document.size})`,
-    category: getFileCategory(document.name)
+    category: getFileCategory(document.name),
   }
 
   const { error: updateError } = await db
@@ -312,6 +314,6 @@ export async function processStoredDocumentWithNode(documentId: string, userId: 
     id: document.id,
     status: 'COMPLETED',
     category: updatePayload.category,
-    processedAt: updatePayload.processed_at
+    processedAt: updatePayload.processed_at,
   }
 }

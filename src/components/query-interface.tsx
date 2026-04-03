@@ -6,10 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Send, 
+import {
+  Send,
   Brain,
   Search,
   AlertCircle,
@@ -26,7 +32,7 @@ import {
   Cpu,
   Cloud,
   Shield,
-  MessageSquare
+  MessageSquare,
 } from 'lucide-react'
 
 interface QueryInterfaceProps {
@@ -50,7 +56,13 @@ interface AIProvider {
   isConfigured: boolean
 }
 
-export function QueryInterface({ query, setQuery, isProcessing, documents = [], onSubmit }: QueryInterfaceProps) {
+export function QueryInterface({
+  query,
+  setQuery,
+  isProcessing,
+  documents = [],
+  onSubmit,
+}: QueryInterfaceProps) {
   const [currentProvider, setCurrentProvider] = useState<AIProvider | null>(null)
   const [providers, setProviders] = useState<AIProvider[]>([])
   const [selectedProviderId, setSelectedProviderId] = useState<string>('')
@@ -65,7 +77,7 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
     try {
       const { authenticatedRequest } = await import('@/lib/api-client')
       const data = await authenticatedRequest('/api/settings')
-      
+
       const mapped: AIProvider[] = data.map((p: any) => {
         const raw = (p.provider || '').toString()
         const lower = raw.toLowerCase()
@@ -76,11 +88,11 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
           type,
           model: p.model || '',
           isActive: !!p.isActive,
-          isConfigured: !!p.apiKey && typeof p.apiKey === 'string' && p.apiKey.length > 0
+          isConfigured: !!p.apiKey && typeof p.apiKey === 'string' && p.apiKey.length > 0,
         }
       })
-      
-      const configuredProviders = mapped.filter(p => p.isConfigured)
+
+      const configuredProviders = mapped.filter((p) => p.isConfigured)
       setProviders(configuredProviders)
       const active = configuredProviders.find((p: any) => p.isActive)
       if (active) {
@@ -90,12 +102,12 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
           type: active.type,
           model: active.model,
           isActive: true,
-          isConfigured: true
+          isConfigured: true,
         })
         setSelectedProviderId(active.id)
         return
       }
-      
+
       setCurrentProvider(null)
     } catch (error) {
       console.error('Error fetching current provider:', error)
@@ -108,28 +120,43 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
 
   const handleSubmit = () => {
     if (query.trim()) {
-      onSubmit({ query, documentIds: selectedDocumentIds, provider: selectedProviderId || undefined })
+      onSubmit({
+        query,
+        documentIds: selectedDocumentIds,
+        provider: selectedProviderId || undefined,
+      })
     }
   }
 
   const getProviderIcon = (type: string) => {
     switch (type) {
-      case 'google': return <Cloud className="w-4 h-4 text-blue-500" />
-      case 'mistral': return <Cloud className="w-4 h-4 text-orange-500" />
-      case 'lm-studio': return <Server className="w-4 h-4 text-slate-500" />
-      case 'ollama': return <Cpu className="w-4 h-4 text-slate-500" />
-      case 'open-router': return <Cloud className="w-4 h-4 text-indigo-500" />
-      case 'openai': return <Brain className="w-4 h-4 text-emerald-500" />
-      case 'anthropic': return <Shield className="w-4 h-4 text-rose-500" />
-      default: return <Brain className="w-4 h-4 text-primary" />
+      case 'google':
+        return <Cloud className="w-4 h-4 text-blue-500" />
+      case 'mistral':
+        return <Cloud className="w-4 h-4 text-orange-500" />
+      case 'lm-studio':
+        return <Server className="w-4 h-4 text-slate-500" />
+      case 'ollama':
+        return <Cpu className="w-4 h-4 text-slate-500" />
+      case 'open-router':
+        return <Cloud className="w-4 h-4 text-indigo-500" />
+      case 'openai':
+        return <Brain className="w-4 h-4 text-emerald-500" />
+      case 'anthropic':
+        return <Shield className="w-4 h-4 text-rose-500" />
+      default:
+        return <Brain className="w-4 h-4 text-primary" />
     }
   }
 
-  const completedDocuments = useMemo(() => (documents || []).filter(d => d.status ? d.status === 'COMPLETED' : true), [documents])
+  const completedDocuments = useMemo(
+    () => (documents || []).filter((d) => (d.status ? d.status === 'COMPLETED' : true)),
+    [documents]
+  )
   const filteredMentionDocs = useMemo(() => {
     const q = mentionQuery.trim().toLowerCase()
     if (!q) return completedDocuments.slice(0, 8)
-    return completedDocuments.filter(d => d.name.toLowerCase().includes(q)).slice(0, 8)
+    return completedDocuments.filter((d) => d.name.toLowerCase().includes(q)).slice(0, 8)
   }, [mentionQuery, completedDocuments])
 
   const insertAtCursor = (text: string) => {
@@ -175,7 +202,7 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
       const afterCaret = query.slice(caret)
       const insertText = `@${doc.name} `
       setQuery(beforeAt + insertText + afterCaret)
-      setSelectedDocumentIds(prev => Array.from(new Set([...prev, doc.id])))
+      setSelectedDocumentIds((prev) => Array.from(new Set([...prev, doc.id])))
       requestAnimationFrame(() => {
         const pos = (beforeAt + insertText).length
         el.selectionStart = el.selectionEnd = pos
@@ -183,14 +210,14 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
       })
     } else {
       insertAtCursor(`@${doc.name} `)
-      setSelectedDocumentIds(prev => Array.from(new Set([...prev, doc.id])))
+      setSelectedDocumentIds((prev) => Array.from(new Set([...prev, doc.id])))
     }
     setShowMentionList(false)
     setMentionQuery('')
   }
 
   const removeSelectedDoc = (docId: string) => {
-    setSelectedDocumentIds(prev => prev.filter(id => id !== docId))
+    setSelectedDocumentIds((prev) => prev.filter((id) => id !== docId))
   }
 
   const toggleVoiceRecognition = () => {
@@ -204,9 +231,10 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
       return
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     const recognition = new SpeechRecognition()
-    
+
     recognition.continuous = false
     recognition.interimResults = false
     recognition.lang = 'en-US'
@@ -233,10 +261,24 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
       </div>
 
       {providers.length === 0 && (
-        <Alert variant="destructive" className="bg-destructive/5 border-destructive/20 text-destructive">
+        <Alert
+          variant="destructive"
+          className="bg-destructive/5 border-destructive/20 text-destructive"
+        >
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="ml-2 font-medium">
-            No active AI models found. Please configure a provider in <a href="/dashboard" onClick={(e) => { e.preventDefault(); document.getElementById('tab-settings')?.click() }} className="underline underline-offset-2">Settings</a> to enable querying.
+            No active AI models found. Please configure a provider in{' '}
+            <a
+              href="/dashboard"
+              onClick={(e) => {
+                e.preventDefault()
+                document.getElementById('tab-settings')?.click()
+              }}
+              className="underline underline-offset-2"
+            >
+              Settings
+            </a>{' '}
+            to enable querying.
           </AlertDescription>
         </Alert>
       )}
@@ -255,7 +297,7 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit()
                 }}
               />
-              
+
               <div className="flex items-center justify-between p-3 bg-secondary/20 border-t border-border/50">
                 <div className="flex items-center gap-2">
                   <Button
@@ -263,24 +305,28 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                     variant="ghost"
                     size="icon"
                     className={`rounded-full hover:bg-secondary transition-colors ${isListening ? 'text-destructive bg-destructive/10 animate-pulse' : 'text-muted-foreground'}`}
-                    title={isListening ? "Stop listening" : "Voice input"}
+                    title={isListening ? 'Stop listening' : 'Voice input'}
                   >
                     {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                   </Button>
                   <Tooltip text="Tip: Press Ctrl+Enter to submit instantly" />
                 </div>
-                
+
                 <Button
                   onClick={handleSubmit}
                   disabled={isProcessing || !query.trim() || providers.length === 0}
                   className="rounded-full px-6 font-medium shadow-sm"
                 >
-                  {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                  {isProcessing ? (
+                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
                   Submit Query
                 </Button>
               </div>
             </div>
-            
+
             {showMentionList && (
               <div className="absolute left-4 bottom-16 mb-2 w-80 z-20 border border-border bg-card rounded-xl shadow-lg overflow-hidden">
                 <div className="bg-secondary/50 px-3 py-2 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -288,13 +334,18 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                 </div>
                 <div className="max-h-48 overflow-auto py-1">
                   {filteredMentionDocs.length === 0 ? (
-                    <div className="px-4 py-3 text-center text-sm text-muted-foreground">No documents found</div>
+                    <div className="px-4 py-3 text-center text-sm text-muted-foreground">
+                      No documents found
+                    </div>
                   ) : (
-                    filteredMentionDocs.map(doc => (
+                    filteredMentionDocs.map((doc) => (
                       <button
                         key={doc.id}
                         className="w-full text-left px-3 py-2 text-sm hover:bg-secondary/80 flex items-center gap-2.5 transition-colors"
-                        onMouseDown={(e) => { e.preventDefault(); handleSelectMention(doc) }}
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          handleSelectMention(doc)
+                        }}
                       >
                         <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         <span className="truncate">{doc.name}</span>
@@ -311,15 +362,19 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Targeting:</p>
                 <div className="flex flex-wrap gap-2">
-                  {selectedDocumentIds.map(id => {
-                    const doc = documents?.find(d => d.id === id)
+                  {selectedDocumentIds.map((id) => {
+                    const doc = documents?.find((d) => d.id === id)
                     if (!doc) return null
                     return (
-                      <Badge key={id} variant="secondary" className="pl-2 pr-1 py-1 rounded-full font-medium gap-1 flex items-center shadow-sm border border-border/50 bg-background hover:bg-secondary/80">
+                      <Badge
+                        key={id}
+                        variant="secondary"
+                        className="pl-2 pr-1 py-1 rounded-full font-medium gap-1 flex items-center shadow-sm border border-border/50 bg-background hover:bg-secondary/80"
+                      >
                         <FileText className="w-3.5 h-3.5 text-primary" />
                         <span className="max-w-[150px] truncate">{doc.name}</span>
-                        <button 
-                          onClick={() => removeSelectedDoc(id)} 
+                        <button
+                          onClick={() => removeSelectedDoc(id)}
                           className="ml-1 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive text-muted-foreground transition-colors"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -345,7 +400,7 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
                     <SelectValue placeholder="Select AI Model" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border">
-                    {providers.map(p => (
+                    {providers.map((p) => (
                       <SelectItem key={p.id} value={p.id} className="py-2">
                         <div className="flex items-center gap-2.5">
                           {getProviderIcon(p.type)}
@@ -358,9 +413,13 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
               </div>
               <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
                 {isProcessing ? (
-                  <><RefreshCw className="w-3 h-3 animate-spin"/> Processing...</>
+                  <>
+                    <RefreshCw className="w-3 h-3 animate-spin" /> Processing...
+                  </>
                 ) : (
-                  <><CheckCircle className="w-3 h-3 text-green-500"/> System Ready</>
+                  <>
+                    <CheckCircle className="w-3 h-3 text-green-500" /> System Ready
+                  </>
                 )}
               </p>
             </div>
@@ -372,9 +431,5 @@ export function QueryInterface({ query, setQuery, isProcessing, documents = [], 
 }
 
 function Tooltip({ text }: { text: string }) {
-  return (
-    <span className="text-xs text-muted-foreground hidden sm:block">
-      {text}
-    </span>
-  )
+  return <span className="text-xs text-muted-foreground hidden sm:block">{text}</span>
 }
